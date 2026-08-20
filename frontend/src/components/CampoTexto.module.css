@@ -1,0 +1,54 @@
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rotulo {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--texto);
+}
+
+.moldura {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  background: var(--branco);
+  border: 1.5px solid var(--borda);
+  border-radius: var(--raio);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.moldura:focus-within {
+  border-color: var(--roxo);
+  box-shadow: 0 0 0 4px rgb(107 78 230 / 12%);
+}
+
+.molduraInvalida {
+  border-color: var(--erro);
+}
+
+.molduraInvalida:focus-within {
+  box-shadow: 0 0 0 4px rgb(217 48 37 / 12%);
+}
+
+.entrada {
+  flex: 1;
+  min-width: 0;
+  padding: 13px 0;
+  border: 0;
+  background: none;
+  outline: none;
+}
+
+.entrada::placeholder {
+  color: var(--texto-suave);
+}
+
+.erro {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--erro);
+}

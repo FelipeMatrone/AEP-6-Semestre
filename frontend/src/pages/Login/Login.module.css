@@ -128,6 +128,10 @@
   color: var(--roxo);
 }
 
+.botaoOlho svg {
+  animation: entrada 0.15s ease;
+}
+
 .lembreMe {
   display: flex;
   gap: 10px;
@@ -155,14 +159,40 @@
 .alerta {
   color: var(--erro);
   background: rgb(217 48 37 / 8%);
+  animation: alertaEntrada 0.4s ease;
 }
 
 .sucesso {
   color: #1f7a58;
   background: rgb(61 190 139 / 14%);
+  animation: entrada 0.2s ease;
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Some fade-in com um leve tremor, para reforçar que algo deu errado. */
+@keyframes alertaEntrada {
+  0% {
+    opacity: 0;
+  }
+  20%, 60% {
+    transform: translateX(-3px);
+  }
+  40%, 80% {
+    transform: translateX(3px);
+  }
 }
 
 .botaoEntrar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
   padding: 14px 20px;
   font-weight: 600;
   color: var(--branco);
@@ -171,6 +201,22 @@
   border-radius: 999px;
   cursor: pointer;
   transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.botaoEntrar:disabled::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgb(255 255 255 / 40%);
+  border-top-color: var(--branco);
+  border-radius: 50%;
+  animation: girar 0.6s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .botaoEntrar:hover:not(:disabled) {
@@ -236,6 +282,18 @@
 
 .rodape a:hover {
   text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botaoOlho svg,
+  .alerta,
+  .sucesso {
+    animation: none;
+  }
+
+  .botaoEntrar:disabled::before {
+    animation-duration: 1.5s;
+  }
 }
 
 @media (max-width: 900px) {

@@ -35,13 +35,17 @@ const esquemaLogin = z.object({
 
 type DadosLogin = z.infer<typeof esquemaLogin>
 
+// Único estado para o resultado do envio: evita que uma mensagem de sucesso
+// antiga fique visível junto com um erro de uma tentativa seguinte.
+type StatusEnvio =
+  | { tipo: 'ocioso' }
+  | { tipo: 'erro'; mensagem: string }
+  | { tipo: 'sucesso'; usuario: Usuario }
+
 export default function Login() {
   const emailLembrado = recuperarEmailLembrado()
   const [senhaVisivel, setSenhaVisivel] = useState(false)
-  const [erroDeAcesso, setErroDeAcesso] = useState<string | null>(null)
-  const [usuarioAutenticado, setUsuarioAutenticado] = useState<Usuario | null>(
-    null,
-  )
+  const [status, setStatus] = useState<StatusEnvio>({ tipo: 'ocioso' })
 
   const {
     register,
@@ -60,17 +64,18 @@ export default function Login() {
   })
 
   async function aoEnviar(dados: DadosLogin) {
-    setErroDeAcesso(null)
     try {
       const usuario = await autenticar(dados.email, dados.senha)
       definirEmailLembrado(dados.lembrarMe ? dados.email : null)
-      setUsuarioAutenticado(usuario)
+      setStatus({ tipo: 'sucesso', usuario })
     } catch (erro) {
-      setErroDeAcesso(
-        erro instanceof CredenciaisInvalidasError
-          ? erro.message
-          : 'Não foi possível entrar agora. Tente novamente em instantes.',
-      )
+      setStatus({
+        tipo: 'erro',
+        mensagem:
+          erro instanceof CredenciaisInvalidasError
+            ? erro.message
+            : 'Não foi possível entrar agora. Tente novamente em instantes.',
+      })
     }
   }
 
@@ -144,15 +149,15 @@ export default function Login() {
               Lembre-me
             </label>
 
-            {erroDeAcesso && (
+            {status.tipo === 'erro' && (
               <p role="alert" className={styles.alerta}>
-                {erroDeAcesso}
+                {status.mensagem}
               </p>
             )}
 
-            {usuarioAutenticado && (
+            {status.tipo === 'sucesso' && (
               <p role="status" className={styles.sucesso}>
-                Tudo certo, {usuarioAutenticado.nome}! A tela inicial ainda não
+                Tudo certo, {status.usuario.nome}! A tela inicial ainda não
                 existe — veja o TODO.md.
               </p>
             )}

@@ -1,0 +1,316 @@
+.pagina {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  min-height: 100dvh;
+}
+
+/* ---------- Painel roxo ---------- */
+
+.painel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 48px;
+  overflow: hidden;
+  color: var(--branco);
+  background: linear-gradient(160deg, var(--roxo), var(--roxo-escuro));
+}
+
+.marca,
+.chamada {
+  position: relative;
+  z-index: 1;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.logo {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  color: var(--roxo);
+  background: var(--branco);
+  border-radius: 16px;
+}
+
+.chamada {
+  max-width: 24ch;
+}
+
+.tituloPainel {
+  margin: 0 0 12px;
+  font-size: clamp(1.75rem, 2.6vw, 2.5rem);
+  line-height: 1.2;
+}
+
+.textoPainel {
+  margin: 0;
+  color: rgb(255 255 255 / 78%);
+}
+
+/* Bolhas decorativas, no espírito das formas arredondadas do design */
+.decoracao {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle at 88% 12%,
+      rgb(255 255 255 / 12%) 0 96px,
+      transparent 97px
+    ),
+    radial-gradient(
+      circle at 10% 88%,
+      rgb(255 255 255 / 8%) 0 150px,
+      transparent 151px
+    ),
+    radial-gradient(
+      circle at 72% 74%,
+      rgb(255 255 255 / 10%) 0 58px,
+      transparent 59px
+    );
+}
+
+/* ---------- Formulário ---------- */
+
+.conteudo {
+  display: grid;
+  place-items: center;
+  padding: 48px 24px;
+  background: var(--branco);
+}
+
+.cartao {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.titulo {
+  margin: 0;
+  font-size: 1.75rem;
+  line-height: 1.25;
+}
+
+.subtitulo {
+  margin: 8px 0 0;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+}
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.botaoOlho {
+  display: flex;
+  padding: 4px;
+  color: var(--texto-suave);
+  background: none;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.botaoOlho:hover {
+  color: var(--roxo);
+}
+
+.botaoOlho svg {
+  animation: entrada 0.15s ease;
+}
+
+.lembreMe {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: fit-content;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lembreMe input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--roxo);
+}
+
+.alerta,
+.sucesso {
+  margin: 0;
+  padding: 12px 14px;
+  font-size: 0.875rem;
+  border-radius: var(--raio);
+}
+
+.alerta {
+  color: var(--erro);
+  background: rgb(217 48 37 / 8%);
+  animation: alertaEntrada 0.4s ease;
+}
+
+.sucesso {
+  color: #1f7a58;
+  background: rgb(61 190 139 / 14%);
+  animation: entrada 0.2s ease;
+}
+
+@keyframes entrada {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+/* Some fade-in com um leve tremor, para reforçar que algo deu errado. */
+@keyframes alertaEntrada {
+  0% {
+    opacity: 0;
+  }
+  20%, 60% {
+    transform: translateX(-3px);
+  }
+  40%, 80% {
+    transform: translateX(3px);
+  }
+}
+
+.botaoEntrar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  font-weight: 600;
+  color: var(--branco);
+  background: var(--magenta);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.botaoEntrar:disabled::before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgb(255 255 255 / 40%);
+  border-top-color: var(--branco);
+  border-radius: 50%;
+  animation: girar 0.6s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.botaoEntrar:hover:not(:disabled) {
+  background: var(--magenta-escuro);
+}
+
+.botaoEntrar:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.botaoEntrar:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.divisor {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+.divisor::before,
+.divisor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--borda);
+}
+
+.botaoGoogle {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  padding: 13px 20px;
+  font-weight: 500;
+  color: var(--texto);
+  text-decoration: none;
+  background: var(--branco);
+  border: 1.5px solid var(--borda);
+  border-radius: 999px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.botaoGoogle:hover {
+  background: #faf9ff;
+  border-color: var(--roxo);
+}
+
+.rodape {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.9375rem;
+  text-align: center;
+}
+
+.rodape a {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.rodape a:hover {
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .botaoOlho svg,
+  .alerta,
+  .sucesso {
+    animation: none;
+  }
+
+  .botaoEntrar:disabled::before {
+    animation-duration: 1.5s;
+  }
+}
+
+@media (max-width: 900px) {
+  .pagina {
+    grid-template-columns: 1fr;
+  }
+
+  .painel {
+    padding: 24px;
+  }
+
+  .chamada,
+  .decoracao {
+    display: none;
+  }
+
+  .conteudo {
+    padding: 32px 20px;
+  }
+}

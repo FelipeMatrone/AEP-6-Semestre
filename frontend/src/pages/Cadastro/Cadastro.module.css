@@ -1,0 +1,27 @@
+.acoes {
+  display: flex;
+  gap: 12px;
+}
+
+.acoes > * {
+  flex: 1;
+}
+
+.botaoCancelar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 20px;
+  font-weight: 600;
+  color: var(--texto);
+  text-decoration: none;
+  background: var(--branco);
+  border: 1.5px solid var(--borda);
+  border-radius: 999px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.botaoCancelar:hover {
+  background: #faf9ff;
+  border-color: var(--roxo);
+}

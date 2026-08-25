@@ -3,27 +3,58 @@
   grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100dvh;
   background: #f7f6fb;
+  transition: grid-template-columns 0.2s ease;
+}
+
+.paginaMenuRecolhido {
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
 .menuLateral {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 34px;
   padding: 28px 18px;
+  overflow: visible;
   color: var(--branco);
   background: linear-gradient(160deg, var(--roxo), var(--roxo-escuro));
+}
+
+.botaoRecolher {
+  position: absolute;
+  top: 38px;
+  right: -16px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--roxo);
+  font-size: 1.5rem;
+  line-height: 1;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgb(46 42 74 / 12%);
 }
 
 .marca {
   display: flex;
   gap: 12px;
   align-items: center;
+  min-height: 40px;
   padding: 0 10px;
+  font-size: 1rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .logo {
   display: grid;
+  flex: 0 0 40px;
   place-items: center;
   width: 40px;
   height: 40px;
@@ -41,10 +72,14 @@
 
 .navegacao button,
 .sair {
+  display: flex;
+  gap: 12px;
+  align-items: center;
   width: 100%;
-  padding: 12px 14px;
+  padding: 11px 14px;
   color: inherit;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
   text-align: left;
   text-decoration: none;
   background: transparent;
@@ -59,13 +94,40 @@
 }
 
 .itemAtivo {
-  font-weight: 600;
+  font-weight: 600 !important;
   background: rgb(255 255 255 / 20%) !important;
+}
+
+.iconeMenu {
+  display: grid;
+  flex: 0 0 18px;
+  place-items: center;
+  width: 18px;
+  font-size: 1rem;
+}
+
+.paginaMenuRecolhido .menuLateral {
+  align-items: center;
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.paginaMenuRecolhido .marca,
+.paginaMenuRecolhido .navegacao button,
+.paginaMenuRecolhido .sair {
+  justify-content: center;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+.paginaMenuRecolhido .textoMenu {
+  display: none;
 }
 
 .conteudo {
   min-width: 0;
-  padding: 28px clamp(20px, 4vw, 56px);
+  padding: 28px clamp(24px, 4vw, 56px) 48px;
+  font-size: 0.875rem;
 }
 
 .cabecalho {
@@ -77,8 +139,9 @@
 
 .busca input {
   width: min(440px, 52vw);
-  padding: 12px 16px;
+  padding: 11px 16px;
   color: var(--texto);
+  font-size: 0.9rem;
   background: var(--branco);
   border: 1px solid var(--borda);
   border-radius: 999px;
@@ -109,8 +172,8 @@
 }
 
 .botaoNotificacao svg {
-  width: 22px;
-  height: 22px;
+  width: 21px;
+  height: 21px;
   fill: none;
   stroke: currentcolor;
   stroke-linecap: round;
@@ -141,6 +204,7 @@
   align-items: center;
   padding: 0;
   color: var(--texto);
+  font-size: 0.875rem;
   font-weight: 600;
   background: transparent;
   border: 0;
@@ -158,14 +222,8 @@
   border-radius: 50%;
 }
 
-@media (max-width: 480px) {
-  .nomePerfil {
-    display: none;
-  }
-}
-
 .boasVindas {
-  margin: 54px 0 32px;
+  margin: 48px 0 28px;
 }
 
 .boasVindas h1,
@@ -174,32 +232,239 @@
 }
 
 .boasVindas h1 {
-  margin: 6px 0 10px;
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  margin: 5px 0 8px;
+  font-size: clamp(1.8rem, 3vw, 2.3rem);
+  line-height: 1.2;
 }
 
 .saudacao {
   color: var(--magenta);
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
 .boasVindas > p:last-child {
   color: var(--texto-suave);
+  font-size: 0.95rem;
 }
 
-.areaCards {
+.painelPrincipal {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  gap: 34px;
+}
+
+.colunaEsquerda,
+.colunaDireita {
+  display: flex;
+  flex-direction: column;
   gap: 20px;
 }
 
-.areaCards article {
-  min-height: 160px;
-  padding: 24px;
-  font-weight: 600;
+.colunaDireita {
+  padding-left: 34px;
+  border-left: 1px solid var(--borda);
+}
+
+.cartao {
+  padding: 22px 24px;
   background: var(--branco);
   border: 1px solid var(--borda);
   border-radius: var(--raio);
+}
+
+.tituloCartao {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cartao h2 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.tituloCartao button {
+  padding: 0;
+  color: var(--roxo);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.lista,
+.listaHoje {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 18px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.itemLista,
+.itemAnotacao {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid #f0eef7;
+}
+
+.itemLista:last-child,
+.itemAnotacao:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.pontoPrioridade {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: 50%;
+}
+
+.itemLista div,
+.itemAnotacao div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemLista strong,
+.itemAnotacao strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.itemLista span,
+.itemAnotacao span {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.itemAnotacao p {
+  max-width: 52ch;
+  margin: 1px 0;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.iconeAnotacao {
+  display: grid;
+  flex: 0 0 30px;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--roxo);
+  background: var(--lilas);
+  border-radius: 8px;
+}
+
+.resumo {
+  padding-bottom: 18px;
+}
+
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  margin-top: 18px;
+}
+
+.metricas div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px 18px;
+}
+
+.metricas div + div {
+  border-left: 1px solid var(--borda);
+}
+
+.metricas span {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+.metricas strong {
+  color: var(--roxo);
+  font-size: 1.8rem;
+  line-height: 1.1;
+}
+
+.tarefasHoje {
+  flex: 1;
+}
+
+.tituloCartao > span {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.listaHoje {
+  gap: 2px;
+}
+
+.listaHoje li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0eef7;
+}
+
+.listaHoje li:last-child {
+  border-bottom: 0;
+}
+
+.listaHoje label {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--texto);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.listaHoje input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--roxo);
+}
+
+.concluida {
+  color: var(--texto-suave);
+  text-decoration: line-through;
+}
+
+.etiqueta {
+  padding: 3px 8px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.prioridadeAlta {
+  color: #c52852;
+  background: #fce3eb;
+}
+
+.prioridadeMédia {
+  color: #9a6700;
+  background: #fff2ce;
+}
+
+.prioridadeBaixa {
+  color: #26744f;
+  background: #dff5e9;
 }
 
 .textoOculto {
@@ -211,23 +476,50 @@
   white-space: nowrap;
 }
 
-@media (max-width: 760px) {
-  .pagina {
+@media (max-width: 960px) {
+  .painelPrincipal {
     grid-template-columns: 1fr;
   }
 
-  .menuLateral {
-    gap: 20px;
+  .colunaDireita {
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .pagina,
+  .paginaMenuRecolhido {
+    grid-template-columns: 1fr;
+  }
+
+  .menuLateral,
+  .paginaMenuRecolhido .menuLateral {
+    align-items: stretch;
+    padding: 20px;
+  }
+
+  .botaoRecolher {
+    display: none;
   }
 
   .navegacao {
+    flex: none;
     flex-direction: row;
     flex-wrap: wrap;
   }
 
   .navegacao button,
-  .sair {
+  .sair,
+  .paginaMenuRecolhido .navegacao button,
+  .paginaMenuRecolhido .sair {
+    justify-content: flex-start;
     width: auto;
+    padding: 9px 12px;
+  }
+
+  .paginaMenuRecolhido .textoMenu {
+    display: inline;
   }
 
   .cabecalho {
@@ -238,8 +530,22 @@
   .busca input {
     width: 100%;
   }
+}
 
-  .areaCards {
-    grid-template-columns: 1fr;
+@media (max-width: 480px) {
+  .conteudo {
+    padding: 22px 16px 36px;
+  }
+
+  .nomePerfil {
+    display: none;
+  }
+
+  .cartao {
+    padding: 18px;
+  }
+
+  .boasVindas {
+    margin-top: 36px;
   }
 }

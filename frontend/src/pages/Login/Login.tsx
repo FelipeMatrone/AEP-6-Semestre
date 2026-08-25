@@ -2,13 +2,9 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CampoTexto } from '../../components/CampoTexto'
-import {
-  autenticar,
-  CredenciaisInvalidasError,
-  type Usuario,
-} from '../../services/auth'
+import { autenticar, CredenciaisInvalidasError } from '../../services/auth'
 import {
   definirEmailLembrado,
   recuperarEmailLembrado,
@@ -35,14 +31,12 @@ const esquemaLogin = z.object({
 
 type DadosLogin = z.infer<typeof esquemaLogin>
 
-// Único estado para o resultado do envio: evita que uma mensagem de sucesso
-// antiga fique visível junto com um erro de uma tentativa seguinte.
 type StatusEnvio =
   | { tipo: 'ocioso' }
   | { tipo: 'erro'; mensagem: string }
-  | { tipo: 'sucesso'; usuario: Usuario }
 
 export default function Login() {
+  const navigate = useNavigate()
   const emailLembrado = recuperarEmailLembrado()
   const [senhaVisivel, setSenhaVisivel] = useState(false)
   const [status, setStatus] = useState<StatusEnvio>({ tipo: 'ocioso' })
@@ -65,9 +59,9 @@ export default function Login() {
 
   async function aoEnviar(dados: DadosLogin) {
     try {
-      const usuario = await autenticar(dados.email, dados.senha)
+      await autenticar(dados.email, dados.senha)
       definirEmailLembrado(dados.lembrarMe ? dados.email : null)
-      setStatus({ tipo: 'sucesso', usuario })
+      navigate('/inicio')
     } catch (erro) {
       setStatus({
         tipo: 'erro',
@@ -155,13 +149,6 @@ export default function Login() {
               </p>
             )}
 
-            {status.tipo === 'sucesso' && (
-              <p role="status" className={styles.sucesso}>
-                Tudo certo, {status.usuario.nome}! A tela inicial ainda não
-                existe — veja o TODO.md.
-              </p>
-            )}
-
             <button
               type="submit"
               className={styles.botaoEntrar}
@@ -175,7 +162,6 @@ export default function Login() {
             <span>ou continue com</span>
           </div>
 
-          {/* Âncora, não botão: OAuth exige navegação de topo real. */}
           <a className={styles.botaoGoogle} href={URL_OAUTH_GOOGLE}>
             <IconeGoogle />
             Entrar com Google

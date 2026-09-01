@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import Modal from '../../components/Modal'
 import { IconeCapelo } from '../Login/icones'
 import styles from './Inicio.module.css'
 
@@ -78,6 +79,7 @@ const tarefasIniciais: Tarefa[] = [
 
 export default function Inicio() {
   const [menuRecolhido, setMenuRecolhido] = useState(false)
+  const [modalTarefasAberto, setModalTarefasAberto] = useState(false)
   const [tarefas, setTarefas] = useState(tarefasIniciais)
 
 const tarefasDeHoje = tarefas.filter((tarefa) => tarefa.paraHoje)
@@ -200,7 +202,12 @@ const pendentesHoje = tarefasDeHoje.filter(
             <article className={styles.cartao}>
               <div className={styles.tituloCartao}>
                 <h2>Próximas tarefas</h2>
-                <button type="button">Ver todas</button>
+                <button
+                  type="button"
+                  onClick={() => setModalTarefasAberto(true)}
+                >
+                  Ver todas
+                </button>
               </div>
 
               <ul className={styles.lista}>
@@ -290,6 +297,14 @@ const pendentesHoje = tarefasDeHoje.filter(
             </article>
           </div>
         </section>
+
+        <Modal
+          aberto={modalTarefasAberto}
+          titulo="Tarefas pendentes"
+          aoFechar={() => setModalTarefasAberto(false)}
+        >
+          <p> Teste Visuzalizacao Tarefas </p>
+        </Modal>
       </main>
     </div>
   )

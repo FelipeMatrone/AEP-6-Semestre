@@ -126,7 +126,7 @@
 
 .conteudo {
   min-width: 0;
-  padding: 28px clamp(24px, 4vw, 56px) 48px;
+  padding: clamp(20px, 3vh, 28px) clamp(20px, 4vw, 56px) clamp(28px, 5vh, 48px);
   font-size: 0.875rem;
 }
 
@@ -223,7 +223,7 @@
 }
 
 .boasVindas {
-  margin: 48px 0 28px;
+  margin: clamp(28px, 5vh, 48px) 0 clamp(20px, 3vh, 28px);
 }
 
 .boasVindas h1,
@@ -251,7 +251,7 @@
 .painelPrincipal {
   display: grid;
   grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-  gap: 34px;
+  gap: clamp(20px, 3vw, 34px);
 }
 
 .colunaEsquerda,
@@ -262,7 +262,7 @@
 }
 
 .colunaDireita {
-  padding-left: 34px;
+  padding-left: clamp(20px, 3vw, 34px);
   border-left: 1px solid var(--borda);
 }
 
@@ -548,4 +548,64 @@
   .boasVindas {
     margin-top: 36px;
   }
+}
+
+@media (max-height: 700px) and (min-width: 761px) {
+  .menuLateral {
+    gap: 22px;
+    padding-block: 20px;
+  }
+
+  .botaoRecolher {
+    top: 28px;
+  }
+
+  .cartao {
+    padding: 18px 20px;
+  }
+}
+
+
+.tabelaResponsiva {
+  overflow-x: auto;
+}
+
+.tabelaModal {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tabelaModal th,
+.tabelaModal td {
+  padding: 14px 12px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.tabelaModal th {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.tabelaModal td {
+  font-size: 0.875rem;
+}
+
+.tabelaModal td:nth-child(2) {
+  min-width: 220px;
+  font-weight: 600;
+}
+
+.tabelaModal tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.mensagemVazia {
+  margin: 0;
+  color: var(--texto-suave);
+  text-align: center;
 }

@@ -91,9 +91,13 @@ const concluidasHoje = tarefasDeHoje.filter(
 const pendentesHoje = tarefasDeHoje.filter(
   (tarefa) => !tarefa.concluida,
 ).length
- const proximasTarefas = tarefas
-  .filter((tarefa) => !tarefa.concluida && !tarefa.paraHoje)
+  const proximasTarefas = tarefas
+    .filter((tarefa) => !tarefa.concluida && !tarefa.paraHoje)
   .slice(0, 4)
+
+  const tarefasPendentes = tarefas.filter(
+    (tarefa) => !tarefa.concluida && !tarefa.paraHoje,
+  )
 
   function alternarTarefa(id: number) {
     setTarefas((tarefasAtuais) =>
@@ -303,7 +307,43 @@ const pendentesHoje = tarefasDeHoje.filter(
           titulo="Tarefas pendentes"
           aoFechar={() => setModalTarefasAberto(false)}
         >
-          <p> Teste Visuzalizacao Tarefas </p>
+          {tarefasPendentes.length > 0 ? (
+  <div className={styles.tabelaResponsiva}>
+    <table className={styles.tabelaModal}>
+      <thead>
+        <tr>
+          <th scope="col">ID</th>
+          <th scope="col">Título</th>
+          <th scope="col">Prazo</th>
+          <th scope="col">Prioridade</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {tarefasPendentes.map((tarefa) => (
+          <tr key={tarefa.id}>
+            <td>#{tarefa.id}</td>
+            <td>{tarefa.titulo}</td>
+            <td>{tarefa.prazo}</td>
+            <td>
+              <span
+                className={`${styles.etiqueta} ${
+                  styles[`prioridade${tarefa.prioridade}`]
+                }`}
+              >
+                {tarefa.prioridade}
+              </span>
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+) : (
+  <p className={styles.mensagemVazia}>
+    Nenhuma tarefa pendente no momento.
+  </p>
+)}
         </Modal>
       </main>
     </div>

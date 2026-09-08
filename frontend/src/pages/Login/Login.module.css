@@ -11,8 +11,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 40px;
-  padding: 48px;
+  gap: clamp(24px, 5vh, 40px);
+  padding: clamp(24px, 5vw, 48px);
   overflow: hidden;
   color: var(--branco);
   background: linear-gradient(160deg, var(--roxo), var(--roxo-escuro));
@@ -84,14 +84,14 @@
 .conteudo {
   display: grid;
   place-items: center;
-  padding: 48px 24px;
+  padding: clamp(24px, 5vh, 48px) 24px;
   background: var(--branco);
 }
 
 .cartao {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: clamp(18px, 3vh, 24px);
   width: 100%;
   max-width: 400px;
 }
@@ -111,7 +111,7 @@
 .formulario {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: clamp(14px, 2.25vh, 18px);
 }
 
 .botaoOlho {
@@ -312,5 +312,47 @@
 
   .conteudo {
     padding: 32px 20px;
+  }
+}
+
+/* Em notebooks e janelas baixas, evita que o formulário pareça ampliado
+   ou fique parcialmente fora da área visível. */
+@media (max-height: 700px) and (min-width: 901px) {
+  .painel {
+    padding-block: 28px;
+  }
+
+  .conteudo {
+    padding-block: 24px;
+  }
+
+  .logo {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+  }
+}
+
+@media (max-height: 620px) {
+  .painel {
+    padding-block: 20px;
+  }
+
+  .conteudo {
+    align-items: start;
+    padding-block: 20px;
+  }
+
+  .titulo {
+    font-size: 1.5rem;
+  }
+
+  .entrada {
+    padding-block: 10px;
+  }
+
+  .botaoEntrar,
+  .botaoGoogle {
+    padding-block: 11px;
   }
 }

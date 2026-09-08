@@ -13,27 +13,6 @@ type Tarefa = {
   paraHoje: boolean
 }
 
-const anotacoes = [
-  {
-    id: 1,
-    titulo: 'Requisitos funcionais',
-    data: 'Criada hoje',
-    descricao: 'Anotações sobre o levantamento inicial do projeto.',
-  },
-  {
-    id: 2,
-    titulo: 'Banco de Dados NoSQL',
-    data: 'Criada ontem',
-    descricao: 'Conceitos principais para revisar antes da atividade.',
-  },
-  {
-    id: 3,
-    titulo: 'Ideias para a AEP',
-    data: 'Criada em 20 ago.',
-    descricao: 'Possíveis temas e funcionalidades para a PoC.',
-  },
-]
-
 const tarefasIniciais: Tarefa[] = [
   {
     id: 1,
@@ -44,7 +23,7 @@ const tarefasIniciais: Tarefa[] = [
     paraHoje: true,
   },
   {
-    id: 2,
+    id: 2, 
     titulo: 'Revisar conceitos de NoSQL',
     prazo: 'Hoje',
     prioridade: 'Média',
@@ -144,11 +123,6 @@ const pendentesHoje = tarefasDeHoje.filter(
             <span className={styles.textoMenu}>Dashboard</span>
           </button>
 
-          <button type="button" aria-label="Anotações" title="Anotações">
-            <span className={styles.iconeMenu}>✎</span>
-            <span className={styles.textoMenu}>Anotações</span>
-          </button>
-
           <button type="button" aria-label="Tarefas" title="Tarefas">
             <span className={styles.iconeMenu}>✓</span>
             <span className={styles.textoMenu}>Tarefas</span>
@@ -231,25 +205,6 @@ const pendentesHoje = tarefasDeHoje.filter(
               </ul>
             </article>
 
-            <article className={styles.cartao}>
-              <div className={styles.tituloCartao}>
-                <h2>Últimas anotações criadas</h2>
-                <button type="button">Ver todas</button>
-              </div>
-
-              <ul className={styles.lista}>
-                {anotacoes.map((anotacao) => (
-                  <li key={anotacao.id} className={styles.itemAnotacao}>
-                    <div className={styles.iconeAnotacao}>✎</div>
-                    <div>
-                      <strong>{anotacao.titulo}</strong>
-                      <p>{anotacao.descricao}</p>
-                      <span>{anotacao.data}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </article>
           </div>
 
           <div className={styles.colunaDireita}>

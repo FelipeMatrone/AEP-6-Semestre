@@ -17,6 +17,9 @@
 	<properties>
 		<java.version>21</java.version>
 		<springdoc.version>2.9.0</springdoc.version>
+		<!-- o parent do Boot não gerencia o JaCoCo; sem versão fixa aqui o build
+		     quebra com "Plugin not found" -->
+		<jacoco.version>0.8.13</jacoco.version>
 	</properties>
 
 	<dependencies>
@@ -60,6 +63,73 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+			</plugin>
+
+			<!-- o sufixo decide o executor: *Test roda no surefire, no `test`;
+			     *IT roda aqui, no `verify`. Sem esta execução o failsafe fica
+			     registrado mas sem goal, e o teste de integracao nunca roda -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<configuration>
+					<excludes>
+						<!-- Application so tem o main; configuration so tem @Bean.
+						     Incluir os dois inflaria o denominador com linhas que
+						     nenhum teste de comportamento deveria exercitar -->
+						<exclude>br/com/cesumar/aep/AepApplication.class</exclude>
+						<exclude>br/com/cesumar/aep/configuration/**</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.70</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

@@ -1,0 +1,17 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: aep-mongo
+    restart: unless-stopped
+    ports:
+      # só localhost: o banco não fica exposto na rede
+      - "127.0.0.1:27017:27017"
+    environment:
+      # define contra qual banco os scripts de init rodam
+      MONGO_INITDB_DATABASE: aep
+    volumes:
+      - mongo-dados:/data/db
+      - ./banco:/docker-entrypoint-initdb.d:ro
+
+volumes:
+  mongo-dados:

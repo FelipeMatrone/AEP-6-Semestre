@@ -1,77 +1,53 @@
-# React + TypeScript + Vite
+# Frontend — AEP 6º Semestre
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Interface web do projeto da Atividade de Ensino Prática do 6º semestre.
+React 19 + TypeScript, build com Vite, roteamento com React Router e formulários
+com react-hook-form + zod.
 
-Currently, two official plugins are available:
+**Estado atual:** roda inteiramente sem backend. Login e cadastro são mocks e as
+anotações vivem em memória — veja `TODO.md`, que separa o que some sozinho quando
+a API existir do que precisa ser corrigido antes.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Como rodar
 
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+cp .env.example .env   # ajuste VITE_API_URL se o backend não estiver em :8080
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Outros comandos:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+| Comando | O que faz |
+|---|---|
+| `npm run dev` | Servidor de desenvolvimento com HMR |
+| `npm run build` | Checagem de tipos (`tsc -b`) e build de produção |
+| `npm run preview` | Serve o build de produção localmente |
+| `npm run lint` | ESLint |
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Estrutura
 
 ```
+src/
+├── components/     Componentes compartilhados (Layout, Modal, CampoTexto, icones)
+├── pages/          Uma pasta por tela, com seu CSS Module ao lado
+│   ├── Login/
+│   ├── Cadastro/
+│   ├── Inicio/     Painel principal
+│   └── Anotacoes/  Categorias e o editor de anotações
+├── services/       Acesso a dados e preferências (hoje mockados)
+├── config.ts       Constantes de identidade do sistema
+└── index.css       Tokens de cor, tipografia e reset
+```
+
+## Convenções
+
+- **Estilos:** CSS Modules (`*.module.css`) ao lado do componente. Cores,
+  espaçamentos e raios saem dos tokens de `src/index.css` — evite hex solto.
+- **Nomes:** código em português (componentes, funções, variáveis, classes CSS),
+  acompanhando o restante do repositório.
+- **Formulários:** react-hook-form com resolver zod e `mode: 'onTouched'`.
+- **Acessibilidade:** rótulo associado a todo campo, `aria-label` em botão só de
+  ícone, e `<dialog>` nativo para modais — não reimplemente foco preso ou Esc.
+
+Convenções de commit e de branch estão no `CLAUDE.md` da raiz do repositório.

@@ -4,11 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link } from 'react-router-dom'
 import { CampoTexto } from '../../components/CampoTexto'
-import { IconeCapelo, IconeOlho, IconeOlhoCortado } from '../Login/icones'
+import {
+  IconeCapelo,
+  IconeOlho,
+  IconeOlhoCortado,
+} from '../../components/icones'
+import { NOME_DO_SISTEMA } from '../../config'
 import loginStyles from '../Login/Login.module.css'
 import styles from './Cadastro.module.css'
-
-const NOME_DO_SISTEMA = 'Sistema AEP'
 
 const esquemaCadastro = z
   .object({
@@ -18,7 +21,10 @@ const esquemaCadastro = z
       .trim()
       .min(1, 'Informe seu e-mail')
       .pipe(z.email('Informe um e-mail válido')),
-    senha: z.string().min(1, 'Informe uma senha'),
+    senha: z
+      .string()
+      .min(1, 'Informe uma senha')
+      .min(8, 'A senha deve ter ao menos 8 caracteres'),
     confirmarSenha: z.string().min(1, 'Confirme sua senha'),
   })
   .refine((dados) => dados.senha === dados.confirmarSenha, {
@@ -43,7 +49,7 @@ export default function Cadastro() {
     defaultValues: { nome: '', email: '', senha: '', confirmarSenha: '' },
   })
 
-  // ponytail: sem backend de cadastro ainda — só valida e confirma na tela.
+  // Sem backend de cadastro ainda — só valida e confirma na tela.
   // Quando o endpoint existir, chama ele aqui (como autenticar() em services/auth.ts).
   async function aoSalvar() {
     setCadastrado(true)
@@ -71,7 +77,7 @@ export default function Cadastro() {
 
       <main className={loginStyles.conteudo}>
         <div className={loginStyles.cartao}>
-          <header className={loginStyles.cabecalho}>
+          <header>
             <h2 className={loginStyles.titulo}>Crie sua conta</h2>
             <p className={loginStyles.subtitulo}>
               Preencha os dados abaixo para começar.

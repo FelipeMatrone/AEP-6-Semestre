@@ -49,3 +49,9 @@ a {
   outline: 2px solid var(--roxo);
   outline-offset: 2px;
 }
+
+/* Com um diálogo modal aberto o fundo já fica inerte ao clique, mas continua
+   rolando atrás dele; isto trava a rolagem sem precisar de JavaScript. */
+body:has(dialog[open]) {
+  overflow: hidden;
+}

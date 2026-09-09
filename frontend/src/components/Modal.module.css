@@ -1,22 +1,25 @@
-.fundo {
-  position: fixed;
-  inset: 0;
-  z-index: 10;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgb(46 42 74 / 42%);
-  backdrop-filter: blur(5px);
-}
-
+/*
+ * A janela é o próprio <dialog>: aberto por showModal(), o navegador já o
+ * centraliza e o coloca acima de tudo, então não há mais fundo em position:
+ * fixed nem z-index para administrar.
+ */
 .janela {
-  width: min(100%, 760px);
+  display: flex;
+  flex-direction: column;
+  width: min(100% - 48px, 760px);
   max-height: min(80dvh, 680px);
+  padding: 0;
   overflow: hidden;
+  color: inherit;
   background: var(--branco);
   border: 1px solid var(--borda);
   border-radius: var(--raio-grande);
   box-shadow: 0 20px 50px rgb(46 42 74 / 25%);
+}
+
+.janela::backdrop {
+  background: rgb(46 42 74 / 42%);
+  backdrop-filter: blur(5px);
 }
 
 .cabecalho {
@@ -53,15 +56,17 @@
   background: var(--lilas);
 }
 
+/* Ocupa a altura que sobrar do cabeçalho, seja ela qual for — antes era um
+   "menos 79px" fixo, que já saía errado quando o padding mudava no celular. */
 .conteudo {
-  max-height: calc(min(80dvh, 680px) - 79px);
+  flex: 1;
   padding: 24px;
   overflow-y: auto;
 }
 
 @media (max-width: 480px) {
-  .fundo {
-    padding: 16px;
+  .janela {
+    width: min(100% - 32px, 760px);
   }
 
   .cabecalho,

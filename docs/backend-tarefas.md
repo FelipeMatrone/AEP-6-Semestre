@@ -123,8 +123,9 @@ coleção `usuarios` nova; `categorias` entra com anotações aninhadas. Três
 coleções, dois relacionamentos, um objeto complexo — tudo aditivo, visível em
 diff.
 
-> `docs/modelagem-banco.md` descreve o agregado `usuarios` com `tarefas[]`.
-> Aquele documento passa a descrever a **2ª entrega**. Ver T27.
+> `docs/modelagem-banco.md` descrevia o agregado `usuarios` com `tarefas[]`.
+> Reescrito em 09/09/2026 (T27): agora especifica a coleção `tarefas` achatada,
+> e o agregado virou a seção "Caminho para a 2ª entrega".
 
 ### D2 — Frontend buildado dentro do Spring
 
@@ -375,13 +376,13 @@ Ordem de implementação da skill `spring-crud` da referência, agora registrada
 Sem esta fase o item "Cobertura ≥ 70%" recebe **0 ponto**, e ele é eliminatório
 por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
 
-- [ ] **T17. `TarefaServiceTest`** — JUnit 5 + Mockito, sem Spring, sem Mongo.
+- [x] **T17. `TarefaServiceTest`** — JUnit 5 + Mockito, sem Spring, sem Mongo.
       Casos: listar mapeia para resumo; buscar existente; buscar inexistente
       lança; criar força `concluida = false` e carimba as datas; atualizar
       preserva o id e mexe em `atualizadaEm`; excluir inexistente lança e não
       chama `delete`.
 
-- [ ] **T18. `TarefaControllerTest`** — `@WebMvcTest` + MockMvc, Service mockado.
+- [x] **T18. `TarefaControllerTest`** — `@WebMvcTest` + MockMvc, Service mockado.
       Casos: `200` na listagem devolvendo **só** os campos do resumo — com
       `jsonPath(...).doesNotExist()` nos demais, senão a projeção não está
       testada; `200` na busca completa; `201` com `Location`; `400` com
@@ -390,6 +391,9 @@ por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
       *Pronto quando:* `./mvnw clean test` passa **e** T17 + T18 sozinhos já
       passam de 70% no relatório (D6).
 
+<!-- adiado em 09/09/2026: exige daemon Docker, desligado na máquina onde o
+     backend foi escrito. O failsafe já está registrado (T20), então basta o
+     arquivo existir para ele rodar no verify de quem tiver Docker. -->
 - [ ] **T19. `TarefaApiIT`** — `@SpringBootTest` + Testcontainers com a **mesma
       imagem do Compose** (ver T21). Fluxo HTTP completo: criar, buscar, listar,
       atualizar, excluir. `repository.deleteAll()` no `@BeforeEach`.
@@ -398,26 +402,29 @@ por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
       `banco/init.js` — logo sem `$jsonSchema` e sem índices. A conformidade com
       o validador do banco de desenvolvimento é verificada em T24, à mão.
 
-- [ ] **T20. JaCoCo + Failsafe no `pom.xml`.**
+- [x] **T20. JaCoCo + Failsafe no `pom.xml`.**
       `prepare-agent`, `report` e `check` na fase `verify`, com limite
       `LINE / COVEREDRATIO / 0.70`. Excluir a classe `Application` e o package
       de configuração, como a referência faz.
       Failsafe registrado para o `*IT` rodar no `verify`.
       *Pronto quando:* `./mvnw clean verify` passa **e** o número de
       `target/site/jacoco/index.html` está anotado no README.
+      **Feito em 09/09/2026:** `verify` verde, **96,7% de linha** (117/121) só
+      com T17 + T18, sem Docker. Anotar o número no README é parte de T28, que
+      ainda reescreve o arquivo inteiro.
 
 ---
 
 ## Fase 4 — Banco, infraestrutura e demonstração
 
-- [ ] **T21. Trocar `mongo:8` por `mongo:7.0` no `docker-compose.yml`.**
+- [x] **T21. Trocar `mongo:8` por `mongo:7.0` no `docker-compose.yml`.**
       A referência documenta que a imagem `mongo:8.0` **recusa iniciar** em
       hosts com kernel Linux 6.19 ou mais novo, e por isso fixou 7.0.
       Se o professor corrigir em Linux, nosso Compose atual não sobe na máquina
       dele. Alinhar Compose e Testcontainers (T19) na mesma versão.
       De quebra, some a tag flutuante: `mongo:8` muda de conteúdo sem aviso.
 
-- [ ] **T22. Desligar o campo `_class` do Spring Data.** ⚠ **bloqueia T23 e T24**
+- [x] **T22. Desligar o campo `_class` do Spring Data.** ⚠ **bloqueia T23 e T24**
       O `MappingMongoConverter` grava por padrão um campo `_class` com o nome da
       classe Java. Com `additionalProperties: false`, isso conta como campo
       extra e **todo insert falha** com `Document failed validation` — a mesma
@@ -431,16 +438,22 @@ por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
          `setTypeMapper(new DefaultMongoTypeMapper(null))`.
       *Pronto quando:* um documento gravado pela aplicação e lido no `mongosh`
       não tem `_class`.
+      **Feito em 09/09/2026:** saída adotada (2). Verificado no `mongosh` contra
+      o mongod local: o documento gravado pela API não tem `_class`, `prioridade`
+      vem como slug e `prazo` vem em `00:00:00.000Z`.
 
       **Não bloqueia T19.** O Testcontainers sobe um Mongo limpo, sem o
       validador do `init.js`; o `_class` passa despercebido lá. A falha aparece
       só contra o Compose — ou seja, na hora de gravar o vídeo, com a suíte
       verde. É por isso que T24 existe.
 
-- [ ] **T23. Reescrever `banco/init.js` para a coleção `tarefas`.**
+- [x] **T23. Reescrever `banco/init.js` para a coleção `tarefas`.**
       `$jsonSchema` fechado (`additionalProperties: false`) nos moldes do atual,
       `enum` em `prioridade`, índice em `{ dono: 1 }` e seed de demonstração.
       Manter o comentário sobre `docker compose down -v`.
+      **Feito em 09/09/2026.** O schema foi aplicado à mão a um mongod local e
+      `POST` e `PUT` pela API passaram por ele. Contra o Compose continua sendo
+      T24.
 
 - [ ] **T24. Smoke test manual contra o Compose.** ⚠ **antes de T33**
       A suíte automatizada não cobre o validador do banco (ver T19/T22). Uma vez,
@@ -470,7 +483,7 @@ por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
       citar o número do objetivo. Já está listado como "Em aberto" em
       `modelagem-banco.md`. Decisão do grupo — ver `sugestoes-projetos.md`.
 
-- [ ] **T27. Atualizar `docs/modelagem-banco.md` para D1.**
+- [x] **T27. Atualizar `docs/modelagem-banco.md` para D1.**
       O documento hoje especifica o agregado `usuarios`. Ele passa a
       especificar a coleção `tarefas` achatada, e o agregado vira a seção
       "Caminho para a 2ª entrega". A análise de campos derivados continua
@@ -564,9 +577,8 @@ por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
 
 ## Caminho crítico
 
-Três bloqueios reais: **T26** (ODS, trava README e vídeo), **T22** (`_class`,
-trava o banco e a demonstração) e **T5/T6** (convenção, trava a coerência do
-código escrito por duas pessoas). O resto é sequencial e previsível.
+Restava um bloqueio real: **T26** (ODS, trava README e vídeo). **T22**
+(`_class`) e **T5/T6** (convenção) já saíram.
 
 ```
 T1 → T5 → T6 → T8..T16 → T17..T20 → T22 → T23 → T24 → T25 → T28 → T33 → T35

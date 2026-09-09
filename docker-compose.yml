@@ -1,6 +1,6 @@
 services:
   mongo:
-    image: mongo:8
+    image: mongo:7.0
     container_name: aep-mongo
     restart: unless-stopped
     ports:

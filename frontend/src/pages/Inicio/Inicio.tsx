@@ -1,15 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import {
+  atualizarTarefa,
+  listarTarefas,
+  type Prioridade,
+  type TarefaResumo,
+} from '../../services/tarefas'
 import styles from './Inicio.module.css'
-
-type Tarefa = {
-  id: number
-  titulo: string
-  prazo: string
-  prioridade: 'Alta' | 'Média' | 'Baixa'
-  concluida: boolean
-  paraHoje: boolean
-}
 
 const anotacoes = [
   {
@@ -32,73 +29,102 @@ const anotacoes = [
   },
 ]
 
-const tarefasIniciais: Tarefa[] = [
-  {
-    id: 1,
-    titulo: 'Finalizar layout do dashboard',
-    prazo: 'Hoje',
-    prioridade: 'Alta',
-    concluida: false,
-    paraHoje: true,
-  },
-  {
-    id: 2,
-    titulo: 'Revisar conceitos de NoSQL',
-    prazo: 'Hoje',
-    prioridade: 'Média',
-    concluida: false,
-    paraHoje: true,
-  },
-  {
-    id: 3,
-    titulo: 'Criar anotações da aula',
-    prazo: 'Hoje',
-    prioridade: 'Baixa',
-    concluida: true,
-    paraHoje: true,
-  },
-  {
-    id: 4,
-    titulo: 'Entregar atividade de requisitos',
-    prazo: 'Amanhã',
-    prioridade: 'Alta',
-    concluida: false,
-    paraHoje: false,
-  },
-  {
-    id: 5,
-    titulo: 'Organizar tarefas da semana',
-    prazo: 'Em 3 dias',
-    prioridade: 'Média',
-    concluida: false,
-    paraHoje: false,
-  },
-]
+const rotulosPrioridade: Record<Prioridade, string> = {
+  alta: 'Alta',
+  media: 'Média',
+  baixa: 'Baixa',
+}
+
+const classesPrioridade: Record<Prioridade, string> = {
+  alta: styles.prioridadeAlta,
+  media: styles.prioridadeMedia,
+  baixa: styles.prioridadeBaixa,
+}
+
+function obterDataLocalAtual() {
+  const agora = new Date()
+  const mes = String(agora.getMonth() + 1).padStart(2, '0')
+  const dia = String(agora.getDate()).padStart(2, '0')
+
+  return `${agora.getFullYear()}-${mes}-${dia}`
+}
+
+function formatarPrazo(prazo: string, hoje: string) {
+  if (prazo === hoje) return 'Hoje'
+
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(
+    new Date(`${prazo}T00:00:00Z`),
+  )
+}
 
 export default function Inicio() {
-  const [tarefas, setTarefas] = useState(tarefasIniciais)
+  const [tarefas, setTarefas] = useState<TarefaResumo[]>([])
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState<string | null>(null)
+  const [processandoId, setProcessandoId] = useState<string | null>(null)
 
-  const tarefasDeHoje = tarefas.filter((tarefa) => tarefa.paraHoje)
+  useEffect(() => {
+    let telaAtiva = true
 
-  const concluidasHoje = tarefasDeHoje.filter(
-    (tarefa) => tarefa.concluida,
-  ).length
+    async function carregarTarefas() {
+      try {
+        const resposta = await listarTarefas()
+        if (telaAtiva) {
+          setTarefas(resposta)
+        }
+      } catch {
+        if (telaAtiva) {
+          setErro('Não foi possível carregar as tarefas.')
+        }
+      } finally {
+        if (telaAtiva) {
+          setCarregando(false)
+        }
+      }
+    }
 
+    carregarTarefas()
+
+    return () => {
+      telaAtiva = false
+    }
+  }, [])
+
+  const hoje = obterDataLocalAtual()
+  const tarefasDeHoje = tarefas.filter((tarefa) => tarefa.prazo === hoje)
+  const concluidasHoje = tarefasDeHoje.filter((tarefa) => tarefa.concluida).length
   const pendentesHoje = tarefasDeHoje.length - concluidasHoje
-
   const proximasTarefas = tarefas
-    .filter((tarefa) => !tarefa.concluida)
-    .filter((tarefa) => !tarefa.paraHoje)
+    .filter((tarefa) => !tarefa.concluida && tarefa.prazo > hoje)
+    .sort((primeira, segunda) => primeira.prazo.localeCompare(segunda.prazo))
     .slice(0, 4)
 
-  function alternarTarefa(id: number) {
-    setTarefas((tarefasAtuais) =>
-      tarefasAtuais.map((tarefa) =>
-        tarefa.id === id
-          ? { ...tarefa, concluida: !tarefa.concluida }
-          : tarefa,
-      ),
-    )
+  async function alternarTarefa(tarefa: TarefaResumo) {
+    setProcessandoId(tarefa.id)
+    setErro(null)
+
+    try {
+      const tarefaAtualizada = await atualizarTarefa(tarefa.id, {
+        titulo: tarefa.titulo,
+        prazo: tarefa.prazo,
+        prioridade: tarefa.prioridade,
+        observacao: tarefa.observacao,
+        concluida: !tarefa.concluida,
+      })
+      setTarefas((tarefasAtuais) =>
+        tarefasAtuais.map((tarefaAtual) =>
+          tarefaAtual.id === tarefaAtualizada.id ? tarefaAtualizada : tarefaAtual,
+        ),
+      )
+    } catch (erroAoAtualizar) {
+      setErro(
+        erroAoAtualizar instanceof Error
+          ? erroAoAtualizar.message
+          : 'Não foi possível atualizar a tarefa.',
+      )
+    } finally {
+      setProcessandoId(null)
+    }
   }
 
   return (
@@ -118,16 +144,15 @@ export default function Inicio() {
             </div>
 
             <ul className={styles.lista}>
+              {!carregando && !erro && proximasTarefas.length === 0 && (
+                <li className={styles.mensagemVazia}>Nenhuma tarefa futura.</li>
+              )}
               {proximasTarefas.map((tarefa) => (
                 <li key={tarefa.id} className={styles.itemLista}>
-                  <span
-                    className={`${styles.pontoPrioridade} ${
-                      styles[`prioridade${tarefa.prioridade}`]
-                    }`}
-                  />
+                  <span className={`${styles.pontoPrioridade} ${classesPrioridade[tarefa.prioridade]}`} />
                   <div>
                     <strong>{tarefa.titulo}</strong>
-                    <span>Prazo: {tarefa.prazo}</span>
+                    <span>Prazo: {formatarPrazo(tarefa.prazo, hoje)}</span>
                   </div>
                 </li>
               ))}
@@ -178,6 +203,11 @@ export default function Inicio() {
               <span>{tarefasDeHoje.length} tarefas</span>
             </div>
 
+            {erro && <p className={styles.mensagemVazia} role="alert">{erro}</p>}
+            {carregando && <p className={styles.mensagemVazia}>Carregando tarefas...</p>}
+            {!carregando && !erro && tarefasDeHoje.length === 0 && (
+              <p className={styles.mensagemVazia}>Nenhuma tarefa para hoje.</p>
+            )}
             <ul className={styles.listaHoje}>
               {tarefasDeHoje.map((tarefa) => (
                 <li key={tarefa.id}>
@@ -185,18 +215,15 @@ export default function Inicio() {
                     <input
                       type="checkbox"
                       checked={tarefa.concluida}
-                      onChange={() => alternarTarefa(tarefa.id)}
+                      onChange={() => alternarTarefa(tarefa)}
+                      disabled={processandoId === tarefa.id}
                     />
                     <span className={tarefa.concluida ? styles.concluida : ''}>
                       {tarefa.titulo}
                     </span>
                   </label>
-                  <span
-                    className={`${styles.etiqueta} ${
-                      styles[`prioridade${tarefa.prioridade}`]
-                    }`}
-                  >
-                    {tarefa.prioridade}
+                  <span className={`${styles.etiqueta} ${classesPrioridade[tarefa.prioridade]}`}>
+                    {rotulosPrioridade[tarefa.prioridade]}
                   </span>
                 </li>
               ))}
@@ -204,7 +231,6 @@ export default function Inicio() {
           </article>
         </div>
       </section>
-
     </>
   )
 }

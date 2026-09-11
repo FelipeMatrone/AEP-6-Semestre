@@ -113,9 +113,9 @@ export default function Tarefas() {
     const titulo = String(dados.get('titulo') ?? '').trim()
     const prazo = String(dados.get('prazo') ?? '')
     const prioridade = String(dados.get('prioridade') ?? '') as Prioridade
-    const dono = String(dados.get('dono') ?? '').trim()
+    const observacao = String(dados.get('observacao') ?? '').trim()
 
-    if (!titulo || !prazo || (!tarefaEmEdicao && !dono)) {
+    if (!titulo || !prazo || !observacao) {
       setErroFormulario('Preencha todos os campos obrigatórios.')
       return
     }
@@ -129,6 +129,7 @@ export default function Tarefas() {
           titulo,
           prazo,
           prioridade,
+          observacao,
           concluida: tarefaEmEdicao.concluida,
         })
         setTarefas((tarefasAtuais) =>
@@ -137,7 +138,7 @@ export default function Tarefas() {
           ),
         )
       } else {
-        const tarefaCriada = await criarTarefa({ titulo, dono, prazo, prioridade })
+        const tarefaCriada = await criarTarefa({ titulo, observacao, prazo, prioridade })
         setTarefas((tarefasAtuais) => [...tarefasAtuais, tarefaCriada])
       }
 
@@ -158,6 +159,7 @@ export default function Tarefas() {
         titulo: tarefa.titulo,
         prazo: tarefa.prazo,
         prioridade: tarefa.prioridade,
+        observacao: tarefa.observacao,
         concluida: !tarefa.concluida,
       })
       setTarefas((tarefasAtuais) =>
@@ -347,12 +349,16 @@ export default function Tarefas() {
             />
           </label>
 
-          {!tarefaEmEdicao && (
-            <label className={styles.grupoCampo}>
-              <span>Dono</span>
-              <input name="dono" type="text" placeholder="Informe o responsável pela tarefa" required />
-            </label>
-          )}
+          <label className={styles.grupoCampo}>
+            <span>Observação</span>
+            <textarea
+              name="observacao"
+              placeholder="Adicione uma observação sobre a tarefa"
+              rows={4}
+              defaultValue={tarefaEmEdicao?.observacao}
+              required
+            />
+          </label>
 
           {erroFormulario && <p className={styles.erroFormulario} role="alert">{erroFormulario}</p>}
 

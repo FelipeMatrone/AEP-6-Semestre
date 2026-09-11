@@ -15,7 +15,7 @@ db.createCollection("tarefas", {
         "prazo",
         "prioridade",
         "concluida",
-        "dono",
+        "observacao",
         "criadaEm",
         "atualizadaEm"
       ],
@@ -31,17 +31,13 @@ db.createCollection("tarefas", {
         // o mesmo slug ASCII que a API expõe; o rótulo acentuado é da tela
         prioridade: { bsonType: "string", enum: ["alta", "media", "baixa"] },
         concluida: { bsonType: "bool" },
-        dono: { bsonType: "string" },
+        observacao: { bsonType: "string" },
         criadaEm: { bsonType: "date" },
         atualizadaEm: { bsonType: "date" }
       }
     }
   }
 });
-
-// A listagem por dono é o único filtro que a 1ª entrega faz. Não é único:
-// a mesma pessoa tem várias tarefas.
-db.tarefas.createIndex({ dono: 1 });
 
 // Dados de demonstração: o suficiente para a listagem não abrir vazia na
 // apresentação, com uma tarefa concluída e duas pendentes.
@@ -51,7 +47,7 @@ db.tarefas.insertMany([
     prazo: ISODate("2026-09-08T00:00:00Z"),
     prioridade: "alta",
     concluida: true,
-    dono: "samuel",
+    observacao: "Revisar os requisitos antes da entrega.",
     criadaEm: agora,
     atualizadaEm: agora
   },
@@ -60,7 +56,7 @@ db.tarefas.insertMany([
     prazo: ISODate("2026-09-12T00:00:00Z"),
     prioridade: "media",
     concluida: false,
-    dono: "samuel",
+    observacao: "Validar a escolha com a equipe.",
     criadaEm: agora,
     atualizadaEm: agora
   },
@@ -69,7 +65,7 @@ db.tarefas.insertMany([
     prazo: ISODate("2026-09-19T00:00:00Z"),
     prioridade: "baixa",
     concluida: false,
-    dono: "felipe",
+    observacao: "Preparar o roteiro antes de gravar.",
     criadaEm: agora,
     atualizadaEm: agora
   }

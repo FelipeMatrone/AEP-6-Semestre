@@ -19,6 +19,6 @@ public record TarefaCreateRequest(
 		@NotNull(message = "A prioridade é obrigatória")
 		Prioridade prioridade,
 
-		@NotBlank(message = "O dono é obrigatório")
-		String dono) {
+		@NotBlank(message = "A observação é obrigatória")
+		String observacao) {
 }

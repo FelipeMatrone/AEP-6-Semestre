@@ -104,7 +104,7 @@ A tarefa **é** o documento. Não há aninhamento na 1ª entrega.
   prazo: ISODate("2026-09-08T00:00:00Z"),
   prioridade: "alta",          // alta | media | baixa
   concluida: false,
-  dono: "samuel@exemplo.com",
+  observacao: "Revisar com a equipe antes da entrega.",
   criadaEm: ISODate(...),
   atualizadaEm: ISODate(...)
 }
@@ -118,8 +118,8 @@ A referência do professor confirma a leitura restritiva.
 entregável obrigatório do 1º bimestre, e o fluxo principal avaliado é gerenciar
 tarefas, não autenticar.
 
-**Caminho para a 2ª entrega:** `dono` (String) vira `usuarioId` referenciando a
-coleção `usuarios` nova; `categorias` entra com anotações aninhadas. Três
+**Caminho para a 2ª entrega:** `usuarioId` entra referenciando a coleção
+`usuarios` nova; `categorias` entra com anotações aninhadas. Três
 coleções, dois relacionamentos, um objeto complexo — tudo aditivo, visível em
 diff.
 
@@ -312,10 +312,10 @@ Ordem de implementação da skill `spring-crud` da referência, agora registrada
 - [x] **T11. DTOs como `record`, um por caso de uso.**
       A referência é explícita: não reutilizar DTO entre criação, atualização e
       resposta só porque os campos coincidem hoje.
-      - `TarefaCreateRequest` — `titulo`, `prazo`, `prioridade`, `dono`.
+      - `TarefaCreateRequest` — `titulo`, `prazo`, `prioridade`, `observacao`.
         **Sem `id` e sem `concluida`:** tarefa nasce pendente, é regra de
         negócio, não entrada do cliente.
-      - `TarefaUpdateRequest` — `titulo`, `prazo`, `prioridade`, `concluida`.
+      - `TarefaUpdateRequest` — `titulo`, `prazo`, `prioridade`, `observacao`, `concluida`.
         Sem `id`: ele vem do path.
       - `TarefaResponse` — representação completa.
       - `TarefaSummaryResponse` — `id`, `titulo`, `prazo`, `prioridade`, `concluida`.
@@ -449,7 +449,7 @@ por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
 
 - [x] **T23. Reescrever `banco/init.js` para a coleção `tarefas`.**
       `$jsonSchema` fechado (`additionalProperties: false`) nos moldes do atual,
-      `enum` em `prioridade`, índice em `{ dono: 1 }` e seed de demonstração.
+      `enum` em `prioridade` e seed de demonstração.
       Manter o comentário sobre `docker compose down -v`.
       **Feito em 09/09/2026.** O schema foi aplicado à mão a um mongod local e
       `POST` e `PUT` pela API passaram por ele. Contra o Compose continua sendo
@@ -566,7 +566,7 @@ por si só no enunciado. A matriz completa de casos está em `docs/padroes.md`.
       que já mapeiam item por item o que morre quando a API existir.
 
 - [ ] **T38. Autenticação real e a modelagem da 2ª entrega:** `usuarios` como
-      coleção própria, `dono` vira `usuarioId`, `categorias` com anotações
+      coleção própria, `usuarioId` referencia as tarefas, `categorias` com anotações
       aninhadas.
 
 - [ ] **T39. Quadro de tarefas.** Critério de nota da **2ª** entrega

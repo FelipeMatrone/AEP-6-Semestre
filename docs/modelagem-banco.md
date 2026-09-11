@@ -26,8 +26,8 @@ se não houvesse teto.
 
 ## Decisão: coleção única `tarefas`, com documento achatado
 
-A coleção é `tarefas`, cada documento é uma tarefa, e o dono é um **campo
-escalar** (`dono`) dentro dela. Nenhum array de subdocumentos, nenhum aninhamento.
+A coleção é `tarefas`, e cada documento é uma tarefa com uma **observação
+escalar** (`observacao`). Nenhum array de subdocumentos, nenhum aninhamento.
 
 O que sustenta a escolha:
 
@@ -39,8 +39,8 @@ O que sustenta a escolha:
 2. **O CRUD é o da entidade avaliada.** `GET /api/tarefas` lê a coleção inteira,
    `POST` insere um documento, `PUT` e `DELETE` endereçam um `_id`. Cada operação
    HTTP é uma operação de coleção, sem operador posicional e sem `arrayFilters`.
-3. **A evolução fica aditiva e visível em diff.** `dono` vira `usuarioId` quando a
-   coleção `usuarios` existir. Extrai, não reescreve.
+3. **A evolução fica aditiva e visível em diff.** `usuarioId` entra quando a
+   coleção `usuarios` existir, sem alterar a observação da tarefa.
 
 O preço, aceito conscientemente: **login e cadastro continuam mock nesta
 entrega**. Não há `senhaHash` no banco, porque não há coleção de usuários — e
@@ -66,7 +66,7 @@ Coleção: **`tarefas`**
 | `prazo` | Date | Data de calendário, gravada à meia-noite UTC. Ver "Datas e fuso". |
 | `prioridade` | String | `"alta"`, `"media"` ou `"baixa"`. Slug ASCII, sem acento. |
 | `concluida` | Boolean | Criada como `false` — regra de negócio, não entrada do cliente. |
-| `dono` | String | Obrigatório. Identifica de quem é a tarefa enquanto não há coleção de usuários. |
+| `observacao` | String | Obrigatória. Registra um detalhe livre sobre a tarefa. |
 | `criadaEm` | Date | Instante da criação. |
 | `atualizadaEm` | Date | Igual a `criadaEm` na criação; atualizado a cada edição. |
 
@@ -116,12 +116,9 @@ está com o daemon desligado.
 
 ## Índices
 
-Um só:
-
-- `{ dono: 1 }`, **não único** — sustenta a listagem por dono, que é o único
-  filtro da primeira entrega. A mesma pessoa tem várias tarefas.
-
-Nada mais é indexado. Índice que ninguém usa é escrita mais lenta de graça.
+Nenhum índice adicional é necessário nesta entrega: a listagem não tem filtro e
+o MongoDB já mantém o índice obrigatório de `_id`. Índice sem consulta que o use
+é escrita mais lenta de graça.
 
 ## Como subir o banco
 
@@ -201,12 +198,9 @@ para o servidor — e aí com fuso explícito, assumido conscientemente.
 
 ## Limites conhecidos
 
-- **`dono` é uma string livre.** Sem coleção de usuários, nada impede duas grafias
-  do mesmo nome, e nada garante que quem chama a API é quem diz ser. Aceito: a
-  autenticação é mock nesta entrega e a API não é publicada fora da máquina.
 - **Sem escopo por usuário na listagem.** `GET /api/tarefas` devolve a coleção
-  inteira. O filtro por `dono` tem índice e entra junto com a autenticação real,
-  na segunda entrega.
+  inteira. O filtro por `usuarioId` entra junto com a autenticação real, na
+  segunda entrega.
 - **Última escrita vence.** Duas edições simultâneas da mesma tarefa se
   sobrescrevem. Aceito: a PoC tem um usuário. Bloqueio otimista por versão resolve
   sem mexer na modelagem.
@@ -218,7 +212,7 @@ uma coleção com objetos complexos. A evolução é aditiva:
 
 1. `usuarios` entra como coleção nova, com `nome`, `email` único e `senhaHash` —
    e o login e o cadastro deixam de ser mock.
-2. `dono` vira `usuarioId`, referenciando essa coleção.
+2. `usuarioId` entra nas tarefas, referenciando essa coleção.
 3. `categorias` entra referenciando `usuarioId`, com a lista de anotações
    **aninhada** — o objeto complexo exigido, e a tela de Anotações, que está
    preservada justamente para isso.

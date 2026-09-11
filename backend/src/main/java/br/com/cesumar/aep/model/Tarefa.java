@@ -20,7 +20,7 @@ public class Tarefa {
 
 	private boolean concluida;
 
-	private String dono;
+	private String observacao;
 
 	private Instant criadaEm;
 
@@ -31,11 +31,11 @@ public class Tarefa {
 
 	// os quatro campos que chegam do cliente. concluida, criadaEm e atualizadaEm
 	// são derivados e nascem no Service.
-	public Tarefa(String titulo, LocalDate prazo, Prioridade prioridade, String dono) {
+	public Tarefa(String titulo, LocalDate prazo, Prioridade prioridade, String observacao) {
 		this.titulo = titulo;
 		this.prazo = prazo;
 		this.prioridade = prioridade;
-		this.dono = dono;
+		this.observacao = observacao;
 	}
 
 	public String getId() {
@@ -78,12 +78,12 @@ public class Tarefa {
 		this.concluida = concluida;
 	}
 
-	public String getDono() {
-		return dono;
+	public String getObservacao() {
+		return observacao;
 	}
 
-	public void setDono(String dono) {
-		this.dono = dono;
+	public void setObservacao(String observacao) {
+		this.observacao = observacao;
 	}
 
 	public Instant getCriadaEm() {

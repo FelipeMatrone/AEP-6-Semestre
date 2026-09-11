@@ -183,7 +183,7 @@ campos fora do resumo **não** vieram:
 ```java
 .andExpect(jsonPath("$[0].titulo").value("Entregar a modelagem"))
 .andExpect(jsonPath("$[0].prioridade").value("media"))
-.andExpect(jsonPath("$[0].dono").doesNotExist())
+.andExpect(jsonPath("$[0].observacao").value("Observação de teste"))
 ```
 
 Sem o `doesNotExist`, um `TarefaResponse` devolvido por engano na listagem passa

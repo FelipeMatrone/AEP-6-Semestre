@@ -5,11 +5,11 @@ export type TarefaResumo = {
   titulo: string
   prazo: string
   prioridade: Prioridade
+  observacao: string
   concluida: boolean
 }
 
 export type Tarefa = TarefaResumo & {
-  dono: string
   criadaEm: string
   atualizadaEm: string
 }
@@ -18,13 +18,14 @@ export type TarefaCreateRequest = {
   titulo: string
   prazo: string
   prioridade: Prioridade
-  dono: string
+  observacao: string
 }
 
 export type TarefaUpdateRequest = {
   titulo: string
   prazo: string
   prioridade: Prioridade
+  observacao: string
   concluida: boolean
 }
 

@@ -60,7 +60,8 @@ class TarefaServiceTest {
 		List<TarefaSummaryResponse> resumos = service.listar();
 
 		assertThat(resumos).containsExactly(
-				new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false));
+				new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA,
+						"Observação de teste", false));
 	}
 
 	@Test
@@ -71,7 +72,7 @@ class TarefaServiceTest {
 
 		assertThat(resposta.titulo()).isEqualTo("Entregar a modelagem");
 		assertThat(resposta.prioridade()).isEqualTo(Prioridade.MEDIA);
-		assertThat(resposta.dono()).isEqualTo("samuel");
+		assertThat(resposta.observacao()).isEqualTo("Observação de teste");
 	}
 
 	@Test
@@ -88,7 +89,7 @@ class TarefaServiceTest {
 		when(repository.save(any(Tarefa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
 		TarefaResponse resposta = service.criar(
-				new TarefaCreateRequest("Definir o ODS", PRAZO, Prioridade.MEDIA, "samuel"));
+				new TarefaCreateRequest("Definir o ODS", PRAZO, Prioridade.MEDIA, "Observação de teste"));
 
 		assertThat(resposta.concluida()).isFalse();
 		assertThat(resposta.criadaEm()).isEqualTo(AGORA);
@@ -104,11 +105,11 @@ class TarefaServiceTest {
 		when(repository.save(any(Tarefa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
 		TarefaResponse resposta = service.atualizar("1",
-				new TarefaUpdateRequest("Título novo", PRAZO, Prioridade.ALTA, true));
+				new TarefaUpdateRequest("Título novo", PRAZO, Prioridade.ALTA, "Observação atualizada", true));
 
 		assertThat(resposta.id()).isEqualTo("1");
 		assertThat(resposta.titulo()).isEqualTo("Título novo");
-		assertThat(resposta.dono()).isEqualTo("samuel");
+		assertThat(resposta.observacao()).isEqualTo("Observação atualizada");
 		assertThat(resposta.criadaEm()).isEqualTo(ONTEM);
 		assertThat(resposta.atualizadaEm()).isEqualTo(AGORA);
 	}
@@ -133,7 +134,7 @@ class TarefaServiceTest {
 	}
 
 	private Tarefa tarefa(String id, String titulo, boolean concluida) {
-		Tarefa tarefa = new Tarefa(titulo, PRAZO, Prioridade.MEDIA, "samuel");
+		Tarefa tarefa = new Tarefa(titulo, PRAZO, Prioridade.MEDIA, "Observação de teste");
 		tarefa.setId(id);
 		tarefa.setConcluida(concluida);
 		tarefa.setCriadaEm(AGORA);

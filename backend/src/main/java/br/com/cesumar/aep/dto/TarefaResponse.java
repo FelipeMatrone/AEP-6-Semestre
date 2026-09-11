@@ -11,7 +11,7 @@ public record TarefaResponse(
 		LocalDate prazo,
 		Prioridade prioridade,
 		boolean concluida,
-		String dono,
+		String observacao,
 		Instant criadaEm,
 		Instant atualizadaEm) {
 }

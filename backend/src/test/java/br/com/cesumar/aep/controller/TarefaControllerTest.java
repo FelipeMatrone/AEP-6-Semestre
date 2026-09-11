@@ -49,7 +49,8 @@ class TarefaControllerTest {
 	@Test
 	void deveListarSomenteOsCamposDoResumo() throws Exception {
 		when(service.listar()).thenReturn(
-				List.of(new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false)));
+				List.of(new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA,
+						"Observação de teste", false)));
 
 		mockMvc.perform(get(BASE_PATH))
 				.andExpect(status().isOk())
@@ -57,10 +58,10 @@ class TarefaControllerTest {
 				.andExpect(jsonPath("$[0].titulo").value("Entregar a modelagem"))
 				.andExpect(jsonPath("$[0].prazo").value("2026-09-12"))
 				.andExpect(jsonPath("$[0].prioridade").value("media"))
+				.andExpect(jsonPath("$[0].observacao").value("Observação de teste"))
 				.andExpect(jsonPath("$[0].concluida").value(false))
 				// sem estes, um TarefaResponse devolvido por engano na listagem
 				// passaria verde e a projeção não estaria testada
-				.andExpect(jsonPath("$[0].dono").doesNotExist())
 				.andExpect(jsonPath("$[0].criadaEm").doesNotExist());
 	}
 
@@ -71,7 +72,7 @@ class TarefaControllerTest {
 		mockMvc.perform(get(BASE_PATH + "/{id}", "1"))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.prioridade").value("media"))
-				.andExpect(jsonPath("$.dono").value("samuel"))
+				.andExpect(jsonPath("$.observacao").value("Observação de teste"))
 				.andExpect(jsonPath("$.criadaEm").value("2026-09-09T12:00:00Z"));
 	}
 
@@ -86,7 +87,7 @@ class TarefaControllerTest {
 						  "titulo": "Entregar a modelagem",
 						  "prazo": "2026-09-12",
 						  "prioridade": "media",
-						  "dono": "samuel"
+						  "observacao": "Observação de teste"
 						}
 						"""))
 				.andExpect(status().isCreated())
@@ -103,7 +104,7 @@ class TarefaControllerTest {
 						{
 						  "titulo": "  ",
 						  "prioridade": "media",
-						  "dono": "samuel"
+						  "observacao": "Observação de teste"
 						}
 						"""))
 				.andExpect(status().isBadRequest())
@@ -122,6 +123,7 @@ class TarefaControllerTest {
 						  "titulo": "Entregar a modelagem",
 						  "prazo": "2026-09-12",
 						  "prioridade": "urgentissima",
+						  "observacao": "Observação de teste",
 						  "concluida": false
 						}
 						"""))
@@ -140,6 +142,7 @@ class TarefaControllerTest {
 						  "titulo": "Entregar a modelagem",
 						  "prazo": "2026-09-12",
 						  "prioridade": "media",
+						  "observacao": "Observação atualizada",
 						  "concluida": false
 						}
 						"""))
@@ -174,7 +177,7 @@ class TarefaControllerTest {
 	}
 
 	private TarefaResponse resposta() {
-		return new TarefaResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false, "samuel", CARIMBO,
+		return new TarefaResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false, "Observação de teste", CARIMBO,
 				CARIMBO);
 	}
 

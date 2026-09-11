@@ -19,6 +19,9 @@ public record TarefaUpdateRequest(
 		@NotNull(message = "A prioridade é obrigatória")
 		Prioridade prioridade,
 
+		@NotBlank(message = "A observação é obrigatória")
+		String observacao,
+
 		@NotNull(message = "A situação de conclusão é obrigatória")
 		Boolean concluida) {
 }

@@ -54,6 +54,7 @@ validação de esquema no próprio banco.
 | Validação de esquema no MongoDB (`$jsonSchema` fechado) | pronto |
 | Documentação interativa da API (Swagger UI) | pronto |
 | Cliente web mínimo executando o fluxo completo | pronto |
+| Telas React de início e de tarefas consumindo a API | listar, criar e concluir |
 | Testes automatizados — unitário, contrato HTTP e integração | pronto |
 | Login e cadastro | mock, tela apenas — ver [Limites](#limites-conhecidos-desta-entrega) |
 | Materiais de estudo (categorias e anotações) | 2ª entrega |
@@ -131,7 +132,7 @@ comando:
 ```bash
 curl -X POST http://localhost:8080/api/tarefas \
   -H 'Content-Type: application/json' \
-  -d '{"titulo":"Estudar agregações","prazo":"2026-09-20","prioridade":"alta","dono":"samuel"}'
+  -d '{"titulo":"Estudar agregações","prazo":"2026-09-20","prioridade":"alta","observacao":"Revisar o capítulo 4"}'
 ```
 
 Contrato completo, com todos os campos, regras de validação e formato de erro, em
@@ -150,8 +151,8 @@ cd backend
 
 | Comando | Testes | Exige Docker | Linha (*node*) | Ramo (*edge*) |
 |---|---|---|---|---|
-| `./mvnw clean test` | 20 | não | **96,7%** (117/121) | **100%** (6/6) |
-| `./mvnw clean verify` | 21 | sim | **98,3%** (119/121) | **100%** (6/6) |
+| `./mvnw clean test` | 12 | não | **78,2%** (97/124) | **100%** (6/6) |
+| `./mvnw clean verify` | 13 | sim | **99,2%** (123/124) | **100%** (6/6) |
 
 Medido em 11/09/2026. O gate do JaCoCo reprova o build abaixo de **85%** em
 linha **e** em ramo — acima dos 70% exigidos pelo enunciado, para travar a
@@ -197,10 +198,12 @@ O sufixo decide o executor: `*Test` roda no surefire (`test`), `*IT` no failsafe
 O enunciado pede 70% de cobertura "sobre o código da PoC entregue". A PoC deste
 marco é a **API em `backend/`**.
 
-O cliente React em `frontend/` está em desenvolvimento, consome dados mockados,
-ainda não fala com a API e **não faz parte da medição** — declarado aqui em voz
-alta, e não por omissão. Seu empacotamento dentro do Spring e a troca dos mocks
-por chamadas reais estão planejados para a 2ª entrega.
+O cliente React em `frontend/` está em desenvolvimento e **não faz parte da
+medição** — declarado aqui em voz alta, e não por omissão. Ele já consome a API
+de verdade nas telas de início e de tarefas (listar, criar e concluir); login,
+cadastro e anotações seguem com dados fixos. Seu empacotamento dentro do Spring
+e a troca dos mocks restantes por chamadas reais estão planejados para a
+2ª entrega.
 
 O fluxo principal da PoC é demonstrado pelo `crud.html`, que é servido pela
 própria aplicação e consome a API de verdade.
@@ -217,7 +220,7 @@ Coleção única `tarefas`, documento achatado, conforme o limite da 1ª entrega
   "prazo": "2026-09-20T00:00:00.000Z",
   "prioridade": "alta",
   "concluida": false,
-  "dono": "samuel",
+  "observacao": "Revisar o capítulo 4",
   "criadaEm": "2026-09-11T21:37:57.282Z",
   "atualizadaEm": "2026-09-11T21:37:57.282Z"
 }
@@ -225,7 +228,9 @@ Coleção única `tarefas`, documento achatado, conforme o limite da 1ª entrega
 
 Todo documento tem todos os campos — ausência e `null` não são estados válidos. O
 `$jsonSchema` é **fechado** (`additionalProperties: false`), então campo com nome
-errado falha na escrita em vez de divergir em silêncio. Índice em `{dono: 1}`.
+errado falha na escrita em vez de divergir em silêncio. Nenhum índice além do
+`_id` obrigatório: a listagem não tem filtro, e índice sem consulta que o use é
+escrita mais lenta de graça.
 
 Especificação completa, com as alternativas descartadas e o tratamento de fuso
 horário, em [`docs/modelagem-banco.md`](docs/modelagem-banco.md).
@@ -250,11 +255,12 @@ Declarados porque limite escondido vira pergunta na correção.
 - **Login e cadastro são mock.** Não há coleção de usuários, porque a 1ª entrega
   está limitada a uma coleção — criar `usuarios` seria a segunda. As telas
   existem; a autenticação real é a 2ª entrega.
-- **`dono` é string livre.** Nada garante que quem chama a API é quem diz ser, e
-  nada impede duas grafias do mesmo nome.
+- **A tarefa não tem dono.** Não há campo de usuário nesta entrega, porque a
+  coleção `usuarios` é a 2ª entrega e criá-la agora violaria o teto de uma
+  coleção só.
 - **`GET /api/tarefas` devolve a coleção inteira.** Sem escopo por usuário, sem
-  paginação e sem ordenação. O índice `{dono: 1}` já existe para quando o filtro
-  entrar.
+  paginação e sem ordenação. O filtro por `usuarioId` entra junto com a
+  autenticação real, na 2ª entrega.
 - **Última escrita vence.** Duas edições simultâneas da mesma tarefa se
   sobrescrevem.
 - **O teste de integração não cobre o validador do banco.** O Testcontainers sobe
@@ -268,7 +274,7 @@ Múltiplas coleções, relacionamento entre elas e ao menos uma com objetos
 complexos — de forma aditiva, visível em diff:
 
 1. `usuarios` entra como coleção nova, e o login deixa de ser mock;
-2. `dono` vira `usuarioId`, referenciando essa coleção;
+2. `usuarioId` entra na tarefa, referenciando essa coleção;
 3. `categorias` entra com a lista de **anotações aninhada** — o objeto complexo
    exigido, e a outra metade do problema: os materiais de estudo.
 

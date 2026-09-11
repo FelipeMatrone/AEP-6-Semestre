@@ -59,7 +59,8 @@ class TarefaServiceTest {
 
 		List<TarefaSummaryResponse> resumos = service.listar();
 
-		assertThat(resumos).containsExactly(new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, false));
+		assertThat(resumos).containsExactly(
+				new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false));
 	}
 
 	@Test

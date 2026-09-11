@@ -318,7 +318,7 @@ Ordem de implementação da skill `spring-crud` da referência, agora registrada
       - `TarefaUpdateRequest` — `titulo`, `prazo`, `prioridade`, `concluida`.
         Sem `id`: ele vem do path.
       - `TarefaResponse` — representação completa.
-      - `TarefaSummaryResponse` — `id`, `titulo`, `prazo`, `concluida`.
+      - `TarefaSummaryResponse` — `id`, `titulo`, `prazo`, `prioridade`, `concluida`.
         A projeção da listagem, como `LinguagemSummaryResponse` na referência.
       Jakarta Validation nos Requests: `@NotBlank`, `@NotNull`, mensagens em
       português.

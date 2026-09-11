@@ -182,7 +182,7 @@ campos fora do resumo **não** vieram:
 
 ```java
 .andExpect(jsonPath("$[0].titulo").value("Entregar a modelagem"))
-.andExpect(jsonPath("$[0].prioridade").doesNotExist())
+.andExpect(jsonPath("$[0].prioridade").value("media"))
 .andExpect(jsonPath("$[0].dono").doesNotExist())
 ```
 

@@ -42,6 +42,7 @@ public class TarefaMapper {
 				tarefa.getId(),
 				tarefa.getTitulo(),
 				tarefa.getPrazo(),
+				tarefa.getPrioridade(),
 				tarefa.isConcluida());
 	}
 

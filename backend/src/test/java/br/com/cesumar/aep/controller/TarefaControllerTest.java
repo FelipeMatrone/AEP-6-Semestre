@@ -48,17 +48,18 @@ class TarefaControllerTest {
 
 	@Test
 	void deveListarSomenteOsCamposDoResumo() throws Exception {
-		when(service.listar()).thenReturn(List.of(new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, false)));
+		when(service.listar()).thenReturn(
+				List.of(new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false)));
 
 		mockMvc.perform(get(BASE_PATH))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$[0].id").value("1"))
 				.andExpect(jsonPath("$[0].titulo").value("Entregar a modelagem"))
 				.andExpect(jsonPath("$[0].prazo").value("2026-09-12"))
+				.andExpect(jsonPath("$[0].prioridade").value("media"))
 				.andExpect(jsonPath("$[0].concluida").value(false))
 				// sem estes, um TarefaResponse devolvido por engano na listagem
 				// passaria verde e a projeção não estaria testada
-				.andExpect(jsonPath("$[0].prioridade").doesNotExist())
 				.andExpect(jsonPath("$[0].dono").doesNotExist())
 				.andExpect(jsonPath("$[0].criadaEm").doesNotExist());
 	}

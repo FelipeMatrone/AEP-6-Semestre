@@ -46,10 +46,10 @@ export default function Layout() {
             <span className={styles.textoMenu}>Anotações</span>
           </NavLink>
 
-          <button type="button" aria-label="Tarefas" title="Tarefas">
+          <NavLink to="/tarefas" className={classeItem} title="Tarefas">
             <span className={styles.iconeMenu}>✓</span>
             <span className={styles.textoMenu}>Tarefas</span>
-          </button>
+          </NavLink>
         </nav>
 
         <Link to="/login" className={styles.sair} title="Sair">

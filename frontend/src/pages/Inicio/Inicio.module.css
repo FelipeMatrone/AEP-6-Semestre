@@ -62,7 +62,8 @@
   line-height: 1.3;
 }
 
-.tituloCartao button {
+.tituloCartao button,
+.tituloCartao a {
   padding: 0;
   color: var(--roxo);
   font-size: 0.8125rem;
@@ -70,6 +71,7 @@
   background: none;
   border: 0;
   cursor: pointer;
+  text-decoration: none;
 }
 
 .lista,

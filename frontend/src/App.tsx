@@ -5,6 +5,7 @@ import Cadastro from './pages/Cadastro/Cadastro'
 import Inicio from './pages/Inicio/Inicio'
 import Anotacoes from './pages/Anotacoes/Anotacoes'
 import Categoria from './pages/Anotacoes/Categoria'
+import Tarefas from './pages/Tarefas/Tarefas'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/inicio" element={<Inicio />} />
         <Route path="/anotacoes" element={<Anotacoes />} />
         <Route path="/anotacoes/:id" element={<Categoria />} />
+        <Route path="/tarefas" element={<Tarefas />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

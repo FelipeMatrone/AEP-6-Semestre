@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import Modal from '../../components/Modal'
+import { Link } from 'react-router-dom'
 import styles from './Inicio.module.css'
 
 type Tarefa = {
@@ -76,7 +76,6 @@ const tarefasIniciais: Tarefa[] = [
 ]
 
 export default function Inicio() {
-  const [modalTarefasAberto, setModalTarefasAberto] = useState(false)
   const [tarefas, setTarefas] = useState(tarefasIniciais)
 
   const tarefasDeHoje = tarefas.filter((tarefa) => tarefa.paraHoje)
@@ -87,12 +86,8 @@ export default function Inicio() {
 
   const pendentesHoje = tarefasDeHoje.length - concluidasHoje
 
-  // O modal mostra todas as pendentes, inclusive as de hoje — é o que o título
-  // "Tarefas pendentes" promete. O cartão da esquerda é o recorte "próximas",
-  // que por definição exclui hoje.
-  const tarefasPendentes = tarefas.filter((tarefa) => !tarefa.concluida)
-
-  const proximasTarefas = tarefasPendentes
+  const proximasTarefas = tarefas
+    .filter((tarefa) => !tarefa.concluida)
     .filter((tarefa) => !tarefa.paraHoje)
     .slice(0, 4)
 
@@ -119,12 +114,7 @@ export default function Inicio() {
           <article className={styles.cartao}>
             <div className={styles.tituloCartao}>
               <h2>Próximas tarefas</h2>
-              <button
-                type="button"
-                onClick={() => setModalTarefasAberto(true)}
-              >
-                Ver todas
-              </button>
+              <Link to="/tarefas">Ver todas</Link>
             </div>
 
             <ul className={styles.lista}>
@@ -215,49 +205,6 @@ export default function Inicio() {
         </div>
       </section>
 
-      <Modal
-        aberto={modalTarefasAberto}
-        titulo="Tarefas pendentes"
-        aoFechar={() => setModalTarefasAberto(false)}
-      >
-        {tarefasPendentes.length > 0 ? (
-          <div className={styles.tabelaResponsiva}>
-            <table className={styles.tabelaModal}>
-              <thead>
-                <tr>
-                  <th scope="col">ID</th>
-                  <th scope="col">Título</th>
-                  <th scope="col">Prazo</th>
-                  <th scope="col">Prioridade</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {tarefasPendentes.map((tarefa) => (
-                  <tr key={tarefa.id}>
-                    <td>#{tarefa.id}</td>
-                    <td>{tarefa.titulo}</td>
-                    <td>{tarefa.prazo}</td>
-                    <td>
-                      <span
-                        className={`${styles.etiqueta} ${
-                          styles[`prioridade${tarefa.prioridade}`]
-                        }`}
-                      >
-                        {tarefa.prioridade}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className={styles.mensagemVazia}>
-            Nenhuma tarefa pendente no momento.
-          </p>
-        )}
-      </Modal>
     </>
   )
 }

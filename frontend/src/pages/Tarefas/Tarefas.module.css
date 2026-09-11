@@ -1,0 +1,168 @@
+.pagina {
+  margin-top: clamp(28px, 5vh, 48px);
+}
+
+.cabecalho,
+.cabecalhoLista {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cabecalho h1,
+.cabecalhoLista h2 {
+  margin: 0;
+}
+
+.cabecalho h1 {
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.botaoNovaTarefa {
+  padding: 11px 16px;
+  color: var(--branco);
+  font-weight: 600;
+  background: var(--roxo);
+  border: 1px solid var(--roxo);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.resumo {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 28px 0;
+}
+
+.resumo article {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 18px 20px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
+.resumo strong {
+  color: var(--roxo);
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.resumo span {
+  color: var(--texto-suave);
+  font-size: 0.8125rem;
+}
+
+.lista {
+  overflow: hidden;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
+.cabecalhoLista {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.cabecalhoLista h2 {
+  font-size: 1rem;
+}
+
+.cabecalhoLista input {
+  width: 180px;
+  padding: 9px 12px;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  outline: none;
+}
+
+.cabecalhoLista input:focus {
+  border-color: var(--roxo);
+}
+
+.tabelaResponsiva {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+th,
+td {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--borda);
+}
+
+th {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 0.875rem;
+}
+
+td:first-child {
+  font-weight: 600;
+}
+
+tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.prioridade {
+  display: inline-block;
+  padding: 3px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+}
+
+.prioridadeAlta {
+  color: #b42345;
+  background: #fce3eb;
+}
+
+.prioridadeMédia {
+  color: #8a5d00;
+  background: #fff2ce;
+}
+
+.prioridadeBaixa {
+  color: #26744f;
+  background: #dff5e9;
+}
+
+@media (max-width: 760px) {
+  .resumo {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .pagina {
+    margin-top: 32px;
+  }
+
+  .cabecalho,
+  .cabecalhoLista {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .cabecalhoLista input {
+    width: 100%;
+  }
+}

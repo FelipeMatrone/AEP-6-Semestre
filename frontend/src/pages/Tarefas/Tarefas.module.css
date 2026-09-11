@@ -135,7 +135,7 @@ tbody tr:last-child td {
   background: #fce3eb;
 }
 
-.prioridadeMédia {
+.prioridadeMedia {
   color: #8a5d00;
   background: #fff2ce;
 }
@@ -193,6 +193,18 @@ tbody tr:last-child td {
   justify-content: flex-end;
 }
 
+.estadoLista {
+  color: var(--texto-suave);
+  font-weight: 400 !important;
+  text-align: center;
+}
+
+.erroFormulario {
+  margin: 0;
+  color: var(--erro);
+  font-size: 0.875rem;
+}
+
 .botaoSalvar {
   padding: 10px 16px;
   color: var(--branco);
@@ -201,6 +213,11 @@ tbody tr:last-child td {
   border: 1px solid var(--roxo);
   border-radius: 8px;
   cursor: pointer;
+}
+
+.botaoSalvar:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 @media (max-width: 760px) {

@@ -145,6 +145,64 @@ tbody tr:last-child td {
   background: #dff5e9;
 }
 
+.formularioNovaTarefa {
+  display: grid;
+  gap: 18px;
+}
+
+.linhaFormulario {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.grupoCampo {
+  display: grid;
+  gap: 6px;
+  color: var(--texto);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.grupoCampo input,
+.grupoCampo select,
+.grupoCampo textarea {
+  width: 100%;
+  padding: 11px 12px;
+  color: var(--texto);
+  font: inherit;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  outline: none;
+}
+
+.grupoCampo textarea {
+  min-height: 150px;
+  resize: vertical;
+}
+
+.grupoCampo input:focus,
+.grupoCampo select:focus,
+.grupoCampo textarea:focus {
+  border-color: var(--roxo);
+}
+
+.acoesFormulario {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.botaoSalvar {
+  padding: 10px 16px;
+  color: var(--branco);
+  font-weight: 600;
+  background: var(--roxo);
+  border: 1px solid var(--roxo);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 @media (max-width: 760px) {
   .resumo {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -164,5 +222,9 @@ tbody tr:last-child td {
 
   .cabecalhoLista input {
     width: 100%;
+  }
+
+  .linhaFormulario {
+    grid-template-columns: 1fr;
   }
 }

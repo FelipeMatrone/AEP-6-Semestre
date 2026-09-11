@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import Modal from '../../components/Modal'
 import styles from './Tarefas.module.css'
 
 const tarefas = [
@@ -22,11 +24,17 @@ const tarefas = [
 ]
 
 export default function Tarefas() {
+  const [modalAberto, setModalAberto] = useState(false)
+
   return (
     <section className={styles.pagina}>
       <header className={styles.cabecalho}>
         <h1>Tarefas</h1>
-        <button type="button" className={styles.botaoNovaTarefa}>
+        <button
+          type="button"
+          className={styles.botaoNovaTarefa}
+          onClick={() => setModalAberto(true)}
+        >
           + Nova tarefa
         </button>
       </header>
@@ -85,6 +93,49 @@ export default function Tarefas() {
           </table>
         </div>
       </section>
+
+      <Modal
+        aberto={modalAberto}
+        titulo="Nova tarefa"
+        aoFechar={() => setModalAberto(false)}
+      >
+        <form
+          className={styles.formularioNovaTarefa}
+          onSubmit={(evento) => evento.preventDefault()}
+        >
+          <div className={styles.linhaFormulario}>
+            <label className={styles.grupoCampo}>
+              <span>Prioridade</span>
+              <select defaultValue="media">
+                <option value="alta">Alta</option>
+                <option value="media">Média</option>
+                <option value="baixa">Baixa</option>
+              </select>
+            </label>
+
+            <label className={styles.grupoCampo}>
+              <span>Prazo</span>
+              <input type="date" />
+            </label>
+          </div>
+
+          <label className={styles.grupoCampo}>
+            <span>Título</span>
+            <input type="text" placeholder="Informe o título da tarefa" />
+          </label>
+
+          <label className={styles.grupoCampo}>
+            <span>Descrição</span>
+            <textarea placeholder="Descreva a tarefa" rows={6} />
+          </label>
+
+          <div className={styles.acoesFormulario}>
+            <button type="submit" className={styles.botaoSalvar}>
+              Salvar
+            </button>
+          </div>
+        </form>
+      </Modal>
     </section>
   )
 }

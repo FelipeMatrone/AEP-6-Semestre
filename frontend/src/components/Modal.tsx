@@ -40,8 +40,13 @@ export default function Modal({
   // só acontece quando o clique foi no fundo.
   function aoClicarNoFundo(evento: React.MouseEvent<HTMLDialogElement>) {
     if (evento.target === evento.currentTarget) {
-      aoFechar()
+      fecharJanela()
     }
+  }
+
+  function fecharJanela() {
+    janelaRef.current?.close()
+    aoFechar()
   }
 
   return (
@@ -58,7 +63,7 @@ export default function Modal({
         <button
           type="button"
           className={styles.botaoFechar}
-          onClick={aoFechar}
+          onClick={fecharJanela}
           aria-label="Fechar modal"
         >
           ×

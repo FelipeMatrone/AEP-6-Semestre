@@ -4,8 +4,6 @@
  * fixed nem z-index para administrar.
  */
 .janela {
-  display: flex;
-  flex-direction: column;
   width: min(100% - 48px, 760px);
   max-height: min(80dvh, 680px);
   padding: 0;
@@ -15,6 +13,11 @@
   border: 1px solid var(--borda);
   border-radius: var(--raio-grande);
   box-shadow: 0 20px 50px rgb(46 42 74 / 25%);
+}
+
+.janela[open] {
+  display: flex;
+  flex-direction: column;
 }
 
 .janela::backdrop {

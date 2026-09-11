@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Tarefas — PoC AEP</title>
+	<style>
+		:root {
+			color-scheme: light dark;
+			--fundo: #f6f7f9;
+			--papel: #ffffff;
+			--borda: #d6dae0;
+			--texto: #1b1f24;
+			--suave: #5c6672;
+			--acento: #2f5bd7;
+			--erro: #b3261e;
+		}
+
+		@media (prefers-color-scheme: dark) {
+			:root {
+				--fundo: #14171a;
+				--papel: #1d2125;
+				--borda: #333a42;
+				--texto: #e8eaed;
+				--suave: #9aa4af;
+				--acento: #7aa2ff;
+				--erro: #f2877f;
+			}
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		body {
+			margin: 0;
+			padding: 24px 16px 48px;
+			background: var(--fundo);
+			color: var(--texto);
+			font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+		}
+
+		main {
+			max-width: 880px;
+			margin: 0 auto;
+		}
+
+		h1 {
+			font-size: 1.4rem;
+			margin: 0 0 4px;
+		}
+
+		p.sub {
+			margin: 0 0 24px;
+			color: var(--suave);
+		}
+
+		section {
+			background: var(--papel);
+			border: 1px solid var(--borda);
+			border-radius: 10px;
+			padding: 16px;
+			margin-bottom: 20px;
+		}
+
+		h2 {
+			font-size: 1rem;
+			margin: 0 0 12px;
+		}
+
+		.campos {
+			display: grid;
+			grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+			gap: 12px;
+		}
+
+		label {
+			display: block;
+			font-size: .8rem;
+			color: var(--suave);
+			margin-bottom: 4px;
+		}
+
+		input,
+		select {
+			width: 100%;
+			padding: 8px 10px;
+			border: 1px solid var(--borda);
+			border-radius: 6px;
+			background: var(--fundo);
+			color: inherit;
+			font: inherit;
+		}
+
+		.erro-campo {
+			display: block;
+			min-height: 1.1em;
+			margin-top: 4px;
+			font-size: .78rem;
+			color: var(--erro);
+		}
+
+		.acoes {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 8px;
+			margin-top: 14px;
+		}
+
+		button {
+			padding: 8px 14px;
+			border: 1px solid var(--borda);
+			border-radius: 6px;
+			background: var(--papel);
+			color: inherit;
+			font: inherit;
+			cursor: pointer;
+		}
+
+		button.primario {
+			background: var(--acento);
+			border-color: var(--acento);
+			color: #fff;
+		}
+
+		.rolagem {
+			overflow-x: auto;
+		}
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+		}
+
+		th,
+		td {
+			padding: 8px 10px;
+			text-align: left;
+			border-bottom: 1px solid var(--borda);
+			white-space: nowrap;
+		}
+
+		th {
+			font-size: .78rem;
+			text-transform: uppercase;
+			letter-spacing: .04em;
+			color: var(--suave);
+		}
+
+		td.titulo {
+			white-space: normal;
+		}
+
+		#aviso {
+			margin: 0 0 16px;
+			padding: 10px 12px;
+			border-radius: 6px;
+			border: 1px solid var(--borda);
+			background: var(--papel);
+		}
+
+		#aviso[data-tipo="erro"] {
+			border-color: var(--erro);
+			color: var(--erro);
+		}
+
+		.vazio {
+			color: var(--suave);
+			padding: 16px 0;
+		}
+	</style>
+</head>
+
+<body>
+	<main>
+		<h1>Tarefas</h1>
+		<p class="sub">
+			Cliente mínimo da PoC, servido pelo próprio Spring. Consome
+			<code>/api/tarefas</code>. Contrato completo em <a href="/docs">/docs</a>.
+		</p>
+
+		<p id="aviso" role="status" aria-live="polite" hidden></p>
+
+		<section>
+			<h2 id="titulo-form">Nova tarefa</h2>
+			<form id="form" novalidate>
+				<input type="hidden" id="id">
+				<div class="campos">
+					<div>
+						<label for="titulo">Título</label>
+						<input id="titulo" name="titulo" maxlength="120">
+						<span class="erro-campo" data-erro="titulo"></span>
+					</div>
+					<div>
+						<!-- input type=date entrega exatamente "AAAA-MM-DD", que é o
+						     formato que LocalDate espera. Sem biblioteca de data e sem
+						     construir Date no cliente: prazo é data de calendário, e
+						     qualquer conversão por fuso aqui erraria o dia. -->
+						<label for="prazo">Prazo</label>
+						<input type="date" id="prazo" name="prazo">
+						<span class="erro-campo" data-erro="prazo"></span>
+					</div>
+					<div>
+						<label for="prioridade">Prioridade</label>
+						<select id="prioridade" name="prioridade">
+							<option value="alta">Alta</option>
+							<option value="media" selected>Média</option>
+							<option value="baixa">Baixa</option>
+						</select>
+						<span class="erro-campo" data-erro="prioridade"></span>
+					</div>
+					<div>
+						<label for="observacao">Observação</label>
+						<input id="observacao" name="observacao" maxlength="200">
+						<span class="erro-campo" data-erro="observacao"></span>
+					</div>
+					<div id="campo-concluida" hidden>
+						<label for="concluida">Situação</label>
+						<select id="concluida" name="concluida">
+							<option value="false">Pendente</option>
+							<option value="true">Concluída</option>
+						</select>
+						<span class="erro-campo" data-erro="concluida"></span>
+					</div>
+				</div>
+				<div class="acoes">
+					<button type="submit" class="primario" id="salvar">Criar</button>
+					<button type="button" id="cancelar" hidden>Cancelar edição</button>
+				</div>
+			</form>
+		</section>
+
+		<section>
+			<h2>Cadastradas</h2>
+			<div class="rolagem">
+				<table>
+					<thead>
+						<tr>
+							<th>Título</th>
+							<th>Prazo</th>
+							<th>Situação</th>
+							<th>Ações</th>
+						</tr>
+					</thead>
+					<tbody id="lista"></tbody>
+				</table>
+			</div>
+			<p class="vazio" id="vazio" hidden>Nenhuma tarefa cadastrada.</p>
+		</section>
+	</main>
+
+	<script>
+		const API = "/api/tarefas";
+
+		const form = document.getElementById("form");
+		const lista = document.getElementById("lista");
+		const vazio = document.getElementById("vazio");
+		const aviso = document.getElementById("aviso");
+		const campoConcluida = document.getElementById("campo-concluida");
+		const botaoSalvar = document.getElementById("salvar");
+		const botaoCancelar = document.getElementById("cancelar");
+		const tituloForm = document.getElementById("titulo-form");
+
+		// "AAAA-MM-DD" vira "DD/MM/AAAA" por manipulação de string, nunca por
+		// new Date(): new Date("2026-09-20") é meia-noite UTC, que em Maringá é o
+		// dia 19. A regra está em docs/modelagem-banco.md, seção "Datas e fuso".
+		const formatarPrazo = (prazo) => prazo.split("-").reverse().join("/");
+
+		function avisar(mensagem, tipo) {
+			aviso.textContent = mensagem;
+			aviso.dataset.tipo = tipo ?? "";
+			aviso.hidden = !mensagem;
+		}
+
+		function limparErrosDeCampo() {
+			document.querySelectorAll("[data-erro]").forEach((span) => {
+				span.textContent = "";
+			});
+		}
+
+		// A API devolve ApiError { message, fieldErrors }. fieldErrors só vem
+		// preenchido na falha de validação, e a chave é o nome do campo — o mesmo
+		// nome do input, o que permite ancorar a mensagem ao lado dele em vez de
+		// empilhar tudo num banner onde o usuário não sabe o que corrigir.
+		async function reportarFalha(resposta) {
+			const erro = await resposta.json().catch(() => null);
+			const porCampo = erro && erro.fieldErrors ? erro.fieldErrors : {};
+
+			if (Object.keys(porCampo).length > 0) {
+				for (const [campo, mensagem] of Object.entries(porCampo)) {
+					const destino = document.querySelector(`[data-erro="${campo}"]`);
+					if (destino) {
+						destino.textContent = mensagem;
+					}
+				}
+				avisar("Corrija os campos destacados.", "erro");
+				return;
+			}
+
+			avisar((erro && erro.message) || `Falha na requisição (HTTP ${resposta.status}).`, "erro");
+		}
+
+		function criarBotao(rotulo, acao) {
+			const botao = document.createElement("button");
+			botao.type = "button";
+			botao.textContent = rotulo;
+			botao.addEventListener("click", acao);
+			return botao;
+		}
+
+		async function listar() {
+			const resposta = await fetch(API);
+			if (!resposta.ok) {
+				return reportarFalha(resposta);
+			}
+
+			const tarefas = await resposta.json();
+			lista.replaceChildren();
+			vazio.hidden = tarefas.length > 0;
+
+			for (const tarefa of tarefas) {
+				const linha = lista.insertRow();
+
+				// textContent, e não innerHTML: o título é texto digitado pelo
+				// usuário e não deve ser interpretado como marcação.
+				const titulo = linha.insertCell();
+				titulo.textContent = tarefa.titulo;
+				titulo.className = "titulo";
+
+				linha.insertCell().textContent = formatarPrazo(tarefa.prazo);
+				linha.insertCell().textContent = tarefa.concluida ? "Concluída" : "Pendente";
+
+				linha.insertCell().append(
+					criarBotao("Editar", () => editar(tarefa.id)),
+					criarBotao("Excluir", () => excluir(tarefa.id)));
+			}
+		}
+
+		// A listagem devolve a projeção resumida, sem criadaEm e sem atualizadaEm.
+		// Editar usa o recurso completo, daí o GET por id antes de preencher o
+		// formulário — o que mantém o cliente correto se a projeção encolher.
+		async function editar(id) {
+			const resposta = await fetch(`${API}/${id}`);
+			if (!resposta.ok) {
+				return reportarFalha(resposta);
+			}
+
+			const tarefa = await resposta.json();
+			limparErrosDeCampo();
+
+			form.id.value = tarefa.id;
+			form.titulo.value = tarefa.titulo;
+			form.prazo.value = tarefa.prazo;
+			form.prioridade.value = tarefa.prioridade;
+			form.observacao.value = tarefa.observacao;
+			form.concluida.value = String(tarefa.concluida);
+
+			campoConcluida.hidden = false;
+			botaoCancelar.hidden = false;
+			botaoSalvar.textContent = "Salvar alterações";
+			tituloForm.textContent = `Editando: ${tarefa.titulo}`;
+			avisar("", null);
+			form.titulo.focus();
+		}
+
+		function voltarParaCriacao() {
+			form.reset();
+			form.id.value = "";
+			campoConcluida.hidden = true;
+			botaoCancelar.hidden = true;
+			botaoSalvar.textContent = "Criar";
+			tituloForm.textContent = "Nova tarefa";
+			limparErrosDeCampo();
+		}
+
+		async function excluir(id) {
+			// sem confirm(): diálogo modal travaria a gravação automatizada do
+			// vídeo, e a PoC não tem dado que justifique a barreira.
+			const resposta = await fetch(`${API}/${id}`, { method: "DELETE" });
+			if (!resposta.ok) {
+				return reportarFalha(resposta);
+			}
+
+			avisar("Tarefa excluída.", "ok");
+			if (form.id.value === id) {
+				voltarParaCriacao();
+			}
+			await listar();
+		}
+
+		form.addEventListener("submit", async (evento) => {
+			evento.preventDefault();
+			limparErrosDeCampo();
+
+			const id = form.id.value;
+			const editando = id !== "";
+
+			// dois corpos diferentes porque são dois casos de uso diferentes:
+			// atualizar leva concluida, criar não — tarefa nasce pendente, e isso é
+			// regra de negócio, não entrada do cliente.
+			const corpo = editando
+				? {
+					titulo: form.titulo.value,
+					prazo: form.prazo.value,
+					prioridade: form.prioridade.value,
+					observacao: form.observacao.value,
+					concluida: form.concluida.value === "true"
+				}
+				: {
+					titulo: form.titulo.value,
+					prazo: form.prazo.value,
+					prioridade: form.prioridade.value,
+					observacao: form.observacao.value
+				};
+
+			// sem `required` nos inputs e com novalidate no form: quem valida é a
+			// API, e é o caminho de erro dela que a PoC precisa demonstrar. O
+			// navegador barrando antes esconderia o 400 com fieldErrors.
+			const resposta = await fetch(editando ? `${API}/${id}` : API, {
+				method: editando ? "PUT" : "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(corpo)
+			});
+
+			if (!resposta.ok) {
+				return reportarFalha(resposta);
+			}
+
+			avisar(editando ? "Tarefa atualizada." : "Tarefa criada.", "ok");
+			voltarParaCriacao();
+			await listar();
+		});
+
+		botaoCancelar.addEventListener("click", () => {
+			voltarParaCriacao();
+			avisar("", null);
+		});
+
+		listar().catch(() => {
+			avisar("Não foi possível falar com a API. A aplicação está no ar?", "erro");
+		});
+	</script>
+</body>
+
+</html>

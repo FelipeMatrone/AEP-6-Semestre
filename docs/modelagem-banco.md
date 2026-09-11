@@ -66,7 +66,7 @@ Coleção: **`tarefas`**
 | `prazo` | Date | Data de calendário, gravada à meia-noite UTC. Ver "Datas e fuso". |
 | `prioridade` | String | `"alta"`, `"media"` ou `"baixa"`. Slug ASCII, sem acento. |
 | `concluida` | Boolean | Criada como `false` — regra de negócio, não entrada do cliente. |
-| `observacao` | String | Obrigatória. Registra um detalhe livre sobre a tarefa. |
+| `observacao` | String, opcional | Ausente vira `null` na API; o Spring Data omite a chave no banco quando o valor não vem no corpo. |
 | `criadaEm` | Date | Instante da criação. |
 | `atualizadaEm` | Date | Igual a `criadaEm` na criação; atualizado a cada edição. |
 

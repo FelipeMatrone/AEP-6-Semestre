@@ -10,12 +10,13 @@ db.createCollection("tarefas", {
   validator: {
     $jsonSchema: {
       bsonType: "object",
+      // observacao fora da lista: campo opcional. O Spring Data omite a chave
+      // por completo quando o valor e null, em vez de grava-la como null.
       required: [
         "titulo",
         "prazo",
         "prioridade",
         "concluida",
-        "observacao",
         "criadaEm",
         "atualizadaEm"
       ],

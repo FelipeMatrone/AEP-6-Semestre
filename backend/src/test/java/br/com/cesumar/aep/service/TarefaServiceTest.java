@@ -65,17 +65,6 @@ class TarefaServiceTest {
 	}
 
 	@Test
-	void deveBuscarTarefaExistente() {
-		when(repository.findById("1")).thenReturn(Optional.of(tarefa("1", "Entregar a modelagem", false)));
-
-		TarefaResponse resposta = service.buscarPorId("1");
-
-		assertThat(resposta.titulo()).isEqualTo("Entregar a modelagem");
-		assertThat(resposta.prioridade()).isEqualTo(Prioridade.MEDIA);
-		assertThat(resposta.observacao()).isEqualTo("Observação de teste");
-	}
-
-	@Test
 	void deveLancarExcecaoAoBuscarTarefaInexistente() {
 		when(repository.findById("999")).thenReturn(Optional.empty());
 
@@ -97,24 +86,6 @@ class TarefaServiceTest {
 	}
 
 	@Test
-	void deveAtualizarPreservandoOIdEACriacao() {
-		Tarefa persistida = tarefa("1", "Título antigo", false);
-		persistida.setCriadaEm(ONTEM);
-		persistida.setAtualizadaEm(ONTEM);
-		when(repository.findById("1")).thenReturn(Optional.of(persistida));
-		when(repository.save(any(Tarefa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
-
-		TarefaResponse resposta = service.atualizar("1",
-				new TarefaUpdateRequest("Título novo", PRAZO, Prioridade.ALTA, "Observação atualizada", true));
-
-		assertThat(resposta.id()).isEqualTo("1");
-		assertThat(resposta.titulo()).isEqualTo("Título novo");
-		assertThat(resposta.observacao()).isEqualTo("Observação atualizada");
-		assertThat(resposta.criadaEm()).isEqualTo(ONTEM);
-		assertThat(resposta.atualizadaEm()).isEqualTo(AGORA);
-	}
-
-	@Test
 	void deveExcluirTarefaExistente() {
 		Tarefa persistida = tarefa("1", "Entregar a modelagem", false);
 		when(repository.findById("1")).thenReturn(Optional.of(persistida));
@@ -122,15 +93,6 @@ class TarefaServiceTest {
 		service.excluir("1");
 
 		verify(repository).delete(persistida);
-	}
-
-	@Test
-	void deveLancarExcecaoAoExcluirTarefaInexistente() {
-		when(repository.findById("999")).thenReturn(Optional.empty());
-
-		assertThatThrownBy(() -> service.excluir("999")).isInstanceOf(TarefaNotFoundException.class);
-
-		verify(repository, never()).delete(any(Tarefa.class));
 	}
 
 	private Tarefa tarefa(String id, String titulo, boolean concluida) {

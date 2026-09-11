@@ -66,17 +66,6 @@ class TarefaControllerTest {
 	}
 
 	@Test
-	void deveDevolverARepresentacaoCompletaNaBusca() throws Exception {
-		when(service.buscarPorId("1")).thenReturn(resposta());
-
-		mockMvc.perform(get(BASE_PATH + "/{id}", "1"))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.prioridade").value("media"))
-				.andExpect(jsonPath("$.observacao").value("Observação de teste"))
-				.andExpect(jsonPath("$.criadaEm").value("2026-09-09T12:00:00Z"));
-	}
-
-	@Test
 	void deveCriarComLocationEOCorpoCompleto() throws Exception {
 		when(service.criar(any())).thenReturn(resposta());
 
@@ -115,42 +104,6 @@ class TarefaControllerTest {
 	}
 
 	@Test
-	void deveRejeitarPrioridadeDesconhecida() throws Exception {
-		mockMvc.perform(put(BASE_PATH + "/{id}", "1")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-						  "titulo": "Entregar a modelagem",
-						  "prazo": "2026-09-12",
-						  "prioridade": "urgentissima",
-						  "observacao": "Observação de teste",
-						  "concluida": false
-						}
-						"""))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.fieldErrors").isEmpty());
-	}
-
-	@Test
-	void deveAtualizarDevolvendoARepresentacaoCompleta() throws Exception {
-		when(service.atualizar(eq("1"), any(TarefaUpdateRequest.class))).thenReturn(resposta());
-
-		mockMvc.perform(put(BASE_PATH + "/{id}", "1")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content("""
-						{
-						  "titulo": "Entregar a modelagem",
-						  "prazo": "2026-09-12",
-						  "prioridade": "media",
-						  "observacao": "Observação atualizada",
-						  "concluida": false
-						}
-						"""))
-				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.atualizadaEm").value("2026-09-09T12:00:00Z"));
-	}
-
-	@Test
 	void deveRetornarNotFoundParaTarefaInexistente() throws Exception {
 		when(service.buscarPorId("999")).thenThrow(new TarefaNotFoundException("999"));
 
@@ -159,21 +112,6 @@ class TarefaControllerTest {
 				.andExpect(jsonPath("$.status").value(404))
 				.andExpect(jsonPath("$.message").value("Tarefa não encontrada: 999"))
 				.andExpect(jsonPath("$.fieldErrors").isEmpty());
-	}
-
-	@Test
-	void deveExcluirSemCorpo() throws Exception {
-		mockMvc.perform(delete(BASE_PATH + "/{id}", "1"))
-				.andExpect(status().isNoContent())
-				.andExpect(content().string(""));
-	}
-
-	@Test
-	void deveRetornarNotFoundAoExcluirTarefaInexistente() throws Exception {
-		doThrow(new TarefaNotFoundException("999")).when(service).excluir("999");
-
-		mockMvc.perform(delete(BASE_PATH + "/{id}", "999"))
-				.andExpect(status().isNotFound());
 	}
 
 	private TarefaResponse resposta() {

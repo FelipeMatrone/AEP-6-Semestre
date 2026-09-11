@@ -21,6 +21,13 @@ export type TarefaCreateRequest = {
   dono: string
 }
 
+export type TarefaUpdateRequest = {
+  titulo: string
+  prazo: string
+  prioridade: Prioridade
+  concluida: boolean
+}
+
 type ApiErrorResponse = {
   message?: string
 }
@@ -41,6 +48,10 @@ async function requisitar<T>(url: string, opcoes?: RequestInit): Promise<T> {
     throw new Error(erro?.message ?? 'Não foi possível concluir a operação.')
   }
 
+  if (resposta.status === 204) {
+    return undefined as T
+  }
+
   return resposta.json() as Promise<T>
 }
 
@@ -52,5 +63,18 @@ export function criarTarefa(request: TarefaCreateRequest): Promise<Tarefa> {
   return requisitar<Tarefa>(BASE_PATH, {
     method: 'POST',
     body: JSON.stringify(request),
+  })
+}
+
+export function atualizarTarefa(id: string, request: TarefaUpdateRequest): Promise<Tarefa> {
+  return requisitar<Tarefa>(`${BASE_PATH}/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(request),
+  })
+}
+
+export function excluirTarefa(id: string): Promise<void> {
+  return requisitar<void>(`${BASE_PATH}/${id}`, {
+    method: 'DELETE',
   })
 }

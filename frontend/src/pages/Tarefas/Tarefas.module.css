@@ -86,13 +86,21 @@
   border-color: var(--roxo);
 }
 
+.erroAcao {
+  margin: 0;
+  padding: 10px 20px;
+  color: var(--erro);
+  font-size: 0.875rem;
+  border-bottom: 1px solid var(--borda);
+}
+
 .tabelaResponsiva {
   overflow-x: auto;
 }
 
 table {
   width: 100%;
-  min-width: 560px;
+  min-width: 800px;
   border-collapse: collapse;
   text-align: left;
 }
@@ -143,6 +151,46 @@ tbody tr:last-child td {
 .prioridadeBaixa {
   color: #26744f;
   background: #dff5e9;
+}
+
+.concluida,
+.pendente {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.concluida {
+  color: #26744f;
+}
+
+.pendente {
+  color: #9a6700;
+}
+
+.acoesTabela {
+  display: flex;
+  gap: 8px;
+}
+
+.botaoAcao {
+  padding: 5px 8px;
+  color: var(--roxo);
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.botaoExcluir {
+  color: var(--erro);
+}
+
+.botaoAcao:disabled {
+  cursor: wait;
+  opacity: 0.6;
 }
 
 .formularioNovaTarefa {

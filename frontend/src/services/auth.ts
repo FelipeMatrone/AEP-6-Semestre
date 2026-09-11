@@ -17,7 +17,7 @@ export class CredenciaisInvalidasError extends Error {
   }
 }
 
-// ponytail: usuário fixo enquanto o backend Spring não existe.
+// Usuário fixo enquanto o backend Spring não existe.
 // Quando existir, o corpo de autenticar() vira um fetch para POST /auth/login
 // e nada mais neste arquivo (nem na tela) precisa mudar.
 const USUARIO_MOCK = {

@@ -1,0 +1,306 @@
+.pagina {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 100dvh;
+  background: #f7f6fb;
+  transition: grid-template-columns 0.2s ease;
+}
+
+.paginaMenuRecolhido {
+  grid-template-columns: 76px minmax(0, 1fr);
+}
+
+.menuLateral {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  padding: 28px 18px;
+  overflow: visible;
+  color: var(--branco);
+  background: linear-gradient(160deg, var(--roxo), var(--roxo-escuro));
+}
+
+.botaoRecolher {
+  position: absolute;
+  top: 38px;
+  right: -16px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  color: var(--roxo);
+  font-size: 1.5rem;
+  line-height: 1;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgb(46 42 74 / 12%);
+}
+
+.marca {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.logo {
+  display: grid;
+  flex: 0 0 40px;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--roxo);
+  background: var(--branco);
+  border-radius: 12px;
+}
+
+.navegacao {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.navegacao a,
+.navegacao button,
+.sair {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  padding: 11px 14px;
+  color: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.navegacao a:hover,
+.navegacao button:hover,
+.sair:hover {
+  background: rgb(255 255 255 / 12%);
+}
+
+/* Precisa incluir o `a` para empatar em especificidade com `.navegacao a:hover`
+   acima — vindo depois na folha, vence o desempate e o item ativo continua
+   destacado mesmo com o mouse em cima. */
+.navegacao a.itemAtivo {
+  font-weight: 600;
+  background: rgb(255 255 255 / 20%);
+}
+
+.iconeMenu {
+  display: grid;
+  flex: 0 0 18px;
+  place-items: center;
+  width: 18px;
+  font-size: 1rem;
+}
+
+.paginaMenuRecolhido .menuLateral {
+  align-items: center;
+  padding-right: 12px;
+  padding-left: 12px;
+}
+
+.paginaMenuRecolhido .marca,
+.paginaMenuRecolhido .navegacao a,
+.paginaMenuRecolhido .navegacao button,
+.paginaMenuRecolhido .sair {
+  justify-content: center;
+  padding-right: 10px;
+  padding-left: 10px;
+}
+
+.paginaMenuRecolhido .textoMenu {
+  display: none;
+}
+
+.conteudo {
+  min-width: 0;
+  padding: clamp(20px, 3vh, 28px) clamp(20px, 4vw, 56px) clamp(28px, 5vh, 48px);
+  font-size: 0.875rem;
+}
+
+.cabecalho {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.busca input {
+  width: min(440px, 52vw);
+  padding: 11px 16px;
+  color: var(--texto);
+  font-size: 0.9rem;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 999px;
+}
+
+.acoesCabecalho {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.botaoNotificacao {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  color: var(--texto);
+  background: transparent;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.botaoNotificacao:hover {
+  background: var(--lilas);
+}
+
+.botaoNotificacao svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.indicadorNotificacao {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  color: var(--branco);
+  font-size: 0.625rem;
+  font-weight: 700;
+  background: var(--magenta);
+  border: 2px solid #f7f6fb;
+  border-radius: 999px;
+}
+
+.perfil {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0;
+  color: var(--texto);
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  color: var(--branco);
+  font-size: 0.75rem;
+  background: var(--roxo);
+  border-radius: 50%;
+}
+
+.textoOculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+  .pagina,
+  .paginaMenuRecolhido {
+    grid-template-columns: 1fr;
+  }
+
+  .menuLateral,
+  .paginaMenuRecolhido .menuLateral {
+    align-items: stretch;
+    padding: 20px;
+  }
+
+  .botaoRecolher {
+    display: none;
+  }
+
+  .navegacao {
+    flex: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .navegacao a,
+  .navegacao button,
+  .sair,
+  .paginaMenuRecolhido .navegacao a,
+  .paginaMenuRecolhido .navegacao button,
+  .paginaMenuRecolhido .sair {
+    justify-content: flex-start;
+    width: auto;
+    padding: 9px 12px;
+  }
+
+  .paginaMenuRecolhido .textoMenu {
+    display: inline;
+  }
+
+  .cabecalho {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .busca input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .conteudo {
+    padding: 22px 16px 36px;
+  }
+
+  .nomePerfil {
+    display: none;
+  }
+}
+
+@media (max-height: 700px) and (min-width: 761px) {
+  .menuLateral {
+    gap: 22px;
+    padding-block: 20px;
+  }
+
+  .botaoRecolher {
+    top: 28px;
+  }
+}

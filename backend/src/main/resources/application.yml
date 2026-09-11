@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: aep
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/aep}
+
+springdoc:
+  swagger-ui:
+    path: /docs

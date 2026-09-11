@@ -9,11 +9,14 @@ import {
   definirEmailLembrado,
   recuperarEmailLembrado,
 } from '../../services/preferencias'
-import { IconeCapelo, IconeGoogle, IconeOlho, IconeOlhoCortado } from './icones'
+import {
+  IconeCapelo,
+  IconeGoogle,
+  IconeOlho,
+  IconeOlhoCortado,
+} from '../../components/icones'
+import { NOME_DO_SISTEMA } from '../../config'
 import styles from './Login.module.css'
-
-// Identidade provisória: trocar quando o nome do sistema e o ODS forem definidos.
-const NOME_DO_SISTEMA = 'Sistema AEP'
 
 // O Spring Security expõe esta rota ao habilitar o oauth2-client. A troca do
 // código por token acontece no servidor — o frontend só leva o usuário até lá.
@@ -58,6 +61,10 @@ export default function Login() {
   })
 
   async function aoEnviar(dados: DadosLogin) {
+    // Limpa o alerta da tentativa anterior: sem isto, um erro de credenciais
+    // continuaria na tela contradizendo o erro de campo do envio seguinte.
+    setStatus({ tipo: 'ocioso' })
+
     try {
       await autenticar(dados.email, dados.senha)
       definirEmailLembrado(dados.lembrarMe ? dados.email : null)
@@ -97,7 +104,7 @@ export default function Login() {
 
       <main className={styles.conteudo}>
         <div className={styles.cartao}>
-          <header className={styles.cabecalho}>
+          <header>
             <h2 className={styles.titulo}>Bem-vindo de volta</h2>
             <p className={styles.subtitulo}>
               Entre com sua conta para continuar.

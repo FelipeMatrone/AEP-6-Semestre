@@ -18,8 +18,8 @@ public class GlobalExceptionHandler {
 
 	private static final String CORPO_INVALIDO = "Corpo da requisição inválido ou mal formado";
 
-	@ExceptionHandler(TarefaNotFoundException.class)
-	public ResponseEntity<ApiError> tarefaNaoEncontrada(TarefaNotFoundException excecao, HttpServletRequest requisicao) {
+	@ExceptionHandler(RecursoNaoEncontradoException.class)
+	public ResponseEntity<ApiError> recursoNaoEncontrado(RecursoNaoEncontradoException excecao, HttpServletRequest requisicao) {
 		return resposta(HttpStatus.NOT_FOUND, excecao.getMessage(), requisicao, Map.of());
 	}
 

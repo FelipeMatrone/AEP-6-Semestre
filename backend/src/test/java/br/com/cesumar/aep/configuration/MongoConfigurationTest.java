@@ -1,15 +1,18 @@
 package br.com.cesumar.aep.configuration;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.List;
 
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.mongodb.MongoDatabaseFactory;
+import org.springframework.data.mongodb.core.MongoExceptionTranslator;
 import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
-import org.springframework.data.mongodb.core.convert.NoOpDbRefResolver;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 import br.com.cesumar.aep.model.Anotacao;
@@ -25,8 +28,9 @@ class MongoConfigurationTest {
 		MongoCustomConversions conversoes = configuracao.mongoCustomConversions();
 		MongoMappingContext contexto = new MongoMappingContext();
 		contexto.setSimpleTypeHolder(conversoes.getSimpleTypeHolder());
-		MappingMongoConverter conversor = new MappingMongoConverter(NoOpDbRefResolver.INSTANCE, contexto);
-		conversor.setCustomConversions(conversoes);
+		// o bean de verdade, não uma montagem à mão: é ele que desliga o _class
+		MappingMongoConverter conversor = configuracao.mappingMongoConverter(fabrica(), contexto,
+				conversoes);
 		conversor.afterPropertiesSet();
 
 		Anotacao anotacao = new Anotacao("Resumo", "<div>texto</div>");
@@ -42,6 +46,9 @@ class MongoConfigurationTest {
 		assertThat(documento.get("cor")).isEqualTo("ambar");
 		assertThat(gravada.get("id")).isEqualTo("672f0000000000000000c001");
 		assertThat(gravada).doesNotContainKey("_id");
+		// sem _class o $jsonSchema fechado da coleção aceita o documento
+		assertThat(documento).doesNotContainKey("_class");
+		assertThat(gravada).doesNotContainKey("_class");
 
 		Categoria lida = conversor.read(Categoria.class, documento);
 
@@ -49,4 +56,10 @@ class MongoConfigurationTest {
 		assertThat(lida.getAnotacoes().get(0).getId()).isEqualTo("672f0000000000000000c001");
 	}
 
+
+	private MongoDatabaseFactory fabrica() {
+		MongoDatabaseFactory fabrica = mock(MongoDatabaseFactory.class);
+		when(fabrica.getExceptionTranslator()).thenReturn(new MongoExceptionTranslator());
+		return fabrica;
+	}
 }

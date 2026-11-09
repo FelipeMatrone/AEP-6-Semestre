@@ -15,7 +15,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -143,7 +145,8 @@ class CategoriaServiceTest {
 		ordem.verify(mongoTemplate).updateMulti(argThat((Query consulta) -> "1"
 				.equals(consulta.getQueryObject().get("categoriaId"))
 				&& USUARIO.equals(consulta.getQueryObject().get("usuarioId"))),
-				argThat((Update atualizacao) -> atualizacao.getUpdateObject().containsKey("$unset")),
+				argThat((Update atualizacao) -> atualizacao.getUpdateObject().get("$unset") instanceof Map<?, ?> removidos
+						&& removidos.keySet().equals(Set.of("categoriaId"))),
 				eq(Tarefa.class));
 		ordem.verify(repository).delete(persistida);
 	}

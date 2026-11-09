@@ -144,6 +144,21 @@ class TarefaServiceTest {
 	}
 
 	@Test
+	void atualizarComCategoriaDeOutroUsuarioFalhaComoNaoEncontrada() {
+		Tarefa persistida = tarefa("1", "Entregar a modelagem", false);
+		when(repository.findById("1")).thenReturn(Optional.of(persistida));
+		Categoria alheia = new Categoria();
+		alheia.setUsuarioId(OUTRO_USUARIO);
+		when(categoriaRepository.findById("c1")).thenReturn(Optional.of(alheia));
+
+		assertThatThrownBy(() -> service.atualizar("1",
+				new TarefaUpdateRequest("Entregar a modelagem", PRAZO, Prioridade.MEDIA, null, false, "c1"), USUARIO))
+				.isInstanceOf(CategoriaNotFoundException.class);
+
+		verify(repository, never()).save(any(Tarefa.class));
+	}
+
+	@Test
 	void atualizarComCategoriaIdNuloDesvinculaACategoria() {
 		Tarefa persistida = tarefa("1", "Entregar a modelagem", false);
 		persistida.setCategoriaId("c1");

@@ -3,6 +3,7 @@ package br.com.cesumar.aep.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,12 +97,15 @@ class CategoriaServiceAnotacaoTest {
 		assertThat(categoria.getAtualizadaEm()).isEqualTo(AGORA);
 	}
 
-	// o id existe, mas em outra categoria: tem de falhar como não encontrada.
+	// o id existe, mas em outra categoria: a busca fica restrita à categoria da rota,
+	// então nenhuma outra é consultada.
 	@Test
 	void atualizarAnotacaoDeOutraCategoriaFalhaComoNaoEncontrada() {
 		Categoria alvo = categoria("1");
 		Categoria outra = categoria("2");
 		outra.getAnotacoes().add(anotacao(ID_ANOTACAO));
+		// alcançável de propósito: se o Service procurasse fora da categoria da rota, acharia
+		lenient().when(repository.findById("2")).thenReturn(Optional.of(outra));
 		when(repository.findById("1")).thenReturn(Optional.of(alvo));
 
 		assertThatThrownBy(() -> service.atualizarAnotacao("1", ID_ANOTACAO,
@@ -109,6 +113,7 @@ class CategoriaServiceAnotacaoTest {
 				.isInstanceOf(AnotacaoNotFoundException.class)
 				.hasMessageContaining(ID_ANOTACAO);
 
+		verify(repository, never()).findById("2");
 		verify(repository, never()).save(any(Categoria.class));
 	}
 

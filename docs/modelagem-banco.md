@@ -116,15 +116,38 @@ está com o daemon desligado.
 
 ## Índices
 
-Nenhum índice adicional é necessário nesta entrega: a listagem não tem filtro e
-o MongoDB já mantém o índice obrigatório de `_id`. Índice sem consulta que o use
-é escrita mais lenta de graça.
+A segunda entrega tem consultas que justificam índices, o que não havia na
+primeira. Os três estão em `banco/init.js`:
+
+| Coleção | Índice | Por quê |
+|---|---|---|
+| `usuarios` | `{ email: 1 }`, único | o login busca por e-mail; a unicidade é regra, não convenção |
+| `categorias` | `{ usuarioId: 1 }` | toda listagem de categoria é por dono |
+| `tarefas` | `{ usuarioId: 1, prazo: 1 }` | listagem e calendário filtram por dono e ordenam por prazo |
+
+O `_id` de cada coleção já tem índice próprio, criado pelo MongoDB. Índice sem
+consulta que o use continua sendo escrita mais lenta de graça, por isso nenhum
+outro foi criado.
 
 ## Como subir o banco
 
+Dois caminhos, conforme a máquina:
+
+**Com Docker** (o caminho do professor):
+
 ```bash
-docker compose up -d
+docker compose down -v && docker compose up -d
 ```
+
+**Com Mongo nativo** (quando o Docker não está disponível, como nesta máquina),
+na porta 27017, com `mongosh` no PATH:
+
+```bash
+mongosh aep --eval 'db.dropDatabase()' && mongosh aep banco/init.js
+```
+
+O `dropDatabase` é obrigatório na segunda vez: o script cria as coleções com
+`createCollection`, que falha se elas já existem.
 
 A imagem oficial do Mongo executa tudo que estiver em
 `/docker-entrypoint-initdb.d/` na **primeira** subida do container — é onde a

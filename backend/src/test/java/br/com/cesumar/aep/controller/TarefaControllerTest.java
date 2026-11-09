@@ -21,6 +21,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -32,9 +33,11 @@ import br.com.cesumar.aep.dto.TarefaUpdateRequest;
 import br.com.cesumar.aep.exception.TarefaNotFoundException;
 import br.com.cesumar.aep.model.Prioridade;
 import br.com.cesumar.aep.service.TarefaService;
+import br.com.cesumar.aep.service.UsuarioAtual;
 
 @WebMvcTest(TarefaController.class)
-@WithMockUser
+@Import(UsuarioAtual.class)
+@WithMockUser(username = "672f0000000000000000a001")
 class TarefaControllerTest {
 
 	private static final String BASE_PATH = "/api/tarefas";

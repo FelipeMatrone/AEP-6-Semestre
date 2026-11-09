@@ -24,35 +24,35 @@ import br.com.cesumar.aep.dto.CategoriaResponse;
 import br.com.cesumar.aep.dto.CategoriaSummaryResponse;
 import br.com.cesumar.aep.dto.CategoriaUpdateRequest;
 import br.com.cesumar.aep.service.CategoriaService;
+import br.com.cesumar.aep.service.UsuarioAtual;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/categorias")
 public class CategoriaController {
 
-	// usuário semeado em banco/init.js. Sai quando o Security fornecer o usuário
-	// autenticado.
-	private static final String USUARIO_FIXO = "672f0000000000000000a001";
-
 	private final CategoriaService service;
 
-	public CategoriaController(CategoriaService service) {
+	private final UsuarioAtual usuarioAtual;
+
+	public CategoriaController(CategoriaService service, UsuarioAtual usuarioAtual) {
 		this.service = service;
+		this.usuarioAtual = usuarioAtual;
 	}
 
 	@GetMapping
 	public List<CategoriaSummaryResponse> listar() {
-		return service.listar(USUARIO_FIXO);
+		return service.listar(usuarioAtual.id());
 	}
 
 	@GetMapping("/{id}")
 	public CategoriaResponse buscarPorId(@PathVariable String id) {
-		return service.buscarPorId(id, USUARIO_FIXO);
+		return service.buscarPorId(id, usuarioAtual.id());
 	}
 
 	@PostMapping
 	public ResponseEntity<CategoriaResponse> criar(@Valid @RequestBody CategoriaCreateRequest request) {
-		CategoriaResponse categoria = service.criar(request, USUARIO_FIXO);
+		CategoriaResponse categoria = service.criar(request, usuarioAtual.id());
 
 		URI local = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{id}")
@@ -64,19 +64,19 @@ public class CategoriaController {
 
 	@PutMapping("/{id}")
 	public CategoriaResponse atualizar(@PathVariable String id, @Valid @RequestBody CategoriaUpdateRequest request) {
-		return service.atualizar(id, request, USUARIO_FIXO);
+		return service.atualizar(id, request, usuarioAtual.id());
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void excluir(@PathVariable String id) {
-		service.excluir(id, USUARIO_FIXO);
+		service.excluir(id, usuarioAtual.id());
 	}
 
 	@PostMapping("/{id}/anotacoes")
 	public ResponseEntity<AnotacaoResponse> criarAnotacao(@PathVariable String id,
 			@Valid @RequestBody AnotacaoCreateRequest request) {
-		AnotacaoResponse anotacao = service.criarAnotacao(id, request, USUARIO_FIXO);
+		AnotacaoResponse anotacao = service.criarAnotacao(id, request, usuarioAtual.id());
 
 		URI local = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{anotacaoId}")
@@ -89,13 +89,13 @@ public class CategoriaController {
 	@PutMapping("/{id}/anotacoes/{anotacaoId}")
 	public AnotacaoResponse atualizarAnotacao(@PathVariable String id, @PathVariable String anotacaoId,
 			@Valid @RequestBody AnotacaoUpdateRequest request) {
-		return service.atualizarAnotacao(id, anotacaoId, request, USUARIO_FIXO);
+		return service.atualizarAnotacao(id, anotacaoId, request, usuarioAtual.id());
 	}
 
 	@DeleteMapping("/{id}/anotacoes/{anotacaoId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void excluirAnotacao(@PathVariable String id, @PathVariable String anotacaoId) {
-		service.excluirAnotacao(id, anotacaoId, USUARIO_FIXO);
+		service.excluirAnotacao(id, anotacaoId, usuarioAtual.id());
 	}
 
 }

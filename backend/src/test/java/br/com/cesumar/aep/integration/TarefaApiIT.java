@@ -41,7 +41,7 @@ import br.com.cesumar.aep.repository.TarefaRepository;
 @Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc
-@WithMockUser
+@WithMockUser(username = "672f0000000000000000a001")
 class TarefaApiIT {
 
 	private static final String BASE_PATH = "/api/tarefas";

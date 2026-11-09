@@ -18,13 +18,14 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import br.com.cesumar.aep.configuration.SecurityConfiguration;
 import br.com.cesumar.aep.service.TarefaService;
+import br.com.cesumar.aep.service.UsuarioAtual;
 import br.com.cesumar.aep.service.UsuarioService;
 
 // o contrato de segurança de uma rota protegida qualquer vive aqui, separado do
 // TarefaControllerTest: lá todo teste passa autenticado, e um slice só prova o
 // 401 e o 403 se alguma requisição chegar sem credencial e sem token.
 @WebMvcTest(TarefaController.class)
-@Import(SecurityConfiguration.class)
+@Import({ SecurityConfiguration.class, UsuarioAtual.class })
 class TarefaControllerSegurancaTest {
 
 	private static final String BASE_PATH = "/api/tarefas";

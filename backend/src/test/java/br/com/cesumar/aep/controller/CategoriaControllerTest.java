@@ -22,6 +22,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -40,9 +41,14 @@ import br.com.cesumar.aep.model.Anotacao;
 import br.com.cesumar.aep.model.Categoria;
 import br.com.cesumar.aep.model.Cor;
 import br.com.cesumar.aep.service.CategoriaService;
+import br.com.cesumar.aep.service.UsuarioAtual;
 
+// o UsuarioAtual entra de verdade — e ele que traduz o @WithMockUser em
+// usuarioId, e um mock no lugar apagaria essa traducao, que e o que esta
+// classe precisa provar.
 @WebMvcTest(CategoriaController.class)
-@WithMockUser
+@Import(UsuarioAtual.class)
+@WithMockUser(username = "672f0000000000000000a001")
 class CategoriaControllerTest {
 
 	private static final String BASE_PATH = "/api/categorias";
@@ -50,6 +56,8 @@ class CategoriaControllerTest {
 	private static final String USUARIO_ID = "672f0000000000000000a001";
 
 	private static final String CATEGORIA_ID = "672f0000000000000000b001";
+
+	private static final String CATEGORIA_DE_OUTRO = "672f0000000000000000b009";
 
 	private static final String ANOTACAO_ID = "672f0000000000000000c001";
 
@@ -125,6 +133,18 @@ class CategoriaControllerTest {
 		mockMvc.perform(get(BASE_PATH + "/{id}", CATEGORIA_ID))
 				.andExpect(status().isNotFound())
 				.andExpect(jsonPath("$.status").value(404));
+	}
+
+	// 404 e nao 403: um 403 confirmaria que a categoria existe, e quem nao e o
+	// dono nao pode nem descobrir isso. Quem decide e o Service, desde a
+	// Tarefa 3; aqui o que se prova e o contrato HTTP.
+	@Test
+	void buscarCategoriaDeOutroUsuarioDevolve404NaoE403() throws Exception {
+		when(service.buscarPorId(CATEGORIA_DE_OUTRO, USUARIO_ID))
+				.thenThrow(new CategoriaNotFoundException(CATEGORIA_DE_OUTRO));
+
+		mockMvc.perform(get(BASE_PATH + "/{id}", CATEGORIA_DE_OUTRO))
+				.andExpect(status().isNotFound());
 	}
 
 	@Test

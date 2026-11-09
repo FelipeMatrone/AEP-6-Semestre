@@ -27,8 +27,11 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.jayway.jsonpath.JsonPath;
 
+import br.com.cesumar.aep.dto.AnotacaoCreateRequest;
+import br.com.cesumar.aep.dto.AnotacaoUpdateRequest;
 import br.com.cesumar.aep.dto.CategoriaCreateRequest;
 import br.com.cesumar.aep.dto.CategoriaUpdateRequest;
+import br.com.cesumar.aep.exception.AnotacaoNotFoundException;
 import br.com.cesumar.aep.exception.CategoriaNotFoundException;
 import br.com.cesumar.aep.mapper.CategoriaMapper;
 import br.com.cesumar.aep.model.Anotacao;
@@ -52,6 +55,8 @@ class CategoriaControllerTest {
 	private static final String INSTANTE_UTC = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z";
 
 	private static final Instant AGORA = Instant.parse("2026-11-08T14:32:00Z");
+
+	private static final String CONTEUDO = "<div>Resumo da aula</div>";
 
 	// o Mapper entra de verdade para que listagem e detalhe nasçam da mesma
 	// categoria, como no sistema real.
@@ -187,6 +192,9 @@ class CategoriaControllerTest {
 
 	@Test
 	void criarAnotacaoDevolve201ComLocation() throws Exception {
+		when(service.criarAnotacao(eq(CATEGORIA_ID), any(AnotacaoCreateRequest.class), eq(USUARIO_ID)))
+				.thenReturn(mapper.toAnotacaoResponse(anotacao(ANOTACAO_ID, "Resumo", "<div>texto</div>")));
+
 		mockMvc.perform(post(BASE_PATH + "/{id}/anotacoes", CATEGORIA_ID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("Resumo", "<div>texto</div>")))
@@ -210,7 +218,43 @@ class CategoriaControllerTest {
 	}
 
 	@Test
+	void criarAnotacaoComConteudoAcimaDoLimiteDevolve400() throws Exception {
+		mockMvc.perform(post(BASE_PATH + "/{id}/anotacoes", CATEGORIA_ID)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(corpoAnotacao("Resumo", "a".repeat(20_001))))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.fieldErrors.conteudo").value("O conteúdo excede 20000 caracteres"));
+	}
+
+	@Test
+	void criarAnotacaoEmCategoriaInexistenteDevolve404() throws Exception {
+		when(service.criarAnotacao(eq(CATEGORIA_ID), any(AnotacaoCreateRequest.class), eq(USUARIO_ID)))
+				.thenThrow(new CategoriaNotFoundException(CATEGORIA_ID));
+
+		mockMvc.perform(post(BASE_PATH + "/{id}/anotacoes", CATEGORIA_ID)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(corpoAnotacao("Resumo", "<div>texto</div>")))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void atualizarAnotacaoInexistenteDevolve404() throws Exception {
+		when(service.atualizarAnotacao(eq(CATEGORIA_ID), eq(ANOTACAO_ID), any(AnotacaoUpdateRequest.class),
+				eq(USUARIO_ID)))
+				.thenThrow(new AnotacaoNotFoundException(ANOTACAO_ID));
+
+		mockMvc.perform(put(BASE_PATH + "/{id}/anotacoes/{anotacaoId}", CATEGORIA_ID, ANOTACAO_ID)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(corpoAnotacao("Novo título", "<div>novo</div>")))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
 	void atualizarAnotacaoDevolveAnotacaoAtualizada() throws Exception {
+		when(service.atualizarAnotacao(eq(CATEGORIA_ID), eq(ANOTACAO_ID), any(AnotacaoUpdateRequest.class),
+				eq(USUARIO_ID)))
+				.thenReturn(mapper.toAnotacaoResponse(anotacao(ANOTACAO_ID, "Novo título", "<div>novo</div>")));
+
 		mockMvc.perform(put(BASE_PATH + "/{id}/anotacoes/{anotacaoId}", CATEGORIA_ID, ANOTACAO_ID)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("Novo título", "<div>novo</div>")))
@@ -225,6 +269,8 @@ class CategoriaControllerTest {
 	void excluirAnotacaoDevolve204() throws Exception {
 		mockMvc.perform(delete(BASE_PATH + "/{id}/anotacoes/{anotacaoId}", CATEGORIA_ID, ANOTACAO_ID))
 				.andExpect(status().isNoContent());
+
+		verify(service).excluirAnotacao(CATEGORIA_ID, ANOTACAO_ID, USUARIO_ID);
 	}
 
 	private Categoria categoria() {
@@ -233,13 +279,13 @@ class CategoriaControllerTest {
 		categoria.setUsuarioId(USUARIO_ID);
 		categoria.setCriadaEm(AGORA);
 		categoria.setAtualizadaEm(AGORA);
-		categoria.getAnotacoes().add(anotacao("672f0000000000000000c001", "Padrões de projeto"));
-		categoria.getAnotacoes().add(anotacao("672f0000000000000000c002", "Arquitetura em camadas"));
+		categoria.getAnotacoes().add(anotacao("672f0000000000000000c001", "Padrões de projeto", CONTEUDO));
+		categoria.getAnotacoes().add(anotacao("672f0000000000000000c002", "Arquitetura em camadas", CONTEUDO));
 		return categoria;
 	}
 
-	private Anotacao anotacao(String id, String titulo) {
-		Anotacao anotacao = new Anotacao(titulo, "<div>Resumo da aula</div>");
+	private Anotacao anotacao(String id, String titulo, String conteudo) {
+		Anotacao anotacao = new Anotacao(titulo, conteudo);
 		anotacao.setId(id);
 		anotacao.setCriadaEm(AGORA);
 		anotacao.setAtualizadaEm(AGORA);

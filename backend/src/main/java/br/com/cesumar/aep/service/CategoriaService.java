@@ -4,14 +4,20 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 
+import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 
+import br.com.cesumar.aep.dto.AnotacaoCreateRequest;
+import br.com.cesumar.aep.dto.AnotacaoResponse;
+import br.com.cesumar.aep.dto.AnotacaoUpdateRequest;
 import br.com.cesumar.aep.dto.CategoriaCreateRequest;
 import br.com.cesumar.aep.dto.CategoriaResponse;
 import br.com.cesumar.aep.dto.CategoriaSummaryResponse;
 import br.com.cesumar.aep.dto.CategoriaUpdateRequest;
+import br.com.cesumar.aep.exception.AnotacaoNotFoundException;
 import br.com.cesumar.aep.exception.CategoriaNotFoundException;
 import br.com.cesumar.aep.mapper.CategoriaMapper;
+import br.com.cesumar.aep.model.Anotacao;
 import br.com.cesumar.aep.model.Categoria;
 import br.com.cesumar.aep.repository.CategoriaRepository;
 
@@ -64,12 +70,59 @@ public class CategoriaService {
 		repository.delete(buscarOuFalhar(id, usuarioId));
 	}
 
+	public AnotacaoResponse criarAnotacao(String categoriaId, AnotacaoCreateRequest request, String usuarioId) {
+		Categoria categoria = buscarOuFalhar(categoriaId, usuarioId);
+
+		Instant agora = Instant.now(clock);
+		Anotacao anotacao = mapper.toAnotacaoModel(request);
+		anotacao.setId(new ObjectId().toHexString());
+		anotacao.setCriadaEm(agora);
+		anotacao.setAtualizadaEm(agora);
+
+		categoria.getAnotacoes().add(anotacao);
+		categoria.setAtualizadaEm(agora);
+		repository.save(categoria);
+
+		return mapper.toAnotacaoResponse(anotacao);
+	}
+
+	public AnotacaoResponse atualizarAnotacao(String categoriaId, String anotacaoId, AnotacaoUpdateRequest request,
+			String usuarioId) {
+		Categoria categoria = buscarOuFalhar(categoriaId, usuarioId);
+		Anotacao anotacao = buscarAnotacaoOuFalhar(categoria, anotacaoId);
+
+		Instant agora = Instant.now(clock);
+		mapper.updateAnotacao(anotacao, request);
+		anotacao.setAtualizadaEm(agora);
+		categoria.setAtualizadaEm(agora);
+		repository.save(categoria);
+
+		return mapper.toAnotacaoResponse(anotacao);
+	}
+
+	public void excluirAnotacao(String categoriaId, String anotacaoId, String usuarioId) {
+		Categoria categoria = buscarOuFalhar(categoriaId, usuarioId);
+
+		categoria.getAnotacoes().remove(buscarAnotacaoOuFalhar(categoria, anotacaoId));
+		categoria.setAtualizadaEm(Instant.now(clock));
+		repository.save(categoria);
+	}
+
 	// categoria de outro usuário é tratada como inexistente: 404, não 403, para
 	// não revelar que o id existe.
 	private Categoria buscarOuFalhar(String id, String usuarioId) {
 		return repository.findById(id)
 				.filter(categoria -> usuarioId.equals(categoria.getUsuarioId()))
 				.orElseThrow(() -> new CategoriaNotFoundException(id));
+	}
+
+	// a anotação só é procurada dentro da categoria já carregada e validada:
+	// buscar por id solto poderia acertar a anotação de outra categoria.
+	private Anotacao buscarAnotacaoOuFalhar(Categoria categoria, String anotacaoId) {
+		return categoria.getAnotacoes().stream()
+				.filter(anotacao -> anotacaoId.equals(anotacao.getId()))
+				.findFirst()
+				.orElseThrow(() -> new AnotacaoNotFoundException(anotacaoId));
 	}
 
 }

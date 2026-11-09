@@ -1,7 +1,6 @@
 package br.com.cesumar.aep.controller;
 
 import java.net.URI;
-import java.time.Instant;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -34,11 +33,6 @@ public class CategoriaController {
 	// usuário semeado em banco/init.js. Sai quando o Security fornecer o usuário
 	// autenticado.
 	private static final String USUARIO_FIXO = "672f0000000000000000a001";
-
-	// Dados fixos das rotas de anotação: saem quando elas forem ligadas ao Service.
-	private static final String ANOTACAO_ID_FIXO = "672f0000000000000000c001";
-
-	private static final Instant CARIMBO_FIXO = Instant.parse("2026-11-08T14:32:00Z");
 
 	private final CategoriaService service;
 
@@ -82,8 +76,7 @@ public class CategoriaController {
 	@PostMapping("/{id}/anotacoes")
 	public ResponseEntity<AnotacaoResponse> criarAnotacao(@PathVariable String id,
 			@Valid @RequestBody AnotacaoCreateRequest request) {
-		AnotacaoResponse anotacao = new AnotacaoResponse(ANOTACAO_ID_FIXO, request.titulo(), request.conteudo(),
-				CARIMBO_FIXO, CARIMBO_FIXO);
+		AnotacaoResponse anotacao = service.criarAnotacao(id, request, USUARIO_FIXO);
 
 		URI local = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{anotacaoId}")
@@ -96,12 +89,13 @@ public class CategoriaController {
 	@PutMapping("/{id}/anotacoes/{anotacaoId}")
 	public AnotacaoResponse atualizarAnotacao(@PathVariable String id, @PathVariable String anotacaoId,
 			@Valid @RequestBody AnotacaoUpdateRequest request) {
-		return new AnotacaoResponse(anotacaoId, request.titulo(), request.conteudo(), CARIMBO_FIXO, CARIMBO_FIXO);
+		return service.atualizarAnotacao(id, anotacaoId, request, USUARIO_FIXO);
 	}
 
 	@DeleteMapping("/{id}/anotacoes/{anotacaoId}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void excluirAnotacao(@PathVariable String id, @PathVariable String anotacaoId) {
+		service.excluirAnotacao(id, anotacaoId, USUARIO_FIXO);
 	}
 
 }

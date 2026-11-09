@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
+import br.com.cesumar.aep.dto.AnotacaoCreateRequest;
 import br.com.cesumar.aep.dto.AnotacaoResponse;
+import br.com.cesumar.aep.dto.AnotacaoUpdateRequest;
 import br.com.cesumar.aep.dto.CategoriaCreateRequest;
 import br.com.cesumar.aep.dto.CategoriaResponse;
 import br.com.cesumar.aep.dto.CategoriaSummaryResponse;
@@ -50,6 +52,16 @@ public class CategoriaMapper {
 				categoria.getDescricao(),
 				categoria.getCor(),
 				categoria.getAnotacoes().size());
+	}
+
+	// id, criadaEm e atualizadaEm nascem no Service.
+	public Anotacao toAnotacaoModel(AnotacaoCreateRequest request) {
+		return new Anotacao(request.titulo(), request.conteudo());
+	}
+
+	public void updateAnotacao(Anotacao anotacao, AnotacaoUpdateRequest request) {
+		anotacao.setTitulo(request.titulo());
+		anotacao.setConteudo(request.conteudo());
 	}
 
 	public AnotacaoResponse toAnotacaoResponse(Anotacao anotacao) {

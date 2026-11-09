@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,10 +33,14 @@ public class SessaoController {
 
 	private final SecurityContextRepository securityContextRepository;
 
+	private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
+
 	public SessaoController(AuthenticationManager authenticationManager,
-			SecurityContextRepository securityContextRepository) {
+			SecurityContextRepository securityContextRepository,
+			SessionAuthenticationStrategy sessionAuthenticationStrategy) {
 		this.authenticationManager = authenticationManager;
 		this.securityContextRepository = securityContextRepository;
+		this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
 	}
 
 	// montado do principal, sem ir ao banco de novo: o UsuarioAutenticado já
@@ -50,6 +55,11 @@ public class SessaoController {
 			HttpServletResponse resposta) {
 		Authentication autenticado = authenticationManager.authenticate(
 				new UsernamePasswordAuthenticationToken(request.email(), request.senha()));
+
+		// troca o id da sessão e descarta o token CSRF de antes do login. É o
+		// que os filtros do Spring fariam; autenticando à mão, cabe ao
+		// controller chamar, senão uma sessão plantada antes sobrevive ao login.
+		sessionAuthenticationStrategy.onAuthentication(autenticado, requisicao, resposta);
 
 		// autenticar à mão não persiste nada: sem o saveContext a requisição
 		// seguinte volta 401, porque a sessão não guarda contexto nenhum.

@@ -1,5 +1,6 @@
 package br.com.cesumar.aep.controller;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -17,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.com.cesumar.aep.configuration.SecurityConfiguration;
@@ -59,6 +61,26 @@ class SessaoControllerTest {
 				.andExpect(jsonPath("$.email").value(EMAIL))
 				.andExpect(jsonPath("$.senha").doesNotExist())
 				.andExpect(jsonPath("$.senhaHash").doesNotExist());
+	}
+
+	// fixação de sessão: uma sessão plantada antes do login não pode sobreviver
+	// a ele. Autenticar à mão passa por fora dos filtros, então é o controller
+	// que tem de rodar a SessionAuthenticationStrategy.
+	@Test
+	void loginTrocaOIdDaSessaoAnterior() throws Exception {
+		when(service.loadUserByUsername(EMAIL)).thenReturn(usuario());
+
+		MockHttpSession sessaoPlantada = new MockHttpSession();
+		String idAntes = sessaoPlantada.getId();
+
+		mockMvc.perform(post(BASE_PATH)
+				.session(sessaoPlantada)
+				.with(csrf())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(corpo(SENHA)))
+				.andExpect(status().isOk());
+
+		assertThat(sessaoPlantada.getId()).isNotEqualTo(idAntes);
 	}
 
 	@Test

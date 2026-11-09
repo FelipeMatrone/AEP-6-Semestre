@@ -3,6 +3,7 @@ package br.com.cesumar.aep.exception;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -18,9 +19,24 @@ public class GlobalExceptionHandler {
 
 	private static final String CORPO_INVALIDO = "Corpo da requisição inválido ou mal formado";
 
+	private static final String EMAIL_EM_USO = "E-mail já cadastrado";
+
 	@ExceptionHandler(RecursoNaoEncontradoException.class)
 	public ResponseEntity<ApiError> recursoNaoEncontrado(RecursoNaoEncontradoException excecao, HttpServletRequest requisicao) {
 		return resposta(HttpStatus.NOT_FOUND, excecao.getMessage(), requisicao, Map.of());
+	}
+
+	@ExceptionHandler(EmailJaCadastradoException.class)
+	public ResponseEntity<ApiError> emailJaCadastrado(EmailJaCadastradoException excecao, HttpServletRequest requisicao) {
+		return resposta(HttpStatus.CONFLICT, excecao.getMessage(), requisicao, Map.of());
+	}
+
+	// rede de segurança para a corrida: duas requisições simultâneas passam
+	// pelas duas checagens de existsByEmail e só o índice único segura a
+	// segunda. Sem este handler, o conflito sairia como 500.
+	@ExceptionHandler(DuplicateKeyException.class)
+	public ResponseEntity<ApiError> chaveDuplicada(DuplicateKeyException excecao, HttpServletRequest requisicao) {
+		return resposta(HttpStatus.CONFLICT, EMAIL_EM_USO, requisicao, Map.of());
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

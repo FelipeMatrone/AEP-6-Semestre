@@ -11,18 +11,22 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import br.com.cesumar.aep.dto.UsuarioCreateRequest;
 import br.com.cesumar.aep.dto.UsuarioResponse;
+import br.com.cesumar.aep.service.UsuarioService;
 import jakarta.validation.Valid;
 
-// Dados fixos: a constante sai quando o Service for ligado.
 @RestController
 @RequestMapping("/api/usuarios")
 public class UsuarioController {
 
-	private static final String USUARIO_FIXO = "672f0000000000000000a001";
+	private final UsuarioService service;
+
+	public UsuarioController(UsuarioService service) {
+		this.service = service;
+	}
 
 	@PostMapping
 	public ResponseEntity<UsuarioResponse> cadastrar(@Valid @RequestBody UsuarioCreateRequest request) {
-		UsuarioResponse usuario = new UsuarioResponse(USUARIO_FIXO, request.nome(), request.email());
+		UsuarioResponse usuario = service.criar(request);
 
 		URI local = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{id}")

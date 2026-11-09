@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,6 +34,7 @@ import br.com.cesumar.aep.model.Prioridade;
 import br.com.cesumar.aep.service.TarefaService;
 
 @WebMvcTest(TarefaController.class)
+@WithMockUser
 class TarefaControllerTest {
 
 	private static final String BASE_PATH = "/api/tarefas";
@@ -75,6 +78,7 @@ class TarefaControllerTest {
 		when(service.criar(any(), eq(USUARIO))).thenReturn(resposta());
 
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
@@ -96,6 +100,7 @@ class TarefaControllerTest {
 	@Test
 	void deveRejeitarCorpoInvalidoComFieldErrors() throws Exception {
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{

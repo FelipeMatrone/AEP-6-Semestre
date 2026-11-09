@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -40,6 +42,7 @@ import br.com.cesumar.aep.model.Cor;
 import br.com.cesumar.aep.service.CategoriaService;
 
 @WebMvcTest(CategoriaController.class)
+@WithMockUser
 class CategoriaControllerTest {
 
 	private static final String BASE_PATH = "/api/categorias";
@@ -131,6 +134,7 @@ class CategoriaControllerTest {
 		when(service.criar(any(CategoriaCreateRequest.class), eq(USUARIO_ID))).thenReturn(mapper.toResponse(criada));
 
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpo("Banco de Dados", "magenta")))
 				.andExpect(status().isCreated())
@@ -143,6 +147,7 @@ class CategoriaControllerTest {
 	@Test
 	void criarSemNomeDevolve400() throws Exception {
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpo("  ", "roxo")))
 				.andExpect(status().isBadRequest())
@@ -152,6 +157,7 @@ class CategoriaControllerTest {
 	@Test
 	void criarComCorInvalidaDevolve400() throws Exception {
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpo("Banco de Dados", "rosa")))
 				.andExpect(status().isBadRequest())
@@ -166,6 +172,7 @@ class CategoriaControllerTest {
 				.thenReturn(mapper.toResponse(atualizada));
 
 		mockMvc.perform(put(BASE_PATH + "/{id}", CATEGORIA_ID)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpo("Redes", "verde")))
 				.andExpect(status().isOk())
@@ -176,7 +183,7 @@ class CategoriaControllerTest {
 
 	@Test
 	void excluirDevolve204() throws Exception {
-		mockMvc.perform(delete(BASE_PATH + "/{id}", CATEGORIA_ID))
+		mockMvc.perform(delete(BASE_PATH + "/{id}", CATEGORIA_ID).with(csrf()))
 				.andExpect(status().isNoContent());
 
 		verify(service).excluir(CATEGORIA_ID, USUARIO_ID);
@@ -186,7 +193,7 @@ class CategoriaControllerTest {
 	void excluirInexistenteDevolve404() throws Exception {
 		doThrow(new CategoriaNotFoundException(CATEGORIA_ID)).when(service).excluir(CATEGORIA_ID, USUARIO_ID);
 
-		mockMvc.perform(delete(BASE_PATH + "/{id}", CATEGORIA_ID))
+		mockMvc.perform(delete(BASE_PATH + "/{id}", CATEGORIA_ID).with(csrf()))
 				.andExpect(status().isNotFound());
 	}
 
@@ -196,6 +203,7 @@ class CategoriaControllerTest {
 				.thenReturn(mapper.toAnotacaoResponse(anotacao(ANOTACAO_ID, "Resumo", "<div>texto</div>")));
 
 		mockMvc.perform(post(BASE_PATH + "/{id}/anotacoes", CATEGORIA_ID)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("Resumo", "<div>texto</div>")))
 				.andExpect(status().isCreated())
@@ -211,6 +219,7 @@ class CategoriaControllerTest {
 	@Test
 	void criarAnotacaoSemTituloDevolve400() throws Exception {
 		mockMvc.perform(post(BASE_PATH + "/{id}/anotacoes", CATEGORIA_ID)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("", "<div>texto</div>")))
 				.andExpect(status().isBadRequest())
@@ -220,6 +229,7 @@ class CategoriaControllerTest {
 	@Test
 	void criarAnotacaoComConteudoAcimaDoLimiteDevolve400() throws Exception {
 		mockMvc.perform(post(BASE_PATH + "/{id}/anotacoes", CATEGORIA_ID)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("Resumo", "a".repeat(20_001))))
 				.andExpect(status().isBadRequest())
@@ -232,6 +242,7 @@ class CategoriaControllerTest {
 				.thenThrow(new CategoriaNotFoundException(CATEGORIA_ID));
 
 		mockMvc.perform(post(BASE_PATH + "/{id}/anotacoes", CATEGORIA_ID)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("Resumo", "<div>texto</div>")))
 				.andExpect(status().isNotFound());
@@ -244,6 +255,7 @@ class CategoriaControllerTest {
 				.thenThrow(new AnotacaoNotFoundException(ANOTACAO_ID));
 
 		mockMvc.perform(put(BASE_PATH + "/{id}/anotacoes/{anotacaoId}", CATEGORIA_ID, ANOTACAO_ID)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("Novo título", "<div>novo</div>")))
 				.andExpect(status().isNotFound());
@@ -256,6 +268,7 @@ class CategoriaControllerTest {
 				.thenReturn(mapper.toAnotacaoResponse(anotacao(ANOTACAO_ID, "Novo título", "<div>novo</div>")));
 
 		mockMvc.perform(put(BASE_PATH + "/{id}/anotacoes/{anotacaoId}", CATEGORIA_ID, ANOTACAO_ID)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(corpoAnotacao("Novo título", "<div>novo</div>")))
 				.andExpect(status().isOk())
@@ -267,7 +280,7 @@ class CategoriaControllerTest {
 
 	@Test
 	void excluirAnotacaoDevolve204() throws Exception {
-		mockMvc.perform(delete(BASE_PATH + "/{id}/anotacoes/{anotacaoId}", CATEGORIA_ID, ANOTACAO_ID))
+		mockMvc.perform(delete(BASE_PATH + "/{id}/anotacoes/{anotacaoId}", CATEGORIA_ID, ANOTACAO_ID).with(csrf()))
 				.andExpect(status().isNoContent());
 
 		verify(service).excluirAnotacao(CATEGORIA_ID, ANOTACAO_ID, USUARIO_ID);

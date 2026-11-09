@@ -1,5 +1,6 @@
 package br.com.cesumar.aep.controller;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,9 +11,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(SessaoController.class)
+@WithMockUser
 class SessaoControllerTest {
 
 	private static final String BASE_PATH = "/api/sessao";
@@ -33,6 +36,7 @@ class SessaoControllerTest {
 	@Test
 	void loginDevolveUsuario() throws Exception {
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{ "email": "demo@aep.com", "senha": "qualquer" }
@@ -45,6 +49,7 @@ class SessaoControllerTest {
 	@Test
 	void loginComEmailInvalidoDevolve400() throws Exception {
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{ "email": "nao-e-email", "senha": "qualquer" }
@@ -55,7 +60,7 @@ class SessaoControllerTest {
 
 	@Test
 	void logoutDevolve204() throws Exception {
-		mockMvc.perform(delete(BASE_PATH))
+		mockMvc.perform(delete(BASE_PATH).with(csrf()))
 				.andExpect(status().isNoContent());
 	}
 

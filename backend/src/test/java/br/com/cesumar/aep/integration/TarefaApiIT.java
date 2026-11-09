@@ -1,5 +1,6 @@
 package br.com.cesumar.aep.integration;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -17,6 +18,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
@@ -39,6 +41,7 @@ import br.com.cesumar.aep.repository.TarefaRepository;
 @Testcontainers
 @SpringBootTest
 @AutoConfigureMockMvc
+@WithMockUser
 class TarefaApiIT {
 
 	private static final String BASE_PATH = "/api/tarefas";
@@ -71,6 +74,7 @@ class TarefaApiIT {
 	@Test
 	void deveExecutarOCicloDeVidaDaTarefa() throws Exception {
 		String corpoCriado = mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
@@ -102,6 +106,7 @@ class TarefaApiIT {
 				.andExpect(jsonPath("$[0].id").value(id));
 
 		mockMvc.perform(put(BASE_PATH + "/{id}", id)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
@@ -122,7 +127,7 @@ class TarefaApiIT {
 				// foi persistido em vez de apaga-lo por omissao.
 				.andExpect(jsonPath("$.criadaEm").isNotEmpty());
 
-		mockMvc.perform(delete(BASE_PATH + "/{id}", id))
+		mockMvc.perform(delete(BASE_PATH + "/{id}", id).with(csrf()))
 				.andExpect(status().isNoContent());
 
 		mockMvc.perform(get(BASE_PATH + "/{id}", id))
@@ -132,6 +137,7 @@ class TarefaApiIT {
 	@Test
 	void excluirCategoriaDesvinculaATarefaSemApagar() throws Exception {
 		String corpoCategoria = mockMvc.perform(post("/api/categorias")
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{ "nome": "Banco de Dados", "descricao": "Disciplina", "cor": "roxo" }
@@ -143,6 +149,7 @@ class TarefaApiIT {
 		String categoriaId = JsonPath.read(corpoCategoria, "$.id");
 
 		String corpoTarefa = mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
@@ -159,7 +166,7 @@ class TarefaApiIT {
 				.getContentAsString(StandardCharsets.UTF_8);
 		String tarefaId = JsonPath.read(corpoTarefa, "$.id");
 
-		mockMvc.perform(delete("/api/categorias/{id}", categoriaId))
+		mockMvc.perform(delete("/api/categorias/{id}", categoriaId).with(csrf()))
 				.andExpect(status().isNoContent());
 
 		mockMvc.perform(get(BASE_PATH + "/{id}", tarefaId))

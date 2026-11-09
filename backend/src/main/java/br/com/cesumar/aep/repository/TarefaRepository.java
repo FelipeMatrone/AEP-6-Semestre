@@ -9,4 +9,7 @@ import br.com.cesumar.aep.model.Tarefa;
 public interface TarefaRepository extends MongoRepository<Tarefa, String> {
 
 	List<Tarefa> findByUsuarioId(String usuarioId);
+
+	// IsNull casa campo nulo e campo ausente: excluir categoria usa $unset.
+	List<Tarefa> findByUsuarioIdAndCategoriaIdIsNull(String usuarioId);
 }

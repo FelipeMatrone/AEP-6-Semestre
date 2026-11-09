@@ -1,29 +1,29 @@
 package br.com.cesumar.aep.controller;
 
-import java.util.List;
-
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.com.cesumar.aep.dto.PainelResponse;
-import br.com.cesumar.aep.dto.ProgressoResponse;
-import br.com.cesumar.aep.model.Cor;
+import br.com.cesumar.aep.service.PainelService;
+import br.com.cesumar.aep.service.UsuarioAtual;
 
-// Dados fixos: a constante sai quando o Service for ligado.
 @RestController
 @RequestMapping("/api/painel")
 public class PainelController {
 
-	private static final String CATEGORIA_ID_FIXO = "672f0000000000000000b001";
+	private final PainelService service;
 
-	private static final PainelResponse PAINEL_FIXO = new PainelResponse(7, 12, 2, List.of(
-			new ProgressoResponse(CATEGORIA_ID_FIXO, "Engenharia de Software", Cor.ROXO, 5, 3, 60),
-			new ProgressoResponse(null, "Sem disciplina", Cor.AMBAR, 2, 0, 0)));
+	private final UsuarioAtual usuarioAtual;
+
+	public PainelController(PainelService service, UsuarioAtual usuarioAtual) {
+		this.service = service;
+		this.usuarioAtual = usuarioAtual;
+	}
 
 	@GetMapping
 	public PainelResponse painel() {
-		return PAINEL_FIXO;
+		return service.painel(usuarioAtual.id());
 	}
 
 }

@@ -1,6 +1,7 @@
 package br.com.cesumar.aep.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
@@ -15,19 +16,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.com.cesumar.aep.configuration.SecurityConfiguration;
+import br.com.cesumar.aep.dto.UsuarioCreateRequest;
+import br.com.cesumar.aep.dto.UsuarioResponse;
 import br.com.cesumar.aep.service.UsuarioAutenticado;
 import br.com.cesumar.aep.service.UsuarioService;
 
 // @WebMvcTest não carrega uma @Configuration qualquer: sem o @Import a cadeia
 // deste projeto ficaria de fora e o slice testaria o padrão do Boot.
-@WebMvcTest(SessaoController.class)
+// o UsuarioController entra no slice por causa do último teste da classe: é
+// aqui que o cadastro consegue ser exercitado contra a cadeia de verdade.
+@WebMvcTest({ SessaoController.class, UsuarioController.class })
 @Import(SecurityConfiguration.class)
 class SessaoControllerTest {
 
@@ -130,6 +136,26 @@ class SessaoControllerTest {
 	void logoutDevolve204() throws Exception {
 		mockMvc.perform(delete(BASE_PATH).with(csrf()))
 				.andExpect(status().isNoContent());
+	}
+
+	// protege a única rota pública que ninguém mais cobre: se POST /api/usuarios
+	// sair do permitAll, não se cria conta sem conta e o usuário fica preso do
+	// lado de fora. O 201 prova que a requisição chegou ao handler — um 401, um
+	// 403 ou um 404 reprovam.
+	@Test
+	@WithAnonymousUser
+	void cadastroEhPublico() throws Exception {
+		when(service.criar(any(UsuarioCreateRequest.class)))
+				.thenReturn(new UsuarioResponse(USUARIO_ID, NOME, EMAIL));
+
+		mockMvc.perform(post("/api/usuarios")
+				.with(csrf())
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{ "nome": "%s", "email": "%s", "senha": "%s" }
+						""".formatted(NOME, EMAIL, SENHA)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.id").value(USUARIO_ID));
 	}
 
 	// encoder de verdade, e não um hash de fachada: o bean vem do @Import e é

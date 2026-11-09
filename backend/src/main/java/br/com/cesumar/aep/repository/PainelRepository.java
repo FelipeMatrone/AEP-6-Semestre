@@ -1,6 +1,5 @@
 package br.com.cesumar.aep.repository;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.bson.Document;
@@ -26,15 +25,12 @@ public class PainelRepository {
 	public record CategoriaComTarefas(String id, String nome, Cor cor, List<Tarefa> tarefas) {
 	}
 
-	public List<CategoriaComTarefas> agregar(String usuarioId, LocalDate hoje) {
-		return mongoTemplate.aggregate(montarPipeline(usuarioId, hoje), "categorias", CategoriaComTarefas.class)
+	public List<CategoriaComTarefas> agregar(String usuarioId) {
+		return mongoTemplate.aggregate(montarPipeline(usuarioId), "categorias", CategoriaComTarefas.class)
 				.getMappedResults();
 	}
 
-	// `hoje` ainda não entra em estágio nenhum: atrasada é decidida no Service,
-	// onde a fronteira do "<" é testável sem Mongo. O parâmetro fica na
-	// assinatura para o dia ser sempre injetado, nunca lido aqui dentro.
-	public Aggregation montarPipeline(String usuarioId, LocalDate hoje) {
+	public Aggregation montarPipeline(String usuarioId) {
 		// as referências entre documentos são string e o _id é ObjectId: o
 		// $lookup de quatro argumentos compara tipos diferentes, não dá erro e
 		// devolve vazio para toda categoria. Daí let + $expr + $toString.

@@ -2,7 +2,6 @@ package br.com.cesumar.aep.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.LocalDate;
 import java.util.List;
 
 import org.bson.Document;
@@ -11,8 +10,6 @@ import org.springframework.data.mongodb.core.aggregation.Aggregation;
 
 // sem Mongo: afirma sobre os estágios do pipeline montado.
 class PainelRepositoryTest {
-
-	private static final LocalDate HOJE = LocalDate.of(2026, 11, 8);
 
 	private final PainelRepository repository = new PainelRepository(null);
 
@@ -37,7 +34,7 @@ class PainelRepositoryTest {
 	}
 
 	private List<Document> pipeline() {
-		Aggregation aggregation = repository.montarPipeline("u1", HOJE);
+		Aggregation aggregation = repository.montarPipeline("u1");
 
 		return aggregation.toPipeline(Aggregation.DEFAULT_CONTEXT);
 	}

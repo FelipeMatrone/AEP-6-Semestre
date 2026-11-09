@@ -38,7 +38,7 @@ public class PainelService {
 		List<ProgressoResponse> progresso = new ArrayList<>();
 		List<Tarefa> todas = new ArrayList<>();
 
-		for (CategoriaComTarefas categoria : repository.agregar(usuarioId, hoje)) {
+		for (CategoriaComTarefas categoria : repository.agregar(usuarioId)) {
 			progresso.add(progresso(categoria.id(), categoria.nome(), categoria.cor(), categoria.tarefas()));
 			todas.addAll(categoria.tarefas());
 		}

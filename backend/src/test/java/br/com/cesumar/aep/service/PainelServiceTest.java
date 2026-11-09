@@ -46,7 +46,7 @@ class PainelServiceTest {
 
 	@Test
 	void painelSomaPendentesConcluidasEAtrasadas() {
-		when(repository.agregar(USUARIO, HOJE)).thenReturn(List.of(categoria("c1", List.of(
+		when(repository.agregar(USUARIO)).thenReturn(List.of(categoria("c1", List.of(
 				tarefa(true, HOJE.minusDays(5)),
 				tarefa(false, HOJE.minusDays(1)),
 				tarefa(false, HOJE.plusDays(1))))));
@@ -63,7 +63,7 @@ class PainelServiceTest {
 
 	@Test
 	void tarefaComPrazoHojeNaoContaComoAtrasada() {
-		when(repository.agregar(USUARIO, HOJE)).thenReturn(List.of(categoria("c1", List.of(
+		when(repository.agregar(USUARIO)).thenReturn(List.of(categoria("c1", List.of(
 				tarefa(false, HOJE)))));
 		when(tarefaRepository.findByUsuarioIdAndCategoriaIdIsNull(USUARIO)).thenReturn(List.of());
 
@@ -72,7 +72,7 @@ class PainelServiceTest {
 
 	@Test
 	void tarefaSemCategoriaVaiParaOBaldeSemDisciplina() {
-		when(repository.agregar(USUARIO, HOJE)).thenReturn(List.of());
+		when(repository.agregar(USUARIO)).thenReturn(List.of());
 		when(tarefaRepository.findByUsuarioIdAndCategoriaIdIsNull(USUARIO))
 				.thenReturn(List.of(tarefa(true, HOJE), tarefa(false, HOJE)));
 
@@ -87,7 +87,7 @@ class PainelServiceTest {
 
 	@Test
 	void categoriaSemTarefaApareceComPercentualZero() {
-		when(repository.agregar(USUARIO, HOJE)).thenReturn(List.of(categoria("c1", List.of())));
+		when(repository.agregar(USUARIO)).thenReturn(List.of(categoria("c1", List.of())));
 		when(tarefaRepository.findByUsuarioIdAndCategoriaIdIsNull(USUARIO)).thenReturn(List.of());
 
 		List<ProgressoResponse> progresso = service.painel(USUARIO).progresso();
@@ -97,7 +97,7 @@ class PainelServiceTest {
 
 	@Test
 	void percentualVemArredondadoParaInteiro() {
-		when(repository.agregar(USUARIO, HOJE)).thenReturn(List.of(categoria("c1", List.of(
+		when(repository.agregar(USUARIO)).thenReturn(List.of(categoria("c1", List.of(
 				tarefa(true, HOJE), tarefa(false, HOJE), tarefa(false, HOJE)))));
 		when(tarefaRepository.findByUsuarioIdAndCategoriaIdIsNull(USUARIO)).thenReturn(List.of());
 

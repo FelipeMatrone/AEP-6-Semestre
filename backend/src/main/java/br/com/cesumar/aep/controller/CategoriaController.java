@@ -38,15 +38,22 @@ public class CategoriaController {
 
 	private static final Instant CARIMBO_FIXO = Instant.parse("2026-11-08T14:32:00Z");
 
+	private static final String ANOTACAO_ID_FIXO_2 = "672f0000000000000000c002";
+
 	private static final AnotacaoResponse ANOTACAO_FIXA = new AnotacaoResponse(ANOTACAO_ID_FIXO,
 			"Padrões de projeto", "<div>Resumo da aula</div>", CARIMBO_FIXO, CARIMBO_FIXO);
 
+	private static final AnotacaoResponse ANOTACAO_FIXA_2 = new AnotacaoResponse(ANOTACAO_ID_FIXO_2,
+			"Arquitetura em camadas", "<div>Resumo da aula</div>", CARIMBO_FIXO, CARIMBO_FIXO);
+
+	private static final List<AnotacaoResponse> ANOTACOES_FIXAS = List.of(ANOTACAO_FIXA, ANOTACAO_FIXA_2);
+
 	private static final List<CategoriaSummaryResponse> CATEGORIAS_FIXAS = List.of(
 			new CategoriaSummaryResponse(CATEGORIA_ID_FIXO, "Engenharia de Software", "Disciplina do 6º semestre",
-					Cor.ROXO, 12));
+					Cor.ROXO, ANOTACOES_FIXAS.size()));
 
 	private static final CategoriaResponse CATEGORIA_FIXA = new CategoriaResponse(CATEGORIA_ID_FIXO,
-			"Engenharia de Software", "Disciplina do 6º semestre", Cor.ROXO, List.of(ANOTACAO_FIXA));
+			"Engenharia de Software", "Disciplina do 6º semestre", Cor.ROXO, ANOTACOES_FIXAS);
 
 	@GetMapping
 	public List<CategoriaSummaryResponse> listar() {
@@ -73,7 +80,7 @@ public class CategoriaController {
 
 	@PutMapping("/{id}")
 	public CategoriaResponse atualizar(@PathVariable String id, @Valid @RequestBody CategoriaUpdateRequest request) {
-		return new CategoriaResponse(id, request.nome(), request.descricao(), request.cor(), List.of(ANOTACAO_FIXA));
+		return new CategoriaResponse(id, request.nome(), request.descricao(), request.cor(), ANOTACOES_FIXAS);
 	}
 
 	@DeleteMapping("/{id}")

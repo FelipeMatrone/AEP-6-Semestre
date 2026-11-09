@@ -1,6 +1,7 @@
 package br.com.cesumar.aep.controller;
 
 import static org.hamcrest.Matchers.matchesPattern;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -9,11 +10,15 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.jayway.jsonpath.JsonPath;
 
 @WebMvcTest(CategoriaController.class)
 class CategoriaControllerTest {
@@ -38,7 +43,7 @@ class CategoriaControllerTest {
 				.andExpect(jsonPath("$[0].id", matchesPattern(ID_OBJECTID)))
 				.andExpect(jsonPath("$[0].nome").isNotEmpty())
 				.andExpect(jsonPath("$[0].cor").value("roxo"))
-				.andExpect(jsonPath("$[0].totalAnotacoes").value(12))
+				.andExpect(jsonPath("$[0].totalAnotacoes").value(2))
 				// a listagem é resumo: a lista de anotações só vem no detalhe
 				.andExpect(jsonPath("$[0].anotacoes").doesNotExist());
 	}
@@ -49,11 +54,25 @@ class CategoriaControllerTest {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id", matchesPattern(ID_OBJECTID)))
 				.andExpect(jsonPath("$.anotacoes[0].id", matchesPattern(ID_OBJECTID)))
+				.andExpect(jsonPath("$.anotacoes.length()").value(2))
+				.andExpect(jsonPath("$.anotacoes[1].id", matchesPattern(ID_OBJECTID)))
 				.andExpect(jsonPath("$.anotacoes[0].titulo").isNotEmpty())
 				.andExpect(jsonPath("$.anotacoes[0].conteudo").isNotEmpty())
 				.andExpect(jsonPath("$.anotacoes[0].criadaEm", matchesPattern(INSTANTE_UTC)))
 				.andExpect(jsonPath("$.anotacoes[0].atualizadaEm", matchesPattern(INSTANTE_UTC)))
 				.andExpect(jsonPath("$.totalAnotacoes").doesNotExist());
+	}
+
+	@Test
+	void totalAnotacoesDaListagemCasaComAListaDoDetalhe() throws Exception {
+		String listagem = mockMvc.perform(get(BASE_PATH)).andReturn().getResponse().getContentAsString();
+		String id = JsonPath.read(listagem, "$[0].id");
+		int total = JsonPath.read(listagem, "$[0].totalAnotacoes");
+
+		String detalhe = mockMvc.perform(get(BASE_PATH + "/{id}", id)).andReturn().getResponse().getContentAsString();
+		int tamanho = JsonPath.<List<Object>>read(detalhe, "$.anotacoes").size();
+
+		assertEquals(tamanho, total);
 	}
 
 	@Test

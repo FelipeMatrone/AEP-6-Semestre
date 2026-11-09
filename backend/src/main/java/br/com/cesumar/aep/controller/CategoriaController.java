@@ -41,16 +41,21 @@ public class CategoriaController {
 	private static final AnotacaoResponse ANOTACAO_FIXA = new AnotacaoResponse(ANOTACAO_ID_FIXO,
 			"Padrões de projeto", "<div>Resumo da aula</div>", CARIMBO_FIXO, CARIMBO_FIXO);
 
+	private static final List<CategoriaSummaryResponse> CATEGORIAS_FIXAS = List.of(
+			new CategoriaSummaryResponse(CATEGORIA_ID_FIXO, "Engenharia de Software", "Disciplina do 6º semestre",
+					Cor.ROXO, 12));
+
+	private static final CategoriaResponse CATEGORIA_FIXA = new CategoriaResponse(CATEGORIA_ID_FIXO,
+			"Engenharia de Software", "Disciplina do 6º semestre", Cor.ROXO, List.of(ANOTACAO_FIXA));
+
 	@GetMapping
 	public List<CategoriaSummaryResponse> listar() {
-		return List.of(new CategoriaSummaryResponse(CATEGORIA_ID_FIXO, "Engenharia de Software",
-				"Disciplina do 6º semestre", Cor.ROXO, 1));
+		return CATEGORIAS_FIXAS;
 	}
 
 	@GetMapping("/{id}")
 	public CategoriaResponse buscarPorId(@PathVariable String id) {
-		return new CategoriaResponse(CATEGORIA_ID_FIXO, "Engenharia de Software",
-				"Disciplina do 6º semestre", Cor.ROXO, List.of(ANOTACAO_FIXA));
+		return CATEGORIA_FIXA;
 	}
 
 	@PostMapping

@@ -15,9 +15,11 @@ import br.com.cesumar.aep.model.Cor;
 @RequestMapping("/api/painel")
 public class PainelController {
 
+	private static final String CATEGORIA_ID_FIXO = "672f0000000000000000b001";
+
 	private static final PainelResponse PAINEL_FIXO = new PainelResponse(7, 12, 2, List.of(
-			new ProgressoResponse("672f0000000000000000b001", "Engenharia de Software", Cor.ROXO, 5, 3, 60),
-			new ProgressoResponse(null, "Sem categoria", Cor.AMBAR, 2, 0, 0)));
+			new ProgressoResponse(CATEGORIA_ID_FIXO, "Engenharia de Software", Cor.ROXO, 5, 3, 60),
+			new ProgressoResponse(null, "Sem disciplina", Cor.AMBAR, 2, 0, 0)));
 
 	@GetMapping
 	public PainelResponse painel() {

@@ -1,5 +1,6 @@
 package br.com.cesumar.aep.controller;
 
+import static org.hamcrest.Matchers.matchesPattern;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -23,6 +24,10 @@ class CategoriaControllerTest {
 
 	private static final String ANOTACAO_ID = "672f0000000000000000c001";
 
+	private static final String ID_OBJECTID = "[0-9a-f]{24}";
+
+	private static final String INSTANTE_UTC = "\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?Z";
+
 	@Autowired
 	private MockMvc mockMvc;
 
@@ -30,10 +35,10 @@ class CategoriaControllerTest {
 	void listarDevolveCategoriasComTotalDeAnotacoes() throws Exception {
 		mockMvc.perform(get(BASE_PATH))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$[0].id").value(CATEGORIA_ID))
+				.andExpect(jsonPath("$[0].id", matchesPattern(ID_OBJECTID)))
 				.andExpect(jsonPath("$[0].nome").isNotEmpty())
 				.andExpect(jsonPath("$[0].cor").value("roxo"))
-				.andExpect(jsonPath("$[0].totalAnotacoes").isNumber())
+				.andExpect(jsonPath("$[0].totalAnotacoes").value(12))
 				// a listagem é resumo: a lista de anotações só vem no detalhe
 				.andExpect(jsonPath("$[0].anotacoes").doesNotExist());
 	}
@@ -42,11 +47,12 @@ class CategoriaControllerTest {
 	void buscarPorIdDevolveAnotacoesAninhadas() throws Exception {
 		mockMvc.perform(get(BASE_PATH + "/{id}", CATEGORIA_ID))
 				.andExpect(status().isOk())
-				.andExpect(jsonPath("$.id").value(CATEGORIA_ID))
-				.andExpect(jsonPath("$.anotacoes[0].id").value(ANOTACAO_ID))
+				.andExpect(jsonPath("$.id", matchesPattern(ID_OBJECTID)))
+				.andExpect(jsonPath("$.anotacoes[0].id", matchesPattern(ID_OBJECTID)))
 				.andExpect(jsonPath("$.anotacoes[0].titulo").isNotEmpty())
 				.andExpect(jsonPath("$.anotacoes[0].conteudo").isNotEmpty())
-				.andExpect(jsonPath("$.anotacoes[0].atualizadaEm").isNotEmpty())
+				.andExpect(jsonPath("$.anotacoes[0].criadaEm", matchesPattern(INSTANTE_UTC)))
+				.andExpect(jsonPath("$.anotacoes[0].atualizadaEm", matchesPattern(INSTANTE_UTC)))
 				.andExpect(jsonPath("$.totalAnotacoes").doesNotExist());
 	}
 
@@ -57,6 +63,7 @@ class CategoriaControllerTest {
 				.content(corpo("Banco de Dados", "magenta")))
 				.andExpect(status().isCreated())
 				.andExpect(header().string("Location", "http://localhost/api/categorias/" + CATEGORIA_ID))
+				.andExpect(jsonPath("$.id", matchesPattern(ID_OBJECTID)))
 				.andExpect(jsonPath("$.nome").value("Banco de Dados"))
 				.andExpect(jsonPath("$.cor").value("magenta"));
 	}
@@ -104,6 +111,9 @@ class CategoriaControllerTest {
 				.andExpect(status().isCreated())
 				.andExpect(header().string("Location",
 						"http://localhost/api/categorias/" + CATEGORIA_ID + "/anotacoes/" + ANOTACAO_ID))
+				.andExpect(jsonPath("$.id", matchesPattern(ID_OBJECTID)))
+				.andExpect(jsonPath("$.criadaEm", matchesPattern(INSTANTE_UTC)))
+				.andExpect(jsonPath("$.atualizadaEm", matchesPattern(INSTANTE_UTC)))
 				.andExpect(jsonPath("$.titulo").value("Resumo"))
 				.andExpect(jsonPath("$.conteudo").value("<div>texto</div>"));
 	}
@@ -124,6 +134,8 @@ class CategoriaControllerTest {
 				.content(corpoAnotacao("Novo título", "<div>novo</div>")))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(ANOTACAO_ID))
+				.andExpect(jsonPath("$.criadaEm", matchesPattern(INSTANTE_UTC)))
+				.andExpect(jsonPath("$.atualizadaEm", matchesPattern(INSTANTE_UTC)))
 				.andExpect(jsonPath("$.titulo").value("Novo título"));
 	}
 

@@ -26,6 +26,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 
 import com.jayway.jsonpath.JsonPath;
 
+import br.com.cesumar.aep.repository.CategoriaRepository;
 import br.com.cesumar.aep.repository.TarefaRepository;
 
 // O que este teste prova: o CRUD completo vai e volta contra um MongoDB real,
@@ -58,9 +59,13 @@ class TarefaApiIT {
 	@Autowired
 	private TarefaRepository repository;
 
+	@Autowired
+	private CategoriaRepository categoriaRepository;
+
 	@BeforeEach
 	void limparColecao() {
 		repository.deleteAll();
+		categoriaRepository.deleteAll();
 	}
 
 	@Test
@@ -122,6 +127,45 @@ class TarefaApiIT {
 
 		mockMvc.perform(get(BASE_PATH + "/{id}", id))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void excluirCategoriaDesvinculaATarefaSemApagar() throws Exception {
+		String corpoCategoria = mockMvc.perform(post("/api/categorias")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{ "nome": "Banco de Dados", "descricao": "Disciplina", "cor": "roxo" }
+						"""))
+				.andExpect(status().isCreated())
+				.andReturn()
+				.getResponse()
+				.getContentAsString(StandardCharsets.UTF_8);
+		String categoriaId = JsonPath.read(corpoCategoria, "$.id");
+
+		String corpoTarefa = mockMvc.perform(post(BASE_PATH)
+				.contentType(MediaType.APPLICATION_JSON)
+				.content("""
+						{
+						  "titulo": "Modelar o banco",
+						  "prazo": "2026-09-20",
+						  "prioridade": "alta",
+						  "categoriaId": "%s"
+						}
+						""".formatted(categoriaId)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.categoriaId").value(categoriaId))
+				.andReturn()
+				.getResponse()
+				.getContentAsString(StandardCharsets.UTF_8);
+		String tarefaId = JsonPath.read(corpoTarefa, "$.id");
+
+		mockMvc.perform(delete("/api/categorias/{id}", categoriaId))
+				.andExpect(status().isNoContent());
+
+		mockMvc.perform(get(BASE_PATH + "/{id}", tarefaId))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.titulo").value("Modelar o banco"))
+				.andExpect(jsonPath("$.categoriaId").doesNotExist());
 	}
 
 }

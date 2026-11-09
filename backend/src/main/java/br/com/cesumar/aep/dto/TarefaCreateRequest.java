@@ -19,5 +19,8 @@ public record TarefaCreateRequest(
 		@NotNull(message = "A prioridade é obrigatória")
 		Prioridade prioridade,
 
-		String observacao) {
+		String observacao,
+
+		// opcional: tarefa sem disciplina é válida.
+		String categoriaId) {
 }

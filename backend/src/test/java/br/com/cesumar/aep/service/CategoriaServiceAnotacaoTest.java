@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.com.cesumar.aep.dto.AnotacaoCreateRequest;
@@ -43,11 +44,14 @@ class CategoriaServiceAnotacaoTest {
 	@Mock
 	private CategoriaRepository repository;
 
+	@Mock
+	private MongoTemplate mongoTemplate;
+
 	private CategoriaService service;
 
 	@BeforeEach
 	void prepararService() {
-		service = new CategoriaService(repository, new CategoriaMapper(), Clock.fixed(AGORA, ZoneOffset.UTC));
+		service = new CategoriaService(repository, mongoTemplate, new CategoriaMapper(), Clock.fixed(AGORA, ZoneOffset.UTC));
 	}
 
 	@Test

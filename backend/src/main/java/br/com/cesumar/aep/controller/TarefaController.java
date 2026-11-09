@@ -27,6 +27,9 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/tarefas")
 public class TarefaController {
 
+	// enquanto não há Security, o dono é fixo.
+	private static final String USUARIO_FIXO = "672f0000000000000000a001";
+
 	private final TarefaService service;
 
 	public TarefaController(TarefaService service) {
@@ -35,17 +38,17 @@ public class TarefaController {
 
 	@GetMapping
 	public List<TarefaSummaryResponse> listar() {
-		return service.listar();
+		return service.listar(USUARIO_FIXO);
 	}
 
 	@GetMapping("/{id}")
 	public TarefaResponse buscarPorId(@PathVariable String id) {
-		return service.buscarPorId(id);
+		return service.buscarPorId(id, USUARIO_FIXO);
 	}
 
 	@PostMapping
 	public ResponseEntity<TarefaResponse> criar(@Valid @RequestBody TarefaCreateRequest request) {
-		TarefaResponse tarefa = service.criar(request);
+		TarefaResponse tarefa = service.criar(request, USUARIO_FIXO);
 
 		URI local = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{id}")
@@ -57,13 +60,13 @@ public class TarefaController {
 
 	@PutMapping("/{id}")
 	public TarefaResponse atualizar(@PathVariable String id, @Valid @RequestBody TarefaUpdateRequest request) {
-		return service.atualizar(id, request);
+		return service.atualizar(id, request, USUARIO_FIXO);
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void excluir(@PathVariable String id) {
-		service.excluir(id);
+		service.excluir(id, USUARIO_FIXO);
 	}
 
 }

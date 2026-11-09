@@ -36,6 +36,8 @@ class TarefaControllerTest {
 
 	private static final String BASE_PATH = "/api/tarefas";
 
+	private static final String USUARIO = "672f0000000000000000a001";
+
 	private static final LocalDate PRAZO = LocalDate.of(2026, 9, 12);
 
 	private static final Instant CARIMBO = Instant.parse("2026-09-09T12:00:00Z");
@@ -48,9 +50,9 @@ class TarefaControllerTest {
 
 	@Test
 	void deveListarSomenteOsCamposDoResumo() throws Exception {
-		when(service.listar()).thenReturn(
+		when(service.listar(USUARIO)).thenReturn(
 				List.of(new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA,
-						"Observação de teste", false)));
+						"Observação de teste", false, "c1")));
 
 		mockMvc.perform(get(BASE_PATH))
 				.andExpect(status().isOk())
@@ -60,14 +62,17 @@ class TarefaControllerTest {
 				.andExpect(jsonPath("$[0].prioridade").value("media"))
 				.andExpect(jsonPath("$[0].observacao").value("Observação de teste"))
 				.andExpect(jsonPath("$[0].concluida").value(false))
+				.andExpect(jsonPath("$[0].categoriaId").value("c1"))
 				// sem estes, um TarefaResponse devolvido por engano na listagem
 				// passaria verde e a projeção não estaria testada
-				.andExpect(jsonPath("$[0].criadaEm").doesNotExist());
+				.andExpect(jsonPath("$[0].criadaEm").doesNotExist())
+				// usuarioId é dado de dono: não sai em resposta nenhuma
+				.andExpect(jsonPath("$[0].usuarioId").doesNotExist());
 	}
 
 	@Test
 	void deveCriarComLocationEOCorpoCompleto() throws Exception {
-		when(service.criar(any())).thenReturn(resposta());
+		when(service.criar(any(), eq(USUARIO))).thenReturn(resposta());
 
 		mockMvc.perform(post(BASE_PATH)
 				.contentType(MediaType.APPLICATION_JSON)
@@ -76,13 +81,16 @@ class TarefaControllerTest {
 						  "titulo": "Entregar a modelagem",
 						  "prazo": "2026-09-12",
 						  "prioridade": "media",
-						  "observacao": "Observação de teste"
+						  "observacao": "Observação de teste",
+						  "categoriaId": "c1"
 						}
 						"""))
 				.andExpect(status().isCreated())
 				.andExpect(header().string("Location", "http://localhost/api/tarefas/1"))
 				.andExpect(jsonPath("$.id").value("1"))
-				.andExpect(jsonPath("$.concluida").value(false));
+				.andExpect(jsonPath("$.concluida").value(false))
+				.andExpect(jsonPath("$.categoriaId").value("c1"))
+				.andExpect(jsonPath("$.usuarioId").doesNotExist());
 	}
 
 	@Test
@@ -105,7 +113,7 @@ class TarefaControllerTest {
 
 	@Test
 	void deveRetornarNotFoundParaTarefaInexistente() throws Exception {
-		when(service.buscarPorId("999")).thenThrow(new TarefaNotFoundException("999"));
+		when(service.buscarPorId("999", USUARIO)).thenThrow(new TarefaNotFoundException("999"));
 
 		mockMvc.perform(get(BASE_PATH + "/{id}", "999"))
 				.andExpect(status().isNotFound())
@@ -116,7 +124,7 @@ class TarefaControllerTest {
 
 	private TarefaResponse resposta() {
 		return new TarefaResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false, "Observação de teste", CARIMBO,
-				CARIMBO);
+				CARIMBO, "c1");
 	}
 
 }

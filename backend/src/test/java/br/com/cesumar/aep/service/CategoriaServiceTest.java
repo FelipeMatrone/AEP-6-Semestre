@@ -4,8 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Clock;
@@ -17,7 +20,11 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InOrder;
 import org.mockito.Mock;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import br.com.cesumar.aep.dto.CategoriaCreateRequest;
@@ -29,6 +36,7 @@ import br.com.cesumar.aep.mapper.CategoriaMapper;
 import br.com.cesumar.aep.model.Anotacao;
 import br.com.cesumar.aep.model.Categoria;
 import br.com.cesumar.aep.model.Cor;
+import br.com.cesumar.aep.model.Tarefa;
 import br.com.cesumar.aep.repository.CategoriaRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,12 +53,15 @@ class CategoriaServiceTest {
 	@Mock
 	private CategoriaRepository repository;
 
+	@Mock
+	private MongoTemplate mongoTemplate;
+
 	private CategoriaService service;
 
 	@BeforeEach
 	void prepararService() {
 		// Mapper de verdade e relógio fixo, pelo mesmo motivo de TarefaServiceTest.
-		service = new CategoriaService(repository, new CategoriaMapper(), Clock.fixed(AGORA, ZoneOffset.UTC));
+		service = new CategoriaService(repository, mongoTemplate, new CategoriaMapper(), Clock.fixed(AGORA, ZoneOffset.UTC));
 	}
 
 	@Test
@@ -116,6 +127,25 @@ class CategoriaServiceTest {
 				.isInstanceOf(CategoriaNotFoundException.class);
 
 		verify(repository, never()).delete(any(Categoria.class));
+		verifyNoInteractions(mongoTemplate);
+	}
+
+	@Test
+	void excluirCategoriaDesvinculaTarefasAntesDeApagar() {
+		Categoria persistida = categoria("1", USUARIO);
+		when(repository.findById("1")).thenReturn(Optional.of(persistida));
+
+		service.excluir("1", USUARIO);
+
+		// a ordem importa: se falhar no meio, sobra tarefa sem disciplina,
+		// nunca referência pendurada.
+		InOrder ordem = inOrder(mongoTemplate, repository);
+		ordem.verify(mongoTemplate).updateMulti(argThat((Query consulta) -> "1"
+				.equals(consulta.getQueryObject().get("categoriaId"))
+				&& USUARIO.equals(consulta.getQueryObject().get("usuarioId"))),
+				argThat((Update atualizacao) -> atualizacao.getUpdateObject().containsKey("$unset")),
+				eq(Tarefa.class));
+		ordem.verify(repository).delete(persistida);
 	}
 
 	@Test

@@ -5,6 +5,10 @@ import java.time.Instant;
 import java.util.List;
 
 import org.bson.types.ObjectId;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import br.com.cesumar.aep.dto.AnotacaoCreateRequest;
@@ -19,6 +23,7 @@ import br.com.cesumar.aep.exception.CategoriaNotFoundException;
 import br.com.cesumar.aep.mapper.CategoriaMapper;
 import br.com.cesumar.aep.model.Anotacao;
 import br.com.cesumar.aep.model.Categoria;
+import br.com.cesumar.aep.model.Tarefa;
 import br.com.cesumar.aep.repository.CategoriaRepository;
 
 @Service
@@ -26,12 +31,16 @@ public class CategoriaService {
 
 	private final CategoriaRepository repository;
 
+	private final MongoTemplate mongoTemplate;
+
 	private final CategoriaMapper mapper;
 
 	private final Clock clock;
 
-	public CategoriaService(CategoriaRepository repository, CategoriaMapper mapper, Clock clock) {
+	public CategoriaService(CategoriaRepository repository, MongoTemplate mongoTemplate, CategoriaMapper mapper,
+			Clock clock) {
 		this.repository = repository;
+		this.mongoTemplate = mongoTemplate;
 		this.mapper = mapper;
 		this.clock = clock;
 	}
@@ -67,7 +76,15 @@ public class CategoriaService {
 	}
 
 	public void excluir(String id, String usuarioId) {
-		repository.delete(buscarOuFalhar(id, usuarioId));
+		Categoria categoria = buscarOuFalhar(id, usuarioId);
+
+		// desvincula antes de apagar: se falhar no meio, sobra tarefa sem
+		// disciplina, nunca tarefa apontando para categoria que não existe.
+		mongoTemplate.updateMulti(
+				Query.query(Criteria.where("categoriaId").is(id).and("usuarioId").is(usuarioId)),
+				new Update().unset("categoriaId"),
+				Tarefa.class);
+		repository.delete(categoria);
 	}
 
 	public AnotacaoResponse criarAnotacao(String categoriaId, AnotacaoCreateRequest request, String usuarioId) {

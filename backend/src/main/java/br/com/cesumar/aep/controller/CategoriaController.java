@@ -24,51 +24,41 @@ import br.com.cesumar.aep.dto.CategoriaCreateRequest;
 import br.com.cesumar.aep.dto.CategoriaResponse;
 import br.com.cesumar.aep.dto.CategoriaSummaryResponse;
 import br.com.cesumar.aep.dto.CategoriaUpdateRequest;
-import br.com.cesumar.aep.model.Cor;
+import br.com.cesumar.aep.service.CategoriaService;
 import jakarta.validation.Valid;
 
-// Dados fixos: as constantes saem quando o Service for ligado.
 @RestController
 @RequestMapping("/api/categorias")
 public class CategoriaController {
 
-	private static final String CATEGORIA_ID_FIXO = "672f0000000000000000b001";
+	// usuário semeado em banco/init.js. Sai quando o Security fornecer o usuário
+	// autenticado.
+	private static final String USUARIO_FIXO = "672f0000000000000000a001";
 
+	// Dados fixos das rotas de anotação: saem quando elas forem ligadas ao Service.
 	private static final String ANOTACAO_ID_FIXO = "672f0000000000000000c001";
 
 	private static final Instant CARIMBO_FIXO = Instant.parse("2026-11-08T14:32:00Z");
 
-	private static final String ANOTACAO_ID_FIXO_2 = "672f0000000000000000c002";
+	private final CategoriaService service;
 
-	private static final AnotacaoResponse ANOTACAO_FIXA = new AnotacaoResponse(ANOTACAO_ID_FIXO,
-			"Padrões de projeto", "<div>Resumo da aula</div>", CARIMBO_FIXO, CARIMBO_FIXO);
-
-	private static final AnotacaoResponse ANOTACAO_FIXA_2 = new AnotacaoResponse(ANOTACAO_ID_FIXO_2,
-			"Arquitetura em camadas", "<div>Resumo da aula</div>", CARIMBO_FIXO, CARIMBO_FIXO);
-
-	private static final List<AnotacaoResponse> ANOTACOES_FIXAS = List.of(ANOTACAO_FIXA, ANOTACAO_FIXA_2);
-
-	private static final List<CategoriaSummaryResponse> CATEGORIAS_FIXAS = List.of(
-			new CategoriaSummaryResponse(CATEGORIA_ID_FIXO, "Engenharia de Software", "Disciplina do 6º semestre",
-					Cor.ROXO, ANOTACOES_FIXAS.size()));
-
-	private static final CategoriaResponse CATEGORIA_FIXA = new CategoriaResponse(CATEGORIA_ID_FIXO,
-			"Engenharia de Software", "Disciplina do 6º semestre", Cor.ROXO, ANOTACOES_FIXAS);
+	public CategoriaController(CategoriaService service) {
+		this.service = service;
+	}
 
 	@GetMapping
 	public List<CategoriaSummaryResponse> listar() {
-		return CATEGORIAS_FIXAS;
+		return service.listar(USUARIO_FIXO);
 	}
 
 	@GetMapping("/{id}")
 	public CategoriaResponse buscarPorId(@PathVariable String id) {
-		return CATEGORIA_FIXA;
+		return service.buscarPorId(id, USUARIO_FIXO);
 	}
 
 	@PostMapping
 	public ResponseEntity<CategoriaResponse> criar(@Valid @RequestBody CategoriaCreateRequest request) {
-		CategoriaResponse categoria = new CategoriaResponse(CATEGORIA_ID_FIXO, request.nome(), request.descricao(),
-				request.cor(), List.of());
+		CategoriaResponse categoria = service.criar(request, USUARIO_FIXO);
 
 		URI local = ServletUriComponentsBuilder.fromCurrentRequest()
 				.path("/{id}")
@@ -80,12 +70,13 @@ public class CategoriaController {
 
 	@PutMapping("/{id}")
 	public CategoriaResponse atualizar(@PathVariable String id, @Valid @RequestBody CategoriaUpdateRequest request) {
-		return new CategoriaResponse(id, request.nome(), request.descricao(), request.cor(), ANOTACOES_FIXAS);
+		return service.atualizar(id, request, USUARIO_FIXO);
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void excluir(@PathVariable String id) {
+		service.excluir(id, USUARIO_FIXO);
 	}
 
 	@PostMapping("/{id}/anotacoes")

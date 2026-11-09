@@ -15,6 +15,7 @@ import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
 import org.springframework.data.mongodb.core.convert.MongoCustomConversions;
 import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
+import br.com.cesumar.aep.model.Cor;
 import br.com.cesumar.aep.model.Prioridade;
 
 @Configuration
@@ -25,7 +26,8 @@ public class MongoConfiguration {
 	// que é o que o $jsonSchema da coleção valida.
 	@Bean
 	public MongoCustomConversions mongoCustomConversions() {
-		return new MongoCustomConversions(List.of(new PrioridadeParaSlug(), new SlugParaPrioridade()));
+		return new MongoCustomConversions(List.of(new PrioridadeParaSlug(), new SlugParaPrioridade(),
+				new CorParaSlug(), new SlugParaCor()));
 	}
 
 	// por padrão o conversor grava um campo _class com o nome da classe Java.
@@ -45,6 +47,26 @@ public class MongoConfiguration {
 		conversor.setCustomConversions(conversoes);
 
 		return conversor;
+	}
+
+	@WritingConverter
+	static class CorParaSlug implements Converter<Cor, String> {
+
+		@Override
+		public String convert(Cor cor) {
+			return cor.getSlug();
+		}
+
+	}
+
+	@ReadingConverter
+	static class SlugParaCor implements Converter<String, Cor> {
+
+		@Override
+		public Cor convert(String slug) {
+			return Cor.porSlug(slug);
+		}
+
 	}
 
 	@WritingConverter

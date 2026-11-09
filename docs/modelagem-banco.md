@@ -1,4 +1,10 @@
-# Modelagem do banco — 1ª entrega
+# Modelagem do banco — 1ª entrega (histórico)
+
+> **Documento histórico da 1ª entrega.** A modelagem vigente (três coleções, com
+> `usuarios`, `categorias` e `anotacoes` aninhadas) está em
+> `docs/segunda-entrega.md`. As seções "A restrição que define tudo", "Decisão" e
+> "Especificação do documento" abaixo descrevem a coleção única `tarefas` achatada
+> e já não valem sozinhas; índices e "Como subir o banco" estão atualizados.
 
 Modelagem do MongoDB para a primeira entrega da AEP. Decisões, especificação dos
 campos e o caminho para a segunda entrega.
@@ -55,7 +61,7 @@ criá-la seria a segunda coleção que o teto proíbe.
 | Coleção única `tarefas`, usuário embutido em cada documento | `senhaHash` duplicado em todo documento — trocar senha vira `updateMany`. Pior: usuário recém-cadastrado, sem tarefas, não existe em lugar nenhum para autenticar. |
 | Coleção genérica com campo `tipo` | Quebra "objetos homogêneos" de forma explícita. |
 
-## Especificação do documento
+## Especificação do documento (1ª entrega, histórica)
 
 Coleção: **`tarefas`**
 
@@ -235,8 +241,8 @@ uma coleção com objetos complexos. A evolução é aditiva:
 
 1. `usuarios` entra como coleção nova, com `nome`, `email` único e `senhaHash` —
    e o login e o cadastro deixam de ser mock.
-2. `usuarioId` entra nas tarefas, referenciando essa coleção.
-3. `categorias` entra referenciando `usuarioId`, com a lista de anotações
+2. `usuarioId` entra nas tarefas, referenciando essa coleção. Tipo `string`, não ObjectId: o model guarda `String` e o Spring Data só coage o campo `@Id`.
+3. `categorias` entra referenciando `usuarioId` (também `string`, pelo mesmo motivo), com a lista de anotações
    **aninhada** — o objeto complexo exigido, e a tela de Anotações, que está
    preservada justamente para isso.
 

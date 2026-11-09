@@ -123,7 +123,7 @@ Nunca sai pela fronteira HTTP com `senhaHash`. O `UsuarioResponse` tem `id`,
 | Campo | Tipo | Regra |
 |---|---|---|
 | `_id` | ObjectId | |
-| `usuarioId` | ObjectId | obrigatório, referencia `usuarios` |
+| `usuarioId` | string | obrigatório, referencia `usuarios`. É `string` porque o model guarda `String` e o Spring Data só coage para ObjectId o campo `@Id` |
 | `nome` | string | obrigatório |
 | `descricao` | string | opcional |
 | `cor` | string | enum `roxo`, `magenta`, `verde`, `ambar` |
@@ -157,8 +157,8 @@ Dois campos novos no documento existente:
 
 | Campo | Tipo | Regra |
 |---|---|---|
-| `usuarioId` | ObjectId | **obrigatório**, referencia `usuarios` |
-| `categoriaId` | ObjectId | **opcional**, referencia `categorias` |
+| `usuarioId` | string | **obrigatório**, referencia `usuarios`. `string` porque o model guarda `String`; só o `_id` é coagido para ObjectId |
+| `categoriaId` | string | **opcional**, referencia `categorias`. `string` pelo mesmo motivo: o model guarda `String` |
 
 `categoriaId` é opcional de propósito **[decisão do desenho]**: nem toda tarefa
 pertence a uma disciplina, as tarefas que já existem não têm nenhuma, e
@@ -363,6 +363,24 @@ Duas razões, e as duas importam:
 2. É o backend que o card 14 do Felipe exige quando diz "métricas do Dashboard
    não usam números fixos". Esse endpoint não estava em card nenhum — é um
    buraco no quadro, não um extra.
+
+**Aviso para quem implementa o painel: `usuarioId` e `categoriaId` são `string`,
+`_id` é ObjectId.** O model guarda `String` e o Spring Data só coage o campo
+`@Id`. Por isso um `$lookup` de `categorias` para `tarefas` com
+`localField`/`foreignField` **não casa**: `$lookup` compara tipos BSON exatos, e
+`ObjectId("…b001")` nunca é igual a `"…b001"`. O resultado não é erro, é array
+vazio — o painel mostraria toda categoria com total 0 e toda tarefa em "Sem
+disciplina", com build verde e banco correto. O pipeline tem de usar a forma com
+`let` + `pipeline` + `$expr` (Mongo 7.0 suporta):
+
+```js
+{ $lookup: {
+    from: "tarefas",
+    let: { catId: "$_id" },
+    pipeline: [ { $match: { $expr: { $eq: ["$categoriaId", { $toString: "$$catId" }] } } } ],
+    as: "tarefas"
+} }
+```
 
 ## Ordem de implementação
 

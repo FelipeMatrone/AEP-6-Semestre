@@ -28,7 +28,6 @@ db.createCollection("usuarios", {
         nome: { bsonType: "string" },
         // minúsculo; a unicidade é o índice abaixo, não esta regra
         email: { bsonType: "string" },
-        // TODO(samuel): hash real gerado na Tarefa 7
         senhaHash: { bsonType: "string" },
         criadoEm: { bsonType: "date" }
       }
@@ -119,12 +118,13 @@ db.tarefas.createIndex({ usuarioId: 1, prazo: 1 });
 // Dados de demonstração. Um usuário com quatro categorias (uma sem anotação,
 // para a tela vazia aparecer na apresentação), seis anotações e oito tarefas:
 // uma concluída, uma atrasada, e as que não têm categoriaId.
-// Senha em claro para entrar na demo: aep-demo-2026 (o hash sai na Tarefa 7).
+// Senha em claro para entrar na demo: aep-demo-2026, gravada abaixo como hash
+// BCrypt de custo 10 — o mesmo encoder que o cadastro da API usa.
 db.usuarios.insertOne({
   _id: ObjectId(USUARIO_HEX),
   nome: "Usuário de demonstração",
   email: "demo@aep.local",
-  senhaHash: "$2a$10$SUBSTITUIDO.NA.TAREFA.7.PLACEHOLDER.NAO.E.HASH.VALIDO",
+  senhaHash: "$2a$10$VXylslVk9eCgQ5A/1ZzMWOFZMGqZlTcd6pLr.WDjOSbt6g2dAT1ne",
   criadoEm: agora
 });
 

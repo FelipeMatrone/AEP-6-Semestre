@@ -7,6 +7,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,6 +21,8 @@ public class GlobalExceptionHandler {
 	private static final String CORPO_INVALIDO = "Corpo da requisição inválido ou mal formado";
 
 	private static final String EMAIL_EM_USO = "E-mail já cadastrado";
+
+	private static final String CREDENCIAIS_INVALIDAS = "Credenciais inválidas";
 
 	@ExceptionHandler(RecursoNaoEncontradoException.class)
 	public ResponseEntity<ApiError> recursoNaoEncontrado(RecursoNaoEncontradoException excecao, HttpServletRequest requisicao) {
@@ -37,6 +40,15 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(DuplicateKeyException.class)
 	public ResponseEntity<ApiError> chaveDuplicada(DuplicateKeyException excecao, HttpServletRequest requisicao) {
 		return resposta(HttpStatus.CONFLICT, EMAIL_EM_USO, requisicao, Map.of());
+	}
+
+	// o login autentica dentro do controller, então a falha chega como exceção
+	// de método e não passa pelo entry point da cadeia. Mensagem genérica de
+	// propósito: distinguir "e-mail não existe" de "senha errada" entrega a
+	// lista de e-mails cadastrados.
+	@ExceptionHandler(BadCredentialsException.class)
+	public ResponseEntity<ApiError> credenciaisInvalidas(BadCredentialsException excecao, HttpServletRequest requisicao) {
+		return resposta(HttpStatus.UNAUTHORIZED, CREDENCIAIS_INVALIDAS, requisicao, Map.of());
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)

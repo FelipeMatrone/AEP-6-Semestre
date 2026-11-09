@@ -11,12 +11,15 @@ import static org.mockito.Mockito.when;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -35,6 +38,8 @@ class UsuarioServiceTest {
 	private static final String ID = "672f0000000000000000a001";
 
 	private static final String SENHA = "senha-segura-1";
+
+	private static final String HASH = "$2a$10$ovKMhIe6J2sLr3tDhBZrTO/SQQ2nxYqCa7cgeTN.GEr9YMBQ.qSTS";
 
 	// encoder de verdade, não mock: com um mock devolvendo uma string qualquer,
 	// criarGuardaSenhaEmHashENuncaEmTextoPuro passaria sem haver hash nenhum.
@@ -96,12 +101,52 @@ class UsuarioServiceTest {
 		verify(repository, never()).save(any(Usuario.class));
 	}
 
+	@Test
+	void loadUserByUsernameDevolvePrincipalComOIdComoUsername() {
+		when(repository.findByEmail("ana@aep.com")).thenReturn(Optional.of(persistido()));
+
+		UserDetails principal = service.loadUserByUsername("ana@aep.com");
+
+		// o id no lugar do username é o que faz Authentication.getName() já ser
+		// o usuarioId que os Services comparam para decidir pertencimento.
+		assertThat(principal.getUsername()).isEqualTo(ID);
+		assertThat(principal.getPassword()).isEqualTo(HASH);
+		assertThat(principal.getAuthorities()).isEmpty();
+		assertThat(principal).isEqualTo(new UsuarioAutenticado(ID, "Ana", "ana@aep.com", HASH));
+		// o hash não vaza para log nenhum que imprima o principal
+		assertThat(principal.toString()).doesNotContain(HASH);
+	}
+
+	@Test
+	void loadUserByUsernameNormalizaEmailParaMinusculas() {
+		when(repository.findByEmail("ana@aep.com")).thenReturn(Optional.of(persistido()));
+
+		// sem a normalização aqui, quem digita o e-mail com maiúsculas não entra:
+		// o valor gravado é sempre minúsculo.
+		assertThat(service.loadUserByUsername("Ana@AEP.com").getUsername()).isEqualTo(ID);
+	}
+
+	@Test
+	void loadUserByUsernameComEmailDesconhecidoLancaUsernameNotFound() {
+		when(repository.findByEmail("ana@aep.com")).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> service.loadUserByUsername("ANA@aep.com"))
+				.isInstanceOf(UsernameNotFoundException.class)
+				.hasMessageContaining("ana@aep.com");
+	}
+
 	private UsuarioCreateRequest request(String email) {
 		return new UsuarioCreateRequest("Ana", email, SENHA);
 	}
 
 	private Usuario comId(Usuario usuario) {
 		usuario.setId(ID);
+		return usuario;
+	}
+
+	private Usuario persistido() {
+		Usuario usuario = comId(new Usuario("Ana", "ana@aep.com"));
+		usuario.setSenhaHash(HASH);
 		return usuario;
 	}
 

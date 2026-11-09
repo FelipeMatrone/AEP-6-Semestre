@@ -4,6 +4,9 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Locale;
 
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +18,7 @@ import br.com.cesumar.aep.model.Usuario;
 import br.com.cesumar.aep.repository.UsuarioRepository;
 
 @Service
-public class UsuarioService {
+public class UsuarioService implements UserDetailsService {
 
 	private final UsuarioRepository repository;
 
@@ -48,6 +51,19 @@ public class UsuarioService {
 		usuario.setCriadoEm(Instant.now(clock));
 
 		return mapper.toResponse(repository.save(usuario));
+	}
+
+	// contrato do UserDetailsService: o que chega aqui é o e-mail digitado no
+	// login. A normalização repete a de criar porque é o valor gravado que o
+	// índice único e o findByEmail conhecem — sem ela "DEMO@aep.local" não entra.
+	@Override
+	public UserDetails loadUserByUsername(String email) {
+		String normalizado = email.toLowerCase(Locale.ROOT);
+
+		return repository.findByEmail(normalizado)
+				.map(usuario -> new UsuarioAutenticado(usuario.getId(), usuario.getNome(), usuario.getEmail(),
+						usuario.getSenhaHash()))
+				.orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + normalizado));
 	}
 
 }

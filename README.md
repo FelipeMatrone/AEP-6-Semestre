@@ -274,10 +274,13 @@ cd backend
 
 | Comando | Testes | Exige Docker | Linha (*node*) | Ramo (*edge*) |
 |---|---|---|---|---|
-| `./mvnw clean test` | 86 | não | **97,4%** (456/468) | **92,9%** (26/28) |
-| `./mvnw clean verify` | 86 + 5 de integração | sim | **98,9%** (463/468) | **92,9%** (26/28) |
+| `./mvnw clean test` | 87 | não | **97,4%** (456/468) | **92,9%** (26/28) |
+| `./mvnw clean verify` | 87 + 8 de integração | sim | não medido | não medido |
 
-Medido em 09/11/2026, com Docker ligado e os dois comandos verdes. O gate do
+Medido em 10/11/2026 com `./mvnw clean verify -DskipITs`. Os `*IT` compilam,
+mas **não foram executados**: a máquina de desenvolvimento não tem Docker. O
+pipeline do painel e o validador do `init.js` foram conferidos à mão contra um
+MongoDB local. O gate do
 JaCoCo reprova o build abaixo de **70% de linha**. Ficam fora do denominador
 `AepApplication` e o pacote `configuration`, que só têm `main` e `@Bean` —
 fiação, não comportamento.

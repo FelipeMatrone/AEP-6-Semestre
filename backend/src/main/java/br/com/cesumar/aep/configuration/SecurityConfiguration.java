@@ -55,6 +55,8 @@ public class SecurityConfiguration {
 				.authorizeHttpRequests(a -> a
 						.requestMatchers(HttpMethod.POST, "/api/usuarios", "/api/sessao").permitAll()
 						.requestMatchers("/docs/**", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+						// o 403 de CSRF é encaminhado para /error; fechado, ele virava 401
+						.requestMatchers("/error").permitAll()
 						.requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 						.anyRequest().authenticated())
 				// 401 direto em vez do 302 para a tela de login do Boot: esta

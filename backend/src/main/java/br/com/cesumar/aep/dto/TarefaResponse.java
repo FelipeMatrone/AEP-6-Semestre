@@ -13,5 +13,6 @@ public record TarefaResponse(
 		boolean concluida,
 		String observacao,
 		Instant criadaEm,
-		Instant atualizadaEm) {
+		Instant atualizadaEm,
+		String categoriaId) {
 }

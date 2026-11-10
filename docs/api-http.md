@@ -1,5 +1,12 @@
 # API HTTP — `/api/tarefas`
 
+> **Documento histórico da 1ª entrega.** Na 2ª, toda rota de `/api/**` exige
+> sessão (exceto cadastro e login), toda escrita exige o header `X-XSRF-TOKEN`,
+> a tarefa ganhou `categoriaId` opcional e cada pessoa só vê o que é dela. O
+> contrato vigente está no `README.md` (seções "A API" e "Sessão e CSRF") e no
+> Swagger em `/docs`. Abaixo, o contrato de `/api/tarefas` como era — formatos,
+> status e regras de validação continuam valendo.
+
 Contrato da API da 1ª entrega. O Springdoc já expõe o contrato vivo em
 [`/docs`](http://localhost:8080/docs) (OpenAPI cru em `/v3/api-docs`); este
 arquivo existe para quem lê o repositório **sem subir a aplicação** — que é

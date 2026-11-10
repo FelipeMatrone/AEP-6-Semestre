@@ -22,5 +22,8 @@ public record TarefaUpdateRequest(
 		String observacao,
 
 		@NotNull(message = "A situação de conclusão é obrigatória")
-		Boolean concluida) {
+		Boolean concluida,
+
+		// opcional, e PUT é substituição: ausente ou nulo desvincula a categoria.
+		String categoriaId) {
 }

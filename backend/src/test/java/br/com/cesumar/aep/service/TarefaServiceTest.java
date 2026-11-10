@@ -3,6 +3,7 @@ package br.com.cesumar.aep.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,10 +25,13 @@ import br.com.cesumar.aep.dto.TarefaCreateRequest;
 import br.com.cesumar.aep.dto.TarefaResponse;
 import br.com.cesumar.aep.dto.TarefaSummaryResponse;
 import br.com.cesumar.aep.dto.TarefaUpdateRequest;
+import br.com.cesumar.aep.exception.CategoriaNotFoundException;
 import br.com.cesumar.aep.exception.TarefaNotFoundException;
 import br.com.cesumar.aep.mapper.TarefaMapper;
+import br.com.cesumar.aep.model.Categoria;
 import br.com.cesumar.aep.model.Prioridade;
 import br.com.cesumar.aep.model.Tarefa;
+import br.com.cesumar.aep.repository.CategoriaRepository;
 import br.com.cesumar.aep.repository.TarefaRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,10 +41,17 @@ class TarefaServiceTest {
 
 	private static final Instant ONTEM = Instant.parse("2026-09-08T12:00:00Z");
 
+	private static final String USUARIO = "672f0000000000000000a001";
+
+	private static final String OUTRO_USUARIO = "672f0000000000000000a002";
+
 	private static final LocalDate PRAZO = LocalDate.of(2026, 9, 12);
 
 	@Mock
 	private TarefaRepository repository;
+
+	@Mock
+	private CategoriaRepository categoriaRepository;
 
 	private TarefaService service;
 
@@ -50,25 +61,25 @@ class TarefaServiceTest {
 		// mocká-lo faria as asserções sobre o DTO conferirem o mock, não a tradução.
 		// O relógio fixo é o que permite exigir valor exato em criadaEm e
 		// atualizadaEm, em vez de "não é nulo".
-		service = new TarefaService(repository, new TarefaMapper(), Clock.fixed(AGORA, ZoneOffset.UTC));
+		service = new TarefaService(repository, categoriaRepository, new TarefaMapper(), Clock.fixed(AGORA, ZoneOffset.UTC));
 	}
 
 	@Test
 	void deveListarTarefasResumidas() {
-		when(repository.findAll()).thenReturn(List.of(tarefa("1", "Entregar a modelagem", false)));
+		when(repository.findByUsuarioId(USUARIO)).thenReturn(List.of(tarefa("1", "Entregar a modelagem", false)));
 
-		List<TarefaSummaryResponse> resumos = service.listar();
+		List<TarefaSummaryResponse> resumos = service.listar(USUARIO);
 
 		assertThat(resumos).containsExactly(
 				new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA,
-						"Observação de teste", false));
+						"Observação de teste", false, null));
 	}
 
 	@Test
 	void deveLancarExcecaoAoBuscarTarefaInexistente() {
 		when(repository.findById("999")).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> service.buscarPorId("999"))
+		assertThatThrownBy(() -> service.buscarPorId("999", USUARIO))
 				.isInstanceOf(TarefaNotFoundException.class)
 				.hasMessageContaining("999");
 	}
@@ -78,7 +89,7 @@ class TarefaServiceTest {
 		when(repository.save(any(Tarefa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
 
 		TarefaResponse resposta = service.criar(
-				new TarefaCreateRequest("Definir o ODS", PRAZO, Prioridade.MEDIA, "Observação de teste"));
+				new TarefaCreateRequest("Definir o ODS", PRAZO, Prioridade.MEDIA, "Observação de teste", null), USUARIO);
 
 		assertThat(resposta.concluida()).isFalse();
 		assertThat(resposta.criadaEm()).isEqualTo(AGORA);
@@ -90,14 +101,89 @@ class TarefaServiceTest {
 		Tarefa persistida = tarefa("1", "Entregar a modelagem", false);
 		when(repository.findById("1")).thenReturn(Optional.of(persistida));
 
-		service.excluir("1");
+		service.excluir("1", USUARIO);
 
 		verify(repository).delete(persistida);
+	}
+
+	@Test
+	void deveLancarExcecaoAoBuscarTarefaDeOutroUsuario() {
+		Tarefa alheia = tarefa("1", "Entregar a modelagem", false);
+		alheia.setUsuarioId(OUTRO_USUARIO);
+		when(repository.findById("1")).thenReturn(Optional.of(alheia));
+
+		assertThatThrownBy(() -> service.buscarPorId("1", USUARIO))
+				.isInstanceOf(TarefaNotFoundException.class);
+	}
+
+	@Test
+	void criarGravaODonoEACategoriaDoUsuario() {
+		Categoria categoria = new Categoria();
+		categoria.setUsuarioId(USUARIO);
+		when(categoriaRepository.findById("c1")).thenReturn(Optional.of(categoria));
+		when(repository.save(any(Tarefa.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+		TarefaResponse resposta = service.criar(
+				new TarefaCreateRequest("Definir o ODS", PRAZO, Prioridade.MEDIA, null, "c1"), USUARIO);
+
+		assertThat(resposta.categoriaId()).isEqualTo("c1");
+		verify(repository).save(argThat(salva -> USUARIO.equals(salva.getUsuarioId())));
+	}
+
+	@Test
+	void criarComCategoriaDeOutroUsuarioFalhaComoNaoEncontrada() {
+		Categoria alheia = new Categoria();
+		alheia.setUsuarioId(OUTRO_USUARIO);
+		when(categoriaRepository.findById("c1")).thenReturn(Optional.of(alheia));
+
+		assertThatThrownBy(() -> service.criar(
+				new TarefaCreateRequest("Definir o ODS", PRAZO, Prioridade.MEDIA, null, "c1"), USUARIO))
+				.isInstanceOf(CategoriaNotFoundException.class);
+
+		verify(repository, never()).save(any(Tarefa.class));
+	}
+
+	@Test
+	void atualizarComCategoriaDeOutroUsuarioFalhaComoNaoEncontrada() {
+		Tarefa persistida = tarefa("1", "Entregar a modelagem", false);
+		when(repository.findById("1")).thenReturn(Optional.of(persistida));
+		Categoria alheia = new Categoria();
+		alheia.setUsuarioId(OUTRO_USUARIO);
+		when(categoriaRepository.findById("c1")).thenReturn(Optional.of(alheia));
+
+		assertThatThrownBy(() -> service.atualizar("1",
+				new TarefaUpdateRequest("Entregar a modelagem", PRAZO, Prioridade.MEDIA, null, false, "c1"), USUARIO))
+				.isInstanceOf(CategoriaNotFoundException.class);
+
+		verify(repository, never()).save(any(Tarefa.class));
+	}
+
+	@Test
+	void atualizarComCategoriaIdNuloDesvinculaACategoria() {
+		Tarefa persistida = tarefa("1", "Entregar a modelagem", false);
+		persistida.setCategoriaId("c1");
+		when(repository.findById("1")).thenReturn(Optional.of(persistida));
+		when(repository.save(persistida)).thenReturn(persistida);
+
+		TarefaResponse resposta = service.atualizar("1",
+				new TarefaUpdateRequest("Entregar a modelagem", PRAZO, Prioridade.MEDIA, null, false, null), USUARIO);
+
+		assertThat(resposta.categoriaId()).isNull();
+		assertThat(persistida.getCategoriaId()).isNull();
+	}
+
+	@Test
+	void listarDevolveSoAsTarefasDoUsuario() {
+		when(repository.findByUsuarioId(USUARIO)).thenReturn(List.of(tarefa("1", "Minha", false)));
+
+		assertThat(service.listar(USUARIO)).extracting(TarefaSummaryResponse::titulo).containsExactly("Minha");
+		verify(repository, never()).findAll();
 	}
 
 	private Tarefa tarefa(String id, String titulo, boolean concluida) {
 		Tarefa tarefa = new Tarefa(titulo, PRAZO, Prioridade.MEDIA, "Observação de teste");
 		tarefa.setId(id);
+		tarefa.setUsuarioId(USUARIO);
 		tarefa.setConcluida(concluida);
 		tarefa.setCriadaEm(AGORA);
 		tarefa.setAtualizadaEm(AGORA);

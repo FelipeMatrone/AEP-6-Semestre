@@ -1,4 +1,11 @@
-# Modelagem do banco — 1ª entrega
+# Modelagem do banco — 1ª entrega (histórico)
+
+> **Documento histórico da 1ª entrega.** A modelagem vigente (três coleções, com
+> `usuarios`, `categorias` e `anotacoes` aninhadas) está em
+> `docs/segunda-entrega.md`. As seções "A restrição que define tudo", "Decisão" e
+> "Especificação do documento" abaixo descrevem a coleção única `tarefas` achatada
+> e já não valem sozinhas; o resto (índices, como subir o banco, datas, limites e
+> o que a 2ª entrega fez) está atualizado.
 
 Modelagem do MongoDB para a primeira entrega da AEP. Decisões, especificação dos
 campos e o caminho para a segunda entrega.
@@ -55,7 +62,7 @@ criá-la seria a segunda coleção que o teto proíbe.
 | Coleção única `tarefas`, usuário embutido em cada documento | `senhaHash` duplicado em todo documento — trocar senha vira `updateMany`. Pior: usuário recém-cadastrado, sem tarefas, não existe em lugar nenhum para autenticar. |
 | Coleção genérica com campo `tipo` | Quebra "objetos homogêneos" de forma explícita. |
 
-## Especificação do documento
+## Especificação do documento (1ª entrega, histórica)
 
 Coleção: **`tarefas`**
 
@@ -104,27 +111,50 @@ conversores registrados no mesmo arquivo — o Java continua com `ALTA`, `MEDIA`
 
 ### Conformidade verificada
 
-Em 09/09/2026, contra um `mongod` local com o `banco/init.js` aplicado à mão:
-`POST` e `PUT` pela API gravaram documentos que **passam** pelo `$jsonSchema`
-fechado, sem `_class`, com `prioridade` em slug e `prazo` exatamente em
-`00:00:00.000Z`.
+Primeiro à mão, em 09/09/2026, contra um `mongod` local: `POST` e `PUT` pela API
+gravaram documentos que passam pelo `$jsonSchema` fechado, sem `_class`, com
+`prioridade` em slug e `prazo` exatamente em `00:00:00.000Z`.
 
-O que isso **não** cobre: a subida pelo `docker-compose.yml`, que é o caminho que
-o professor vai usar. Essa verificação continua pendente (T24 em
-`backend-tarefas.md`), porque exige Docker e a máquina onde o backend foi escrito
-está com o daemon desligado.
+Na 2ª entrega a verificação virou teste. `ValidadorMongoIT` sobe um MongoDB em
+contêiner (Testcontainers), roda o `banco/init.js` de verdade com `mongosh` e
+prova que o validador aceita tarefa com `usuarioId` e recusa tarefa sem ele.
+`TarefaApiIT` e `PainelApiIT` fazem o caminho inteiro pela API contra o mesmo
+tipo de banco. Os três rodam em `./mvnw verify` e exigem Docker ligado.
 
 ## Índices
 
-Nenhum índice adicional é necessário nesta entrega: a listagem não tem filtro e
-o MongoDB já mantém o índice obrigatório de `_id`. Índice sem consulta que o use
-é escrita mais lenta de graça.
+A segunda entrega tem consultas que justificam índices, o que não havia na
+primeira. Os três estão em `banco/init.js`:
+
+| Coleção | Índice | Por quê |
+|---|---|---|
+| `usuarios` | `{ email: 1 }`, único | o login busca por e-mail; a unicidade é regra, não convenção |
+| `categorias` | `{ usuarioId: 1 }` | toda listagem de categoria é por dono |
+| `tarefas` | `{ usuarioId: 1, prazo: 1 }` | listagem e calendário filtram por dono e ordenam por prazo |
+
+O `_id` de cada coleção já tem índice próprio, criado pelo MongoDB. Índice sem
+consulta que o use continua sendo escrita mais lenta de graça, por isso nenhum
+outro foi criado.
 
 ## Como subir o banco
 
+Dois caminhos, conforme a máquina:
+
+**Com Docker** (o caminho do professor):
+
 ```bash
-docker compose up -d
+docker compose down -v && docker compose up -d
 ```
+
+**Com Mongo nativo** (quando o Docker não está disponível, como nesta máquina),
+na porta 27017, com `mongosh` no PATH:
+
+```bash
+mongosh aep --eval 'db.dropDatabase()' && mongosh aep banco/init.js
+```
+
+O `dropDatabase` é obrigatório na segunda vez: o script cria as coleções com
+`createCollection`, que falha se elas já existem.
 
 A imagem oficial do Mongo executa tudo que estiver em
 `/docker-entrypoint-initdb.d/` na **primeira** subida do container — é onde a
@@ -198,33 +228,30 @@ para o servidor — e aí com fuso explícito, assumido conscientemente.
 
 ## Limites conhecidos
 
-- **Sem escopo por usuário na listagem.** `GET /api/tarefas` devolve a coleção
-  inteira. O filtro por `usuarioId` entra junto com a autenticação real, na
-  segunda entrega.
-- **Última escrita vence.** Duas edições simultâneas da mesma tarefa se
-  sobrescrevem. Aceito: a PoC tem um usuário. Bloqueio otimista por versão resolve
-  sem mexer na modelagem.
+- **Última escrita vence.** Duas edições simultâneas do mesmo documento se
+  sobrescrevem. Bloqueio otimista por versão resolve sem mexer na modelagem.
+- **Excluir disciplina não é atômico.** Primeiro desvincula as tarefas
+  (`categoriaId` some), depois apaga a disciplina — duas escritas, sem transação.
+  A ordem garante que uma falha no meio deixe tarefa sem disciplina, nunca tarefa
+  apontando para disciplina inexistente.
+- **Aninhamento sem teto de quantidade.** As anotações vivem dentro da categoria,
+  e o documento do MongoDB tem limite de 16 MB. O `conteudo` tem teto de 20 000
+  caracteres, mas o número de anotações não; para o uso de um estudante cabe com
+  folga.
 
-## Caminho para a 2ª entrega
+## O que a 2ª entrega fez com isso
 
-A segunda entrega pede múltiplas coleções, relacionamento entre elas e pelo menos
-uma coleção com objetos complexos. A evolução é aditiva:
+A evolução prevista aqui foi aditiva, e foi assim que aconteceu:
 
-1. `usuarios` entra como coleção nova, com `nome`, `email` único e `senhaHash` —
-   e o login e o cadastro deixam de ser mock.
-2. `usuarioId` entra nas tarefas, referenciando essa coleção.
-3. `categorias` entra referenciando `usuarioId`, com a lista de anotações
-   **aninhada** — o objeto complexo exigido, e a tela de Anotações, que está
-   preservada justamente para isso.
+1. `usuarios` entrou como coleção nova, com `nome`, `email` único e `senhaHash`.
+2. `usuarioId` entrou nas tarefas, obrigatório. Tipo `string`, não ObjectId: o
+   model guarda `String` e o Spring Data só coage o campo `@Id`.
+3. `categorias` entrou com `usuarioId` (também `string`) e a lista de anotações
+   **aninhada** — o objeto complexo. A tarefa ganhou `categoriaId` opcional.
 
-Resultado: três coleções, dois relacionamentos, um objeto complexo novo. A
-evolução fica visível em diff e demonstrável em vídeo.
+O preço do `string` aparece na agregação do painel: `$lookup` de quatro
+argumentos compara `string` com `ObjectId` e devolve vazio sem erro, por isso o
+estágio usa `let` + `$expr` + `$toString` (detalhe em `docs/arquitetura.md`).
 
-## Em aberto
-
-- **ODS não definido.** Vale 0,1 no critério "Problema e alinhamento ao ODS" e é
-  pré-requisito do README e do vídeo. Não afeta a modelagem acima, mas trava a
-  entrega. Decisão do grupo — ver `sugestoes-projetos.md`.
-- **Interpretação da seção 8** ainda não confirmada com o professor. A modelagem
-  acima adota a leitura mais restritiva de propósito: se ele for rígido, a entrega
-  está coberta; se for flexível, nada se perde.
+O desenho completo, com os documentos de exemplo e as regras de cada coleção,
+está em `docs/segunda-entrega.md`; o schema vigente, em `banco/init.js`.

@@ -8,3 +8,6 @@ spring:
 springdoc:
   swagger-ui:
     path: /docs
+    # a UI manda o X-XSRF-TOKEN nas escritas; sem isso elas voltam 403
+    csrf:
+      enabled: true

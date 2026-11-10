@@ -14,7 +14,9 @@ public class TarefaMapper {
 	// traduz apenas o que veio do cliente. concluida, criadaEm e atualizadaEm
 	// ficam como estão — quem os define é o Service.
 	public Tarefa toModel(TarefaCreateRequest request) {
-		return new Tarefa(request.titulo(), request.prazo(), request.prioridade(), request.observacao());
+		Tarefa tarefa = new Tarefa(request.titulo(), request.prazo(), request.prioridade(), request.observacao());
+		tarefa.setCategoriaId(request.categoriaId());
+		return tarefa;
 	}
 
 	// atualiza a instância persistida no lugar, o que preserva o id.
@@ -24,6 +26,7 @@ public class TarefaMapper {
 		tarefa.setPrioridade(request.prioridade());
 		tarefa.setObservacao(request.observacao());
 		tarefa.setConcluida(request.concluida());
+		tarefa.setCategoriaId(request.categoriaId());
 	}
 
 	public TarefaResponse toResponse(Tarefa tarefa) {
@@ -35,7 +38,8 @@ public class TarefaMapper {
 				tarefa.isConcluida(),
 				tarefa.getObservacao(),
 				tarefa.getCriadaEm(),
-				tarefa.getAtualizadaEm());
+				tarefa.getAtualizadaEm(),
+				tarefa.getCategoriaId());
 	}
 
 	public TarefaSummaryResponse toSummaryResponse(Tarefa tarefa) {
@@ -45,7 +49,8 @@ public class TarefaMapper {
 				tarefa.getPrazo(),
 				tarefa.getPrioridade(),
 				tarefa.getObservacao(),
-				tarefa.isConcluida());
+				tarefa.isConcluida(),
+				tarefa.getCategoriaId());
 	}
 
 }

@@ -12,5 +12,6 @@ public record TarefaSummaryResponse(
 		LocalDate prazo,
 		Prioridade prioridade,
 		String observacao,
-		boolean concluida) {
+		boolean concluida,
+		String categoriaId) {
 }

@@ -87,7 +87,8 @@ tipo(escopo): descrição no imperativo, minúscula, sem ponto final
 `style` (formatação, sem efeito em comportamento), `refactor` (reestruturação sem
 mudar comportamento), `test` (testes), `chore` (build, dependências, configuração).
 
-**Escopos em uso:** `login`, `cadastro`, `frontend`, `backend`, `docs`, `config`.
+**Escopos em uso:** `login`, `cadastro`, `frontend`, `backend`, `banco`, `docs`,
+`config`.
 
 Exemplos:
 

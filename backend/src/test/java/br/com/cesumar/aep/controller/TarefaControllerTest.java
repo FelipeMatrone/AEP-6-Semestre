@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -20,7 +21,9 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -30,11 +33,16 @@ import br.com.cesumar.aep.dto.TarefaUpdateRequest;
 import br.com.cesumar.aep.exception.TarefaNotFoundException;
 import br.com.cesumar.aep.model.Prioridade;
 import br.com.cesumar.aep.service.TarefaService;
+import br.com.cesumar.aep.service.UsuarioAtual;
 
 @WebMvcTest(TarefaController.class)
+@Import(UsuarioAtual.class)
+@WithMockUser(username = "672f0000000000000000a001")
 class TarefaControllerTest {
 
 	private static final String BASE_PATH = "/api/tarefas";
+
+	private static final String USUARIO = "672f0000000000000000a001";
 
 	private static final LocalDate PRAZO = LocalDate.of(2026, 9, 12);
 
@@ -48,9 +56,9 @@ class TarefaControllerTest {
 
 	@Test
 	void deveListarSomenteOsCamposDoResumo() throws Exception {
-		when(service.listar()).thenReturn(
+		when(service.listar(USUARIO)).thenReturn(
 				List.of(new TarefaSummaryResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA,
-						"Observação de teste", false)));
+						"Observação de teste", false, "c1")));
 
 		mockMvc.perform(get(BASE_PATH))
 				.andExpect(status().isOk())
@@ -60,34 +68,42 @@ class TarefaControllerTest {
 				.andExpect(jsonPath("$[0].prioridade").value("media"))
 				.andExpect(jsonPath("$[0].observacao").value("Observação de teste"))
 				.andExpect(jsonPath("$[0].concluida").value(false))
+				.andExpect(jsonPath("$[0].categoriaId").value("c1"))
 				// sem estes, um TarefaResponse devolvido por engano na listagem
 				// passaria verde e a projeção não estaria testada
-				.andExpect(jsonPath("$[0].criadaEm").doesNotExist());
+				.andExpect(jsonPath("$[0].criadaEm").doesNotExist())
+				// usuarioId é dado de dono: não sai em resposta nenhuma
+				.andExpect(jsonPath("$[0].usuarioId").doesNotExist());
 	}
 
 	@Test
 	void deveCriarComLocationEOCorpoCompleto() throws Exception {
-		when(service.criar(any())).thenReturn(resposta());
+		when(service.criar(any(), eq(USUARIO))).thenReturn(resposta());
 
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
 						  "titulo": "Entregar a modelagem",
 						  "prazo": "2026-09-12",
 						  "prioridade": "media",
-						  "observacao": "Observação de teste"
+						  "observacao": "Observação de teste",
+						  "categoriaId": "c1"
 						}
 						"""))
 				.andExpect(status().isCreated())
 				.andExpect(header().string("Location", "http://localhost/api/tarefas/1"))
 				.andExpect(jsonPath("$.id").value("1"))
-				.andExpect(jsonPath("$.concluida").value(false));
+				.andExpect(jsonPath("$.concluida").value(false))
+				.andExpect(jsonPath("$.categoriaId").value("c1"))
+				.andExpect(jsonPath("$.usuarioId").doesNotExist());
 	}
 
 	@Test
 	void deveRejeitarCorpoInvalidoComFieldErrors() throws Exception {
 		mockMvc.perform(post(BASE_PATH)
+				.with(csrf())
 				.contentType(MediaType.APPLICATION_JSON)
 				.content("""
 						{
@@ -105,7 +121,7 @@ class TarefaControllerTest {
 
 	@Test
 	void deveRetornarNotFoundParaTarefaInexistente() throws Exception {
-		when(service.buscarPorId("999")).thenThrow(new TarefaNotFoundException("999"));
+		when(service.buscarPorId("999", USUARIO)).thenThrow(new TarefaNotFoundException("999"));
 
 		mockMvc.perform(get(BASE_PATH + "/{id}", "999"))
 				.andExpect(status().isNotFound())
@@ -116,7 +132,7 @@ class TarefaControllerTest {
 
 	private TarefaResponse resposta() {
 		return new TarefaResponse("1", "Entregar a modelagem", PRAZO, Prioridade.MEDIA, false, "Observação de teste", CARIMBO,
-				CARIMBO);
+				CARIMBO, "c1");
 	}
 
 }

@@ -1,12 +1,15 @@
-# Organizador de estudos — PoC da AEP 2026.2 (6º semestre)
+# Organizador de estudos — AEP 2026.2 (6º semestre)
 
-Prova de Conceito de um organizador de tarefas e materiais de estudo, alinhada ao
-**ODS 4 — Educação de Qualidade**. Desenvolvida para a Atividade de Estudo
-Programada do 6º semestre de Engenharia de Software (Banco de Dados NoSQL,
-Paradigmas de Linguagem, Processo de Software, Projeto/Implementação e Testes).
+Aplicativo para o estudante que trabalha organizar, num lugar só, as tarefas com
+prazo e o material de estudo de cada disciplina, alinhado ao **ODS 4 — Educação
+de Qualidade**. Desenvolvido para a Atividade de Estudo Programada do 6º semestre
+de Engenharia de Software (Banco de Dados NoSQL, Paradigmas de Linguagem,
+Processo de Software, Projeto/Implementação e Testes).
 
-**Esta é a 1ª entrega.** A PoC avaliada neste marco é a **API REST** —
-ver [Escopo medido](#escopo-medido-nesta-entrega).
+**Esta é a 2ª entrega.** O que mudou desde a 1ª, em uma frase: o banco passou de
+uma coleção achatada para três coleções relacionadas, uma delas com objetos
+aninhados, e cada pessoa passou a entrar com a própria conta e ver só o que é
+dela.
 
 ---
 
@@ -34,80 +37,87 @@ uma das causas de abandono que software resolve de forma direta e barata — sem
 depender de mudança curricular, de infraestrutura ou de contratação. A PoC ataca
 essa causa específica, que é o que torna o vínculo objetivo em vez de retórico.
 
-O problema tem duas metades, e elas correspondem exatamente às duas entregas:
+O problema tem duas metades, e o aplicativo cobre as duas:
 
-| Metade do problema | Entrega | Modelagem |
+| Metade do problema | Onde vive | Entrou na |
 |---|---|---|
-| tarefas pendentes, com prazo e prioridade | **1ª (esta)** | coleção única `tarefas`, documento achatado |
-| materiais de estudo organizados por assunto | 2ª | `categorias` com anotações aninhadas |
+| tarefas pendentes, com prazo e prioridade | coleção `tarefas` | 1ª entrega |
+| materiais de estudo organizados por disciplina | coleção `categorias`, com anotações aninhadas | 2ª entrega |
+| de quem é cada coisa | coleção `usuarios`, com login por sessão | 2ª entrega |
 
-## O que já funciona
 
-CRUD completo de tarefas, com validação de entrada, erros padronizados e
-validação de esquema no próprio banco.
+## O que funciona
 
 | Recurso | Situação |
 |---|---|
-| API REST `/api/tarefas` — criar, listar, buscar, atualizar, excluir | pronto |
-| Validação de entrada com mensagens por campo | pronto |
-| Erros padronizados (`ApiError` com `fieldErrors`) | pronto |
-| Validação de esquema no MongoDB (`$jsonSchema` fechado) | pronto |
+| Cadastro, login e logout com senha em BCrypt e sessão | pronto |
+| Tarefas — criar, listar, buscar, atualizar, excluir, vincular a uma disciplina | pronto |
+| Disciplinas (`categorias`) — CRUD, com cor e descrição | pronto |
+| Anotações dentro da disciplina — criar, editar, excluir | pronto |
+| Painel de progresso por disciplina (agregação no MongoDB) | pronto |
+| Cada pessoa vê só o que é dela | pronto — recurso de outra conta responde `404` |
+| Validação de entrada com mensagens por campo e erro padronizado (`ApiError`) | pronto |
+| Validação de esquema no próprio MongoDB (`$jsonSchema` fechado nas três coleções) | pronto |
 | Documentação interativa da API (Swagger UI) | pronto |
-| Cliente web mínimo executando o fluxo completo | pronto |
-| Telas React de início e de tarefas consumindo a API | listar, criar e concluir |
-| Testes automatizados — unitário, contrato HTTP e integração | pronto |
-| Login e cadastro | mock, tela apenas — ver [Limites](#limites-conhecidos-desta-entrega) |
-| Materiais de estudo (categorias e anotações) | 2ª entrega |
+| Testes unitário, de contrato HTTP e de integração contra MongoDB real | pronto |
+| Telas React | início e tarefas consomem a API; login, disciplinas e painel em integração |
 
 ## Tecnologias
 
 | Camada | Tecnologia |
 |---|---|
 | Linguagem | Java 21 |
-| Backend | Spring Boot 3.5.16 (Web, Validation, Data MongoDB) |
-| Banco | MongoDB 7.0 (NoSQL), via Docker Compose |
+| Backend | Spring Boot 3.5.16 (Web, Validation, Data MongoDB, Security) |
+| Banco | MongoDB 7.0 (NoSQL), via Docker Compose ou instalação local |
 | Documentação da API | Springdoc OpenAPI (Swagger UI em `/docs`) |
 | Testes | JUnit 5, Mockito, MockMvc, Testcontainers |
 | Cobertura | JaCoCo, com gate de 70% de linha no `verify` |
 | Build | Maven (wrapper commitado — não precisa instalar Maven) |
-| Cliente mínimo | HTML, CSS e JavaScript nativos, sem build |
-| Frontend (em desenvolvimento) | React 19, TypeScript, Vite |
+| Frontend | React 19, TypeScript, Vite |
 
 ## Estrutura do repositório
 
 ```
-backend/          API Spring Boot — a PoC medida nesta entrega
+backend/          API Spring Boot
   src/main/java/br/com/cesumar/aep/
     model/ repository/ dto/ mapper/ service/ controller/ exception/ configuration/
-  src/main/resources/static/crud.html    cliente mínimo, servido pelo Spring
-  src/test/java/.../                     unitário, contrato HTTP e integração
-banco/init.js     esquema, índice e dados de exemplo da coleção
-frontend/         cliente React, em desenvolvimento (fora da medição)
+  src/test/java/.../                     unitário, contrato HTTP e integration/
+banco/init.js     esquema, índices e dados de demonstração das três coleções
+frontend/         cliente React
 docs/             documentação técnica
 docker-compose.yml
 ```
 
 ## Como executar
 
-Pré-requisitos: **JDK 21 ou superior** e **Docker**. Maven não é necessário — o
-wrapper está no repositório.
+Pré-requisitos: **JDK 21 ou superior** e um **MongoDB** — pelo Docker ou
+instalado na máquina. Maven não é necessário: o wrapper está no repositório.
 
 ### 1. Subir o banco
 
+Dois caminhos, conforme a máquina. Os dois aplicam o mesmo `banco/init.js`, que
+cria as três coleções com validador de esquema, os índices e os dados de
+demonstração.
+
+**Com Docker:**
+
 ```bash
-docker compose up -d
+docker compose down -v && docker compose up -d
 ```
 
-Sobe o MongoDB 7.0 em `127.0.0.1:27017` e executa `banco/init.js`, que cria a
-coleção `tarefas` com o validador de esquema, o índice e três tarefas de exemplo.
+> O script roda só na **primeira** subida do contêiner. O `down -v` apaga o
+> volume e força a releitura — sem ele, uma mudança no `init.js` é ignorada em
+> silêncio. Se a porta 27017 já estiver ocupada por um MongoDB local, o
+> contêiner não sobe: pare o serviço local ou use o outro caminho.
 
-> O script roda só na **primeira** subida do contêiner. Depois de alterar
-> `banco/init.js`, use `docker compose down -v` (o `-v` apaga o volume) e suba de
-> novo — sem isso o script é ignorado em silêncio.
->
-> Se a porta 27017 já estiver ocupada por um MongoDB local, o contêiner não sobe.
-> Pare o serviço local, ou aponte a aplicação para outra porta com a variável
-> `SPRING_DATA_MONGODB_URI`.
+**Com MongoDB local** na porta 27017, com `mongosh` no PATH:
+
+```bash
+mongosh aep --eval 'db.dropDatabase()' && mongosh aep banco/init.js
+```
+
+> O `dropDatabase` é obrigatório a partir da segunda vez: o script cria as
+> coleções com `createCollection`, que falha se elas já existem.
 
 ### 2. Subir a aplicação
 
@@ -118,29 +128,142 @@ cd backend
 
 No Windows, use `mvnw.cmd` no lugar de `./mvnw`.
 
-### 3. Usar
+### 3. Entrar
+
+O seed cria uma conta de demonstração, já com disciplinas, anotações e tarefas —
+uma delas atrasada, para o painel ter o que mostrar:
+
+| E-mail | Senha |
+|---|---|
+| `demo@aep.local` | `aep-demo-2026` |
+
+A senha está aqui de propósito, para quem corrige conseguir entrar. Está listada
+em [Limites conhecidos](#limites-conhecidos).
 
 | Endereço | O que é |
 |---|---|
-| http://localhost:8080/crud.html | **cliente mínimo** — criar, listar, atualizar e excluir |
-| http://localhost:8080/docs | Swagger UI, contrato interativo |
-| http://localhost:8080/api/tarefas | a API |
+| http://localhost:8080/docs | Swagger UI, contrato interativo de todas as rotas |
+| http://localhost:8080/api/… | a API (rotas abaixo) |
 
-O fluxo principal da PoC se demonstra pelo `crud.html`. Exemplo pela linha de
-comando:
+O `crud.html` da 1ª entrega continua no repositório, mas agora responde `401`:
+ele ficou atrás da autenticação e não sabe fazer login. Não quebrou — saiu da
+demonstração.
+
+## A API
+
+Todas as rotas em `application/json`. Cadastro e login são públicos; **todo o
+resto de `/api/**` exige sessão**.
+
+| Método | Caminho | O que faz |
+|---|---|---|
+| `POST` | `/api/usuarios` | cadastra — `201`, ou `409` se o e-mail já existe |
+| `POST` | `/api/sessao` | login — `200`, ou `401` com senha errada |
+| `GET` | `/api/sessao` | quem está logado — `200`, ou `401` |
+| `DELETE` | `/api/sessao` | logout — `204` |
+| `GET` `POST` | `/api/tarefas` | listar e criar tarefas |
+| `GET` `PUT` `DELETE` | `/api/tarefas/{id}` | uma tarefa |
+| `GET` `POST` | `/api/categorias` | listar e criar disciplinas |
+| `GET` `PUT` `DELETE` | `/api/categorias/{id}` | uma disciplina, com as anotações |
+| `POST` | `/api/categorias/{id}/anotacoes` | criar anotação na disciplina |
+| `PUT` `DELETE` | `/api/categorias/{id}/anotacoes/{anotacaoId}` | uma anotação |
+| `GET` | `/api/painel` | pendentes, concluídas, atrasadas e progresso por disciplina |
+
+A anotação é endereçada pela disciplina que a contém porque ela não existe fora
+dela: a URL conta a verdade da modelagem.
+
+### Sessão e CSRF
+
+O login cria uma sessão (cookie `JSESSIONID`). A proteção contra CSRF fica
+**ligada**: o servidor planta o cookie `XSRF-TOKEN` já na primeira resposta, e o
+cliente devolve esse valor no cabeçalho `X-XSRF-TOKEN` em toda requisição que
+não é `GET`. O login troca o id da sessão e descarta o token, contra fixação de
+sessão: a resposta do login **apaga** o `XSRF-TOKEN`, e o novo só chega na
+resposta seguinte. Por isso o cliente faz um `GET /api/sessao` depois do login
+antes da primeira escrita — sem ele, a escrita volta `403`.
+
+Pela linha de comando, o fluxo completo:
 
 ```bash
-curl -X POST http://localhost:8080/api/tarefas \
+# 1. qualquer requisição planta o XSRF-TOKEN (esta volta 401, e tudo bem)
+curl -s -c c.txt -b c.txt http://localhost:8080/api/sessao
+xsrf() { awk '/XSRF-TOKEN/ {print $7}' c.txt; }
+
+# 2. login
+curl -s -c c.txt -b c.txt -H "X-XSRF-TOKEN: $(xsrf)" \
   -H 'Content-Type: application/json' \
-  -d '{"titulo":"Estudar agregações","prazo":"2026-09-20","prioridade":"alta","observacao":"Revisar o capítulo 4"}'
+  -d '{"email":"demo@aep.local","senha":"aep-demo-2026"}' \
+  http://localhost:8080/api/sessao
+
+# 3. o login apagou o token: um GET traz o novo
+curl -s -c c.txt -b c.txt http://localhost:8080/api/sessao
+
+# 4. escrita, com o token novo
+curl -s -c c.txt -b c.txt -H "X-XSRF-TOKEN: $(xsrf)" \
+  -H 'Content-Type: application/json' \
+  -d '{"titulo":"Estudar MongoDB","prazo":"2026-11-20","prioridade":"alta"}' \
+  http://localhost:8080/api/tarefas
+
+curl -s -b c.txt http://localhost:8080/api/painel
 ```
 
-Contrato completo, com todos os campos, regras de validação e formato de erro, em
-[`docs/api-http.md`](docs/api-http.md).
+Três comportamentos que parecem erro e não são:
+
+- **Recurso de outra conta responde `404`, não `403`.** `403` confirmaria que o
+  recurso existe. O pertencimento é conferido no Service, não na rota.
+- **O `401` vem em dois formatos.** Sem sessão, o corpo vem vazio (é a cadeia do
+  Spring Security que responde); com senha errada, vem como `ApiError`. Nos dois
+  casos quem decide é o status.
+- **Depois do logout o cookie `XSRF-TOKEN` continua no navegador** até a próxima
+  resposta reescrevê-lo. O token mora no cookie, não na sessão, e sem sessão
+  qualquer requisição volta `401`.
+
+O contrato da 1ª entrega, com os campos de tarefa e o formato do erro, está em
+[`docs/api-http.md`](docs/api-http.md); o das rotas novas está no Swagger.
+
+## Banco de dados
+
+Três coleções, dois relacionamentos e um objeto complexo:
+
+```
+usuarios  ◀── usuarioId ──  categorias  { anotacoes: [ … ] }
+    ▲                            ▲
+    └──── usuarioId ── tarefas ──┘ categoriaId (opcional)
+```
+
+| Coleção | O que guarda | Referências |
+|---|---|---|
+| `usuarios` | `nome`, `email` (único, minúsculo), `senhaHash` (BCrypt) | — |
+| `categorias` | a disciplina, com `cor` e a lista **`anotacoes` aninhada** | `usuarioId` |
+| `tarefas` | `titulo`, `prazo`, `prioridade`, `concluida`, `observacao` | `usuarioId` (obrigatório), `categoriaId` (opcional) |
+
+**Por que a anotação é aninhada.** Ela não existe fora da disciplina, é sempre
+lida junto com ela e nunca é consultada sozinha — o caso de manual para
+subdocumento. A tarefa, ao contrário, tem vida própria (a tela de tarefas lista
+todas, de todas as disciplinas), por isso fica em coleção própria e referencia a
+disciplina.
+
+**Por que `categoriaId` é opcional.** Tarefa sem disciplina é válida, e o painel
+a mostra num balde "Sem disciplina" — que só aparece quando existe alguma.
+Excluir uma disciplina desvincula as tarefas dela em vez de apagá-las.
+
+**O painel é uma agregação.** `GET /api/painel` parte de `categorias` filtradas
+pelo dono e faz `$lookup` em `tarefas`. As referências são gravadas como
+`string` e o `_id` é `ObjectId`, então o `$lookup` usa `let` + `$expr` +
+`$toString` — a forma simples (`localField`/`foreignField`) compara tipos
+diferentes e devolve vazio **sem erro nenhum**. Há teste de integração contra
+MongoDB real provando isso.
+
+Todo o esquema é validado no próprio banco por `$jsonSchema` fechado
+(`additionalProperties: false`): campo com nome errado falha na escrita em vez
+de divergir em silêncio. Os índices são três — `usuarios.email` único,
+`categorias.usuarioId` e `tarefas.{usuarioId, prazo}` —, um por consulta que os
+usa.
+
+Especificação e alternativas descartadas em
+[`docs/segunda-entrega.md`](docs/segunda-entrega.md#modelagem) e
+[`docs/modelagem-banco.md`](docs/modelagem-banco.md).
 
 ## Como rodar os testes
-
-São **dois comandos**, e a diferença entre eles importa:
 
 ```bash
 cd backend
@@ -151,132 +274,72 @@ cd backend
 
 | Comando | Testes | Exige Docker | Linha (*node*) | Ramo (*edge*) |
 |---|---|---|---|---|
-| `./mvnw clean test` | 12 | não | **78,2%** (97/124) | **100%** (6/6) |
-| `./mvnw clean verify` | 13 | sim | **99,2%** (123/124) | **100%** (6/6) |
+| `./mvnw clean test` | 87 | não | **97,4%** (456/468) | **92,9%** (26/28) |
+| `./mvnw clean verify` | 87 + 5 de integração | sim | **98,9%** (463/468) | **92,9%** (26/28) |
 
-Medido em 11/09/2026. O gate do JaCoCo reprova o build abaixo de **85%** em
-linha **e** em ramo — acima dos 70% exigidos pelo enunciado, para travar a
-margem já conquistada em vez de permitir que ela caia até o mínimo. Ficam
-excluídas a classe `AepApplication` e o pacote `configuration`, que só têm
-`main` e `@Bean` — fiação, não comportamento.
+Medido em 10/11/2026, com Docker ligado e os dois comandos verdes. O gate do
+JaCoCo reprova o build abaixo de **70% de linha**. Ficam fora do denominador
+`AepApplication` e o pacote `configuration`, que só têm `main` e `@Bean` —
+fiação, não comportamento.
 
-Os dois critérios são os de *graph coverage* que o JaCoCo mede: **linha**
-corresponde a *node coverage* e **ramo** a *edge coverage*. Critérios mais
-fortes — *edge-pair* e *prime path* — nenhuma ferramenta do ecossistema Java
-mede automaticamente; onde eles importam, os casos foram derivados à mão do
-grafo do método (ver `PrioridadeTest`).
+Sem Docker, `./mvnw clean verify -DskipITs` roda o gate sem os testes de
+integração. Os testes sem Docker **sozinhos** já passam de 70%, por decisão de
+projeto: a integração é evidência adicional, nunca a perna que sustenta o
+número.
 
-**Por que dois comandos.** O teste de integração usa Testcontainers, que exige
-daemon Docker. Numa máquina sem Docker, `verify` falharia e a evidência de
-cobertura cairia junto. Por isso os testes unitário e de contrato **sozinhos** já
-passam de 70%, por decisão de projeto: o teste de integração é evidência
-adicional, nunca a perna que sustenta o número.
+Os tipos de teste, e o que cada um prova:
 
-### Relatório de cobertura
-
-```bash
-cd backend
-./mvnw clean test jacoco:report      # sem Docker
-# abra backend/target/site/jacoco/index.html
-```
-
-Para incluir o teste de integração, troque por `./mvnw clean verify`.
-
-Os três tipos de teste, e o que cada um prova:
-
-| Arquivo | Tipo | Prova |
+| Tipo | Exemplos | Prova |
 |---|---|---|
-| `TarefaServiceTest` | unitário (Mockito) | regra de negócio |
-| `TarefaControllerTest` | contrato (`@WebMvcTest`) | status, forma do JSON, validação |
-| `TarefaApiIT` | integração (Testcontainers) | ida e volta contra MongoDB real |
+| unitário (Mockito) | `TarefaServiceTest`, `CategoriaServiceAnotacaoTest`, `PainelServiceTest` | regra de negócio, pertencimento, fronteira do "atrasada" |
+| contrato (`@WebMvcTest`) | `TarefaControllerTest`, `SessaoControllerTest`, `TarefaControllerSegurancaTest` | status, forma do JSON, validação, `401` e CSRF |
+| integração (Testcontainers) | `PainelApiIT`, `ValidadorMongoIT`, `TarefaApiIT` | a agregação e o `$jsonSchema` do `init.js` contra MongoDB real |
 
 O sufixo decide o executor: `*Test` roda no surefire (`test`), `*IT` no failsafe
-(`verify`).
-
-## Escopo medido nesta entrega
-
-O enunciado pede 70% de cobertura "sobre o código da PoC entregue". A PoC deste
-marco é a **API em `backend/`**.
-
-O cliente React em `frontend/` está em desenvolvimento e **não faz parte da
-medição** — declarado aqui em voz alta, e não por omissão. Ele já consome a API
-de verdade nas telas de início e de tarefas (listar, criar e concluir); login,
-cadastro e anotações seguem com dados fixos. Seu empacotamento dentro do Spring
-e a troca dos mocks restantes por chamadas reais estão planejados para a
-2ª entrega.
-
-O fluxo principal da PoC é demonstrado pelo `crud.html`, que é servido pela
-própria aplicação e consome a API de verdade.
-
-## Banco de dados
-
-Coleção única `tarefas`, documento achatado, conforme o limite da 1ª entrega
-(uma coleção, objetos homogêneos, CRUD básico):
-
-```json
-{
-  "_id": "ObjectId",
-  "titulo": "Estudar agregações do MongoDB",
-  "prazo": "2026-09-20T00:00:00.000Z",
-  "prioridade": "alta",
-  "concluida": false,
-  "observacao": "Revisar o capítulo 4",
-  "criadaEm": "2026-09-11T21:37:57.282Z",
-  "atualizadaEm": "2026-09-11T21:37:57.282Z"
-}
-```
-
-Todo documento tem todos os campos — ausência e `null` não são estados válidos. O
-`$jsonSchema` é **fechado** (`additionalProperties: false`), então campo com nome
-errado falha na escrita em vez de divergir em silêncio. Nenhum índice além do
-`_id` obrigatório: a listagem não tem filtro, e índice sem consulta que o use é
-escrita mais lenta de graça.
-
-Especificação completa, com as alternativas descartadas e o tratamento de fuso
-horário, em [`docs/modelagem-banco.md`](docs/modelagem-banco.md).
+(`verify`). Relatório de cobertura em `backend/target/site/jacoco/index.html`
+depois de qualquer um dos dois comandos acrescido de `jacoco:report`.
 
 ## Documentação
 
 | Documento | Quando ler |
 |---|---|
-| [`docs/arquitetura.md`](docs/arquitetura.md) | para entender as camadas e o caminho de uma requisição |
-| [`docs/api-http.md`](docs/api-http.md) | para usar a API sem subir a aplicação |
-| [`docs/modelagem-banco.md`](docs/modelagem-banco.md) | para entender a modelagem e o porquê dela |
-| [`docs/decisoes.md`](docs/decisoes.md) | para saber por que cada escolha foi feita |
+| [`docs/segunda-entrega.md`](docs/segunda-entrega.md) | desenho desta entrega — modelagem, segurança, painel |
+| [`docs/plano-segunda-entrega.md`](docs/plano-segunda-entrega.md) | o plano tarefa a tarefa, com os grupos de revisão |
+| [`docs/arquitetura.md`](docs/arquitetura.md) | as camadas e o caminho de uma requisição |
+| [`docs/modelagem-banco.md`](docs/modelagem-banco.md) | modelagem, índices, datas e fuso |
+| [`docs/api-http.md`](docs/api-http.md) | contrato de tarefas sem subir a aplicação |
+| [`docs/decisoes.md`](docs/decisoes.md) | por que cada escolha foi feita |
 | [`docs/padroes.md`](docs/padroes.md) | **antes** de escrever código no backend |
 | [`docs/checklist-revisao.md`](docs/checklist-revisao.md) | **depois** de escrever, antes de abrir PR |
-| [`docs/backend-tarefas.md`](docs/backend-tarefas.md) | planejamento por tarefa e caminho crítico |
 | [`AGENTS.md`](AGENTS.md) | convenções do repositório — commits, branches, Definition of Done |
 
-## Limites conhecidos desta entrega
+## Versionamento
+
+Uma branch por pessoa (`samuel-backend`, `felipe`). Cada grupo de tarefas do
+plano termina em PR para **`dev`**, a branch de integração, onde ninguém commita
+direto. `main` recebe `dev` só no fim, e a tag da entrega sai na `main`.
+
+## Limites conhecidos
 
 Declarados porque limite escondido vira pergunta na correção.
 
-- **Login e cadastro são mock.** Não há coleção de usuários, porque a 1ª entrega
-  está limitada a uma coleção — criar `usuarios` seria a segunda. As telas
-  existem; a autenticação real é a 2ª entrega.
-- **A tarefa não tem dono.** Não há campo de usuário nesta entrega, porque a
-  coleção `usuarios` é a 2ª entrega e criá-la agora violaria o teto de uma
-  coleção só.
-- **`GET /api/tarefas` devolve a coleção inteira.** Sem escopo por usuário, sem
-  paginação e sem ordenação. O filtro por `usuarioId` entra junto com a
-  autenticação real, na 2ª entrega.
-- **Última escrita vence.** Duas edições simultâneas da mesma tarefa se
-  sobrescrevem.
-- **O teste de integração não cobre o validador do banco.** O Testcontainers sobe
-  um MongoDB limpo, sem executar `banco/init.js`, logo sem `$jsonSchema` e sem
-  índices. Essa conformidade foi verificada à mão contra o Compose, e a evidência
-  está registrada em [`docs/decisoes.md`](docs/decisoes.md#verificações-registradas).
-
-## Evolução prevista para a 2ª entrega
-
-Múltiplas coleções, relacionamento entre elas e ao menos uma com objetos
-complexos — de forma aditiva, visível em diff:
-
-1. `usuarios` entra como coleção nova, e o login deixa de ser mock;
-2. `usuarioId` entra na tarefa, referenciando essa coleção;
-3. `categorias` entra com a lista de **anotações aninhada** — o objeto complexo
-   exigido, e a outra metade do problema: os materiais de estudo.
+- **Anotações aninhadas não escalam sem teto.** O documento da disciplina cresce
+  com cada anotação, e 16 MB é o limite rígido do BSON — por isso o `conteudo`
+  tem teto de 20 000 caracteres. Se um dia importar, `anotacoes` vira coleção
+  própria com `categoriaId`.
+- **Última escrita vence.** Duas edições simultâneas da mesma tarefa ou anotação
+  se sobrescrevem. Bloqueio otimista por versão resolve sem mexer na modelagem.
+- **Excluir disciplina não é atômico.** São duas escritas em coleções diferentes
+  num MongoDB standalone, sem transação. A ordem — desvincular as tarefas antes
+  de apagar a disciplina — garante que uma falha no meio deixe tarefa sem
+  disciplina, e nunca tarefa apontando para disciplina inexistente.
+- **Sessão em memória.** Reiniciar o servidor desloga todo mundo.
+- **A senha de demonstração está no repositório.** Dado fictício, para quem
+  corrige conseguir entrar. Num sistema real, seed com credencial versionada não
+  passa.
+- **Sem recuperação de senha.** Fora do escopo da PoC.
+- **O `conteudo` da anotação é HTML guardado como veio**, limitado em tamanho. A
+  sanitização acontece na renderização, no frontend.
 
 ## Equipe
 

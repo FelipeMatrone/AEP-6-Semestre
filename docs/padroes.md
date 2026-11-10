@@ -24,7 +24,8 @@ Package base: `br.com.cesumar.aep`. Abaixo dele, um pacote por responsabilidade:
 
 ```
 model         documentos persistidos (@Document) e enums do domínio
-repository    interfaces Spring Data, sem implementação própria
+repository    interfaces Spring Data, sem implementação própria (exceção:
+              PainelRepository, classe com MongoTemplate para a agregação)
 dto           contratos HTTP de entrada e saída
 mapper        conversão explícita entre DTO e Model
 service       casos de uso e regras de negócio
@@ -201,10 +202,9 @@ verde.
   mesma versão de imagem do Compose.
 
 > O contêiner do Testcontainers sobe um Mongo **limpo**: ele não executa
-> `banco/init.js`, logo não tem o `$jsonSchema` nem os índices. O teste de
-> integração prova o CRUD, **não** prova que a aplicação satisfaz o validador do
-> banco de desenvolvimento. Essa verificação é manual e está em
-> `backend-tarefas.md`.
+> `banco/init.js`, logo não tem o `$jsonSchema` nem os índices. Por isso o
+> `ValidadorMongoIT` aplica o `init.js` ao contêiner e prova que o validador
+> recusa tarefa sem `usuarioId`; os outros `*IT` provam o CRUD e a agregação.
 
 ### Cobertura
 

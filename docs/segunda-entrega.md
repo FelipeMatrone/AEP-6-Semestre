@@ -1,6 +1,9 @@
 # Segunda entrega — desenho da solução
 
 > Documento de desenho do 2º bimestre. Entrega em **13/11/2026**.
+> **Implementado.** O que a implementação decidiu onde este desenho deixou em
+> aberto está em "O que fica para quem implementa", no fim; o estado de uso
+> (como subir, credenciais, cobertura medida) está no `README.md`.
 > Modelagem da 1ª entrega: `docs/modelagem-banco.md`. Convenções de código:
 > `docs/padroes.md`. Camadas: `docs/arquitetura.md`.
 
@@ -335,8 +338,9 @@ armazenado se esquecido, então não é item de acabamento. **[decisão do desen
 ## Painel — a agregação
 
 Um endpoint, `GET /api/painel`, construído com *aggregation pipeline* de verdade:
-`$match` pelo usuário, `$lookup` ligando `categorias` a `tarefas`, `$group` para
-contar, `$project` para a resposta.
+`$match` pelo usuário e `$lookup` ligando `categorias` a `tarefas` (só as do
+mesmo dono). As contagens ficaram em Java, no `PainelService` — ver "O que fica
+para quem implementa".
 
 Ele devolve: total de pendentes, concluídas e atrasadas, e o progresso por
 disciplina (concluídas sobre total, por categoria).
@@ -443,13 +447,18 @@ Swagger e JaCoCo entram no fim, como evidência. Não como o corpo.
 
 ## O que fica para quem implementa
 
-- Nomes concretos de classes, DTOs e exceções, seguindo `docs/padroes.md`.
-- Mensagens de erro e textos de validação.
-- A sequência exata de estágios do pipeline do painel — a resposta que ele tem
-  que produzir está fechada acima; como chegar nela, não.
-- O e-mail e a senha concretos do usuário semeado.
-- Se `categorias` vira `CategoriaService` único ou se as anotações ganham serviço
-  próprio — decidir quando o primeiro ficar grande demais para ler.
+Era a lista do que o desenho não fechava. Como ficou:
+
+- **Nomes**: seguem `docs/padroes.md`; exceções de recurso inexistente herdam de
+  `RecursoNaoEncontradoException`, o que dá um handler só para os três `404`.
+- **Pipeline do painel**: o banco faz só `$match` + `$lookup` (com `let`,
+  `$expr` e `$toString`, porque as referências são `string` e `_id` é
+  `ObjectId`). As contas — atrasada, percentual, o balde "Sem disciplina" —
+  ficaram no `PainelService`, em Java, onde a fronteira de "hoje" é testável com
+  `Clock` fixo. Ver `docs/arquitetura.md`.
+- **Usuário semeado**: `demo@aep.local` / `aep-demo-2026`.
+- **Serviço de anotações**: não ganhou classe própria; vive em
+  `CategoriaService`, que ainda se lê inteiro.
 
 ## Limites conhecidos
 

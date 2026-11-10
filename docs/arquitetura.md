@@ -9,38 +9,31 @@ errado é este — a regra é lida antes de escrever, o desenho depois.
 ## Visão geral
 
 ```
-                       ┌──────────────────────────────┐
-  navegador ──────────▶│  crud.html  (static/)        │
-                       │  Swagger UI  (/docs)         │
-                       └──────────────┬───────────────┘
-                                      │ HTTP/JSON
-                                      ▼
+  navegador ──▶ React (frontend/)  ·  Swagger UI (/docs)
+                        │ HTTP/JSON, cookie JSESSIONID + X-XSRF-TOKEN
+                        ▼
   ┌────────────────────────────────────────────────────────────────┐
-  │  TarefaController          @RestController  /api/tarefas       │
-  │    @Valid, status, header Location                             │
+  │  SecurityFilterChain   CSRF por cookie · sessão · 401 sem corpo │
   └──────────────┬─────────────────────────────────────────────────┘
-                 │  DTO                               ▲  DTO
-                 ▼                                    │
-  ┌────────────────────────────────────────────────────────────────┐
-  │  TarefaService             @Service                            │
-  │    regra, campos derivados, TarefaNotFoundException            │
-  │    ◀── Clock (ClockConfiguration)                              │
-  └──────────────┬─────────────────────────────────────────────────┘
-                 │  Model          ▲  Model
-                 ▼                 │
-       ┌─────────────────┐   ┌─────────────────────────────────┐
-       │  TarefaMapper   │   │  TarefaRepository               │
-       │  DTO ↔ Model    │   │  MongoRepository<Tarefa,String> │
-       └─────────────────┘   └──────────────┬──────────────────┘
-                                            │ BSON
-                                            ▼
-                             ┌──────────────────────────────┐
-                             │  MongoDB — coleção `tarefas` │
-                             │  $jsonSchema (fechado)       │
-                             └──────────────────────────────┘
+                 ▼
+  Controller   Usuario · Sessao · Tarefa · Categoria · Painel
+               @Valid, status, Location; dono vem de UsuarioAtual
+                 │  DTO
+                 ▼
+  Service      UsuarioService · TarefaService · CategoriaService · PainelService
+               regra, pertencimento (404), campos derivados, Clock injetado
+                 │  Model                       ▲
+                 ▼                              │
+  Mapper  DTO ↔ Model          Repository   Usuario · Tarefa · Categoria (Spring Data)
+                                            PainelRepository (MongoTemplate, $lookup)
+                                                │ BSON
+                                                ▼
+                     MongoDB — usuarios · categorias{anotacoes[]} · tarefas
+                     $jsonSchema fechado nas três
 
   transversal:  GlobalExceptionHandler  @RestControllerAdvice → ApiError
-                MongoConfiguration      conversores e _class desligado
+                MongoConfiguration      conversores de enum e _class desligado
+                SecurityConfiguration   cadeia, BCrypt, CSRF, estratégia de sessão
 ```
 
 Uma camada só conhece a de baixo. O Controller não fala com o Repository, o
@@ -102,20 +95,26 @@ escolhe os dois instantes.
 
 ## O caminho de erro é único
 
-Nenhum `try/catch` de fluxo normal em lugar nenhum. O Service lança
-`TarefaNotFoundException`, o Controller não a vê, e o
-`@RestControllerAdvice` transforma em `ApiError`:
+Nenhum `try/catch` de fluxo normal em lugar nenhum. O Service lança, o
+Controller não vê, e o `@RestControllerAdvice` transforma em `ApiError`:
 
 | Exceção | Status | `fieldErrors` |
 |---|---|---|
-| `TarefaNotFoundException` | `404` | vazio |
+| `RecursoNaoEncontradoException` (Tarefa, Categoria, Anotacao) | `404` | vazio |
+| `EmailJaCadastradoException` | `409` | vazio |
+| `DuplicateKeyException` (corrida no índice único de e-mail) | `409` | vazio |
+| `BadCredentialsException` (login com senha errada) | `401` | vazio |
 | `MethodArgumentNotValidException` | `400` | um par por campo inválido |
 | `HttpMessageNotReadableException` | `400` | vazio |
 
 `fieldErrors` vem **vazio, nunca nulo**, para o cliente não precisar checar
-antes de iterar — o `crud.html` depende disso.
+antes de iterar.
 
-O terceiro caso merece explicação: prioridade com slug desconhecido falha na
+A exceção à regra é a requisição sem sessão: ela morre na cadeia de filtros,
+antes de existir Controller, e sai como `401` **sem corpo**. O `401` de senha
+errada passa pelo Controller e tem `ApiError`. Os dois formatos são esperados.
+
+O último caso merece explicação: prioridade com slug desconhecido falha na
 desserialização, antes de o Bean Validation rodar. Por isso
 `TarefaCreateRequest` não tem validador de prioridade — o `enum` já é o
 validador, e o erro chega como corpo ilegível.
@@ -136,49 +135,60 @@ comportamento.
   do Spring Data usa `ZoneId.systemDefault()` — sem essa linha a invariante
   seria falsa em qualquer máquina fora de UTC.
 
+## Quem é o dono
+
+A segurança está partida em duas perguntas, e cada uma tem dono:
+
+- **"Quem é você?"** é do Spring Security. `SecurityConfiguration` deixa
+  públicos só `POST /api/usuarios`, `POST /api/sessao`, o Swagger e os
+  estáticos; todo o resto de `/api/**` exige sessão e responde `401` sem corpo.
+- **"Isso é seu?"** é do Service. O Controller pega o id da sessão em
+  `UsuarioAtual` e passa adiante; o Service busca por `id` **e** `usuarioId`, e
+  recurso de outro dono vira a mesma exceção de recurso inexistente — `404`, não
+  `403`, porque `403` confirmaria que o recurso existe. O mesmo vale para
+  `categoriaId` alheio na tarefa.
+
+O `POST /api/sessao` autentica à mão, fora dos filtros, então precisa chamar
+sozinho o que o filtro de login faria: a `SessionAuthenticationStrategy` (troca o
+id da sessão e descarta o token CSRF — contra fixação de sessão) e o
+`SecurityContextRepository.saveContext` (sem ele a próxima requisição volta
+`401`). Consequência visível para o cliente: a resposta do login apaga o cookie
+`XSRF-TOKEN`, e o novo só chega na resposta seguinte.
+
+## O painel
+
+`GET /api/painel` é a única leitura que cruza coleções. `PainelRepository` parte
+de `categorias` filtradas pelo dono e faz `$lookup` em `tarefas`; as contas
+(atrasada, percentual, o balde "Sem disciplina") ficam no `PainelService`, onde
+são testáveis sem MongoDB — a fronteira "prazo igual a hoje não é atrasada" tem
+teste próprio.
+
+A armadilha que quem continuar o projeto vai encontrar: as referências
+(`usuarioId`, `categoriaId`) são gravadas como `string`, e `_id` é `ObjectId`. O
+`$lookup` de quatro argumentos (`localField`/`foreignField`) compara tipos
+diferentes e devolve array vazio **sem erro nenhum**. Por isso o estágio usa
+`let` + `$expr` + `$toString`. `PainelApiIT` prova o resultado contra MongoDB
+real.
+
 ## Empacotamento
 
-Um processo Spring Boot serve três coisas na mesma porta:
+Um processo Spring Boot serve a API (`/api/**`) e o Swagger UI (`/docs`, com o
+OpenAPI em `/v3/api-docs`). O React de `frontend/` roda no Vite, em
+desenvolvimento. O MongoDB roda em contêiner, pelo `docker-compose.yml` da raiz,
+ou instalado na máquina.
 
-| Caminho | O que é |
-|---|---|
-| `/api/tarefas` | a API |
-| `/crud.html` | o cliente mínimo, de `src/main/resources/static/` |
-| `/docs` | Swagger UI, com o OpenAPI em `/v3/api-docs` |
-
-Mesma origem, logo sem CORS e sem proxy. O MongoDB roda em contêiner separado,
-pelo `docker-compose.yml` da raiz.
-
-O React de `frontend/` **não** está nesse processo nesta entrega: ele roda no
-Vite, consome mocks e não fala com a API. O build para dentro do `static/` está
-planejado (D2 e T36 em `docs/backend-tarefas.md`) e é parte da evolução da 2ª
-entrega.
+O `crud.html` da 1ª entrega continua em `static/`, mas ficou atrás da
+autenticação e responde `401`: ele não sabe fazer login.
 
 ## O que a arquitetura ainda não tem
 
 Declarado aqui porque limite escondido vira pergunta na apresentação.
 
-- **Nenhuma autenticação e nenhum dono.** A tarefa não tem campo de usuário. A
-  coleção `usuarios` é a 2ª entrega, e criá-la agora violaria o teto de uma
-  coleção só da seção 8 do enunciado.
-- **Nenhum escopo por usuário.** `GET /api/tarefas` devolve a coleção inteira.
-  Nenhum índice além do `_id`: índice sem consulta que o use é escrita mais
-  lenta de graça.
+- **Sessão em memória.** Reiniciar o servidor desloga todo mundo.
 - **Última escrita vence.** Duas edições simultâneas se sobrescrevem. Bloqueio
   otimista por versão resolve sem mexer na modelagem.
-- **Sem paginação.** A listagem carrega tudo. Para a PoC cabe com folga.
-
-## Para onde isso cresce
-
-A 2ª entrega pede múltiplas coleções, relacionamento e um objeto complexo. A
-arquitetura não muda de forma — ganha domínios, repetindo a mesma pilha:
-
-```
-usuarios    Usuario   → UsuarioRepository   → UsuarioService   → UsuarioController
-categorias  Categoria → CategoriaRepository → CategoriaService → CategoriaController
-            (com a lista de anotações aninhada — o objeto complexo exigido)
-```
-
-`usuarioId` entra na tarefa referenciando a coleção nova. É adição, não
-reescrita — e é o que torna o critério "evolução verificável" visível em diff.
-A especificação das coleções está em `docs/modelagem-banco.md`.
+- **Excluir disciplina não é atômico.** Desvincula as tarefas e depois apaga a
+  disciplina, em duas escritas, num MongoDB standalone sem transação. A ordem
+  garante que a falha no meio deixe tarefa sem disciplina, nunca tarefa
+  apontando para disciplina inexistente.
+- **Sem paginação.** A listagem carrega tudo do dono. Para a PoC cabe com folga.

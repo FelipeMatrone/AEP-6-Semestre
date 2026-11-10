@@ -33,6 +33,14 @@ class PainelRepositoryTest {
 				.contains("$expr", "$toString", "$$catId", "$categoriaId");
 	}
 
+	@Test
+	void lookupSoTrazTarefasDoDonoDaCategoria() {
+		Document lookup = pipeline().get(1).get("$lookup", Document.class);
+
+		assertThat(lookup.get("let", Document.class).getString("dono")).isEqualTo("$usuarioId");
+		assertThat(lookup.get("pipeline", List.class).get(0).toString()).contains("$usuarioId", "$$dono");
+	}
+
 	private List<Document> pipeline() {
 		Aggregation aggregation = repository.montarPipeline("u1");
 

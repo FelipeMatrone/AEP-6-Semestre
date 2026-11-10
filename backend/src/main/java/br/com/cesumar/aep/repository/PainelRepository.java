@@ -34,9 +34,13 @@ public class PainelRepository {
 		// as referências entre documentos são string e o _id é ObjectId: o
 		// $lookup de quatro argumentos compara tipos diferentes, não dá erro e
 		// devolve vazio para toda categoria. Daí let + $expr + $toString.
+		// O dono também é conferido na tarefa: a API já impede tarefa apontando
+		// para categoria alheia, mas uma escrita direta no banco não passa por ela.
 		Document lookup = Document.parse("""
-				{ $lookup: { from: "tarefas", let: { catId: "$_id" },
-				    pipeline: [ { $match: { $expr: { $eq: ["$categoriaId", { $toString: "$$catId" }] } } } ],
+				{ $lookup: { from: "tarefas", let: { catId: "$_id", dono: "$usuarioId" },
+				    pipeline: [ { $match: { $expr: { $and: [
+				        { $eq: ["$categoriaId", { $toString: "$$catId" }] },
+				        { $eq: ["$usuarioId", "$$dono"] } ] } } } ],
 				    as: "tarefas" } }""");
 
 		return Aggregation.newAggregation(

@@ -40,6 +40,8 @@ class PainelApiIT {
 
 	private static final String USUARIO = "672f0000000000000000a001";
 
+	private static final String OUTRO_USUARIO = "672f0000000000000000a002";
+
 	@Container
 	static final MongoDBContainer MONGO = new MongoDBContainer("mongo:7.0");
 
@@ -77,6 +79,15 @@ class PainelApiIT {
 		tarefaRepository.save(tarefa(categoria.getId(), false, LocalDate.of(2000, 1, 1)));
 		tarefaRepository.save(tarefa(null, false, LocalDate.of(2999, 1, 1)));
 
+		// outra conta: categoria própria, tarefa sem categoria e uma tarefa
+		// gravada direto no banco apontando para a categoria do USUARIO. Nada
+		// disso pode mudar os números abaixo.
+		Categoria alheia = new Categoria("Alheia", null, Cor.AMBAR);
+		alheia.setUsuarioId(OUTRO_USUARIO);
+		categoriaRepository.save(alheia);
+		tarefaRepository.save(tarefaDe(OUTRO_USUARIO, null, false, LocalDate.of(2000, 1, 1)));
+		tarefaRepository.save(tarefaDe(OUTRO_USUARIO, categoria.getId(), false, LocalDate.of(2000, 1, 1)));
+
 		mockMvc.perform(get(BASE_PATH))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.pendentes").value(2))
@@ -85,12 +96,17 @@ class PainelApiIT {
 				.andExpect(jsonPath("$.progresso[?(@.nome == 'Engenharia de Software')].total").value(2))
 				.andExpect(jsonPath("$.progresso[?(@.nome == 'Engenharia de Software')].percentual").value(50))
 				.andExpect(jsonPath("$.progresso[?(@.nome == 'Banco de Dados')].total").value(0))
-				.andExpect(jsonPath("$.progresso[?(@.nome == 'Sem disciplina')].total").value(1));
+				.andExpect(jsonPath("$.progresso[?(@.nome == 'Sem disciplina')].total").value(1))
+				.andExpect(jsonPath("$.progresso[?(@.nome == 'Alheia')]").isEmpty());
 	}
 
 	private Tarefa tarefa(String categoriaId, boolean concluida, LocalDate prazo) {
+		return tarefaDe(USUARIO, categoriaId, concluida, prazo);
+	}
+
+	private Tarefa tarefaDe(String usuarioId, String categoriaId, boolean concluida, LocalDate prazo) {
 		Tarefa tarefa = new Tarefa("Tarefa", prazo, Prioridade.MEDIA, null);
-		tarefa.setUsuarioId(USUARIO);
+		tarefa.setUsuarioId(usuarioId);
 		tarefa.setCategoriaId(categoriaId);
 		tarefa.setConcluida(concluida);
 		return tarefa;

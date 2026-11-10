@@ -21,10 +21,10 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 
 // O que este teste prova: o $jsonSchema de banco/init.js, aplicado a um Mongo
-// real, recusa tarefa sem dono. E o que os outros *IT nao cobrem: eles sobem
+// real, recusa tarefa sem dono. É o que os outros *IT não cobrem: eles sobem
 // um Mongo limpo, sem validador.
-// O controle e uma tarefa do proprio seed: a mesma, com usuarioId, entra; sem
-// ele, nao. Assim a recusa so pode vir do campo ausente.
+// O controle é uma tarefa do próprio seed: a mesma, com usuarioId, entra; sem
+// ele, não. Assim a recusa só pode vir do campo ausente.
 @Testcontainers
 class ValidadorMongoIT {
 
@@ -33,7 +33,7 @@ class ValidadorMongoIT {
 
 	@Container
 	static final MongoDBContainer MONGO = new MongoDBContainer("mongo:7.0")
-			// o failsafe roda com o diretorio do modulo backend como raiz
+			// o failsafe roda com o diretório do módulo backend como raiz
 			.withCopyFileToContainer(MountableFile.forHostPath(Path.of("..", "banco", "init.js")), "/init.js");
 
 	private static MongoClient cliente;

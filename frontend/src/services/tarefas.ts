@@ -1,3 +1,5 @@
+import { requisitar } from './http'
+
 export type Prioridade = 'alta' | 'media' | 'baixa'
 
 export type TarefaResumo = {
@@ -30,32 +32,7 @@ export type TarefaUpdateRequest = {
   concluida: boolean
 }
 
-type ApiErrorResponse = {
-  message?: string
-}
-
 const BASE_PATH = '/api/tarefas'
-
-async function requisitar<T>(url: string, opcoes?: RequestInit): Promise<T> {
-  const resposta = await fetch(url, {
-    ...opcoes,
-    headers: {
-      'Content-Type': 'application/json',
-      ...opcoes?.headers,
-    },
-  })
-
-  if (!resposta.ok) {
-    const erro = (await resposta.json().catch(() => null)) as ApiErrorResponse | null
-    throw new Error(erro?.message ?? 'Não foi possível concluir a operação.')
-  }
-
-  if (resposta.status === 204) {
-    return undefined as T
-  }
-
-  return resposta.json() as Promise<T>
-}
 
 export function listarTarefas(): Promise<TarefaResumo[]> {
   return requisitar<TarefaResumo[]>(BASE_PATH)

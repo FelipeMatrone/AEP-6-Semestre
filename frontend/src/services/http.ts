@@ -2,6 +2,16 @@ type ApiErrorResponse = {
   message?: string
 }
 
+export class ErroApi extends Error {
+  readonly status: number
+
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'ErroApi'
+    this.status = status
+  }
+}
+
 function tokenCsrf() {
   return document.cookie
     .split('; ')
@@ -9,7 +19,20 @@ function tokenCsrf() {
     ?.split('=')[1]
 }
 
+export async function prepararCsrf(forcar = false) {
+  if (!forcar && tokenCsrf()) return
+
+  // A rota protegida cria o cookie de CSRF mesmo respondendo 401 para quem
+  // ainda não entrou. O corpo e o status não importam nesta preparação.
+  await fetch('/api/sessao', { credentials: 'include' })
+}
+
 export async function requisitar<T>(url: string, opcoes?: RequestInit): Promise<T> {
+  const metodo = opcoes?.method?.toUpperCase()
+  if (metodo && metodo !== 'GET') {
+    await prepararCsrf()
+  }
+
   const cabecalhos = new Headers(opcoes?.headers)
   const token = tokenCsrf()
 
@@ -27,7 +50,7 @@ export async function requisitar<T>(url: string, opcoes?: RequestInit): Promise<
 
   if (!resposta.ok) {
     const erro = (await resposta.json().catch(() => null)) as ApiErrorResponse | null
-    throw new Error(erro?.message ?? 'Não foi possível concluir a operação.')
+    throw new ErroApi(erro?.message ?? 'Não foi possível concluir a operação.', resposta.status)
   }
 
   if (resposta.status === 204) {

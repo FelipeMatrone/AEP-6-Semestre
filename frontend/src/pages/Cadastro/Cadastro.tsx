@@ -10,6 +10,7 @@ import {
   IconeOlhoCortado,
 } from '../../components/icones'
 import { NOME_DO_SISTEMA } from '../../config'
+import { cadastrarUsuario } from '../../services/usuarios'
 import loginStyles from '../Login/Login.module.css'
 import styles from './Cadastro.module.css'
 
@@ -38,6 +39,7 @@ export default function Cadastro() {
   const [senhaVisivel, setSenhaVisivel] = useState(false)
   const [confirmacaoVisivel, setConfirmacaoVisivel] = useState(false)
   const [cadastrado, setCadastrado] = useState(false)
+  const [erroCadastro, setErroCadastro] = useState<string | null>(null)
 
   const {
     register,
@@ -49,10 +51,22 @@ export default function Cadastro() {
     defaultValues: { nome: '', email: '', senha: '', confirmarSenha: '' },
   })
 
-  // Sem backend de cadastro ainda — só valida e confirma na tela.
-  // Quando o endpoint existir, chama ele aqui (como autenticar() em services/auth.ts).
-  async function aoSalvar() {
-    setCadastrado(true)
+  async function aoSalvar(dados: DadosCadastro) {
+    setCadastrado(false)
+    setErroCadastro(null)
+
+    try {
+      await cadastrarUsuario({
+        nome: dados.nome.trim(),
+        email: dados.email.trim(),
+        senha: dados.senha,
+      })
+      setCadastrado(true)
+    } catch (erro) {
+      setErroCadastro(
+        erro instanceof Error ? erro.message : 'Não foi possível concluir o cadastro.',
+      )
+    }
   }
 
   return (
@@ -153,6 +167,10 @@ export default function Cadastro() {
               <p role="status" className={loginStyles.sucesso}>
                 Cadastro realizado! Você já pode entrar com sua conta.
               </p>
+            )}
+
+            {erroCadastro && (
+              <p role="alert" className={loginStyles.alerta}>{erroCadastro}</p>
             )}
 
             <div className={styles.acoes}>

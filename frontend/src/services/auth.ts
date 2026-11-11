@@ -1,3 +1,5 @@
+import { ErroApi, prepararCsrf, requisitar } from './http'
+
 export type Usuario = {
   nome: string
   email: string
@@ -17,28 +19,25 @@ export class CredenciaisInvalidasError extends Error {
   }
 }
 
-// Usuário fixo enquanto o backend Spring não existe.
-// Quando existir, o corpo de autenticar() vira um fetch para POST /auth/login
-// e nada mais neste arquivo (nem na tela) precisa mudar.
-const USUARIO_MOCK = {
-  nome: 'Aluno AEP',
-  email: 'aluno@aep.com',
-  senha: '123456',
-}
-
 export async function autenticar(
   email: string,
   senha: string,
 ): Promise<Usuario> {
-  // Latência simulada para o estado "Entrando…" ficar visível na demonstração.
-  await new Promise((resolve) => setTimeout(resolve, 600))
+  try {
+    const usuario = await requisitar<Usuario>('/api/sessao', {
+      method: 'POST',
+      body: JSON.stringify({ email: email.trim(), senha }),
+    })
 
-  const emailConfere =
-    email.trim().toLowerCase() === USUARIO_MOCK.email.toLowerCase()
+    // O login troca a sessão no Spring Security. Busca um token novo para que
+    // as próximas operações de escrita usem o cookie da sessão autenticada.
+    await prepararCsrf(true)
+    return usuario
+  } catch (erro) {
+    if (erro instanceof ErroApi && erro.status === 401) {
+      throw new CredenciaisInvalidasError()
+    }
 
-  if (!emailConfere || senha !== USUARIO_MOCK.senha) {
-    throw new CredenciaisInvalidasError()
+    throw erro
   }
-
-  return { nome: USUARIO_MOCK.nome, email: USUARIO_MOCK.email }
 }

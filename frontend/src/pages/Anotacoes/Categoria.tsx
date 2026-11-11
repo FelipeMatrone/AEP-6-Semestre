@@ -4,6 +4,7 @@ import {
   buscarCategoria,
   criarAnotacao as criarAnotacaoNaApi,
   atualizarAnotacao as atualizarAnotacaoNaApi,
+  excluirAnotacao as excluirAnotacaoNaApi,
   type Anotacao,
   type Categoria as CategoriaDaApi,
 } from '../../services/categorias'
@@ -19,6 +20,7 @@ export default function Categoria() {
   const [tentativa, setTentativa] = useState(0)
   const [salvo, setSalvo] = useState(true)
   const [salvando, setSalvando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
   const [erroSalvamento, setErroSalvamento] = useState<string | null>(null)
 
   const anotacoesDaCategoria = categoria?.anotacoes ?? []
@@ -132,6 +134,34 @@ export default function Categoria() {
       setSalvo(true)
     } catch {
       setErro('Não foi possível criar a anotação. Tente novamente.')
+    }
+  }
+
+  async function excluirAnotacaoSelecionada() {
+    if (!categoria || !anotacaoSelecionada) return
+
+    const confirmou = window.confirm(`Excluir a anotação “${anotacaoSelecionada.titulo}”?`)
+    if (!confirmou) return
+
+    setExcluindo(true)
+    setErroSalvamento(null)
+
+    try {
+      await excluirAnotacaoNaApi(categoria.id, anotacaoSelecionada.id)
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: atual.anotacoes.filter((item) => item.id !== anotacaoSelecionada.id),
+      }))
+      setAnotacaoSelecionadaId(
+        anotacoesDaCategoria.find((item) => item.id !== anotacaoSelecionada.id)?.id ?? null,
+      )
+      setSalvo(true)
+    } catch (erro) {
+      setErroSalvamento(
+        erro instanceof Error ? erro.message : 'Não foi possível excluir a anotação.',
+      )
+    } finally {
+      setExcluindo(false)
     }
   }
 
@@ -273,6 +303,14 @@ export default function Categoria() {
               />
 
               <div className={styles.rodapeEditor}>
+                <button
+                  type="button"
+                  className={styles.botaoExcluir}
+                  onClick={excluirAnotacaoSelecionada}
+                  disabled={excluindo || salvando}
+                >
+                  {excluindo ? 'Excluindo...' : 'Excluir anotação'}
+                </button>
                 <span className={styles.statusSalvamento}>
                   {salvando ? 'Salvando…' : salvo ? 'Salvo' : 'Alterações não salvas'}
                 </span>

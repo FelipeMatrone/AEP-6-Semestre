@@ -17,6 +17,8 @@ const rotulosPrioridade = {
   baixa: 'Baixa',
 }
 
+type SituacaoFiltro = 'todas' | 'pendentes' | 'concluidas'
+
 function primeiroDiaDoMes(data: Date) {
   return new Date(data.getFullYear(), data.getMonth(), 1)
 }
@@ -46,6 +48,8 @@ export default function Calendario() {
   const [tentativa, setTentativa] = useState(0)
   const [mesExibido, setMesExibido] = useState(() => primeiroDiaDoMes(new Date()))
   const [dataSelecionada, setDataSelecionada] = useState(() => new Date())
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState('')
+  const [situacaoSelecionada, setSituacaoSelecionada] = useState<SituacaoFiltro>('todas')
 
   useEffect(() => {
     let telaAtiva = true
@@ -84,7 +88,15 @@ export default function Calendario() {
 
   const dias = diasDoCalendario(mesExibido)
   const hoje = chaveDaData(new Date())
-  const tarefasPorData = tarefas.reduce((agrupadas, tarefa) => {
+  const tarefasFiltradas = tarefas.filter((tarefa) => {
+    const pertenceCategoria = !categoriaSelecionada || tarefa.categoriaId === categoriaSelecionada
+    const pertenceSituacao = situacaoSelecionada === 'todas'
+      || (situacaoSelecionada === 'concluidas' && tarefa.concluida)
+      || (situacaoSelecionada === 'pendentes' && !tarefa.concluida)
+
+    return pertenceCategoria && pertenceSituacao
+  })
+  const tarefasPorData = tarefasFiltradas.reduce((agrupadas, tarefa) => {
     const tarefasDoDia = agrupadas.get(tarefa.prazo) ?? []
     tarefasDoDia.push(tarefa)
     agrupadas.set(tarefa.prazo, tarefasDoDia)
@@ -138,12 +150,40 @@ export default function Calendario() {
       )}
 
       {!carregando && !erro && tarefas.length > 0 && (
-        <div className={styles.areaCalendario}>
-          <section className={styles.calendario} aria-label="Calendário mensal">
+        <>
+          <section className={styles.filtros} aria-label="Filtros do calendário">
+            <label>
+              <span>Disciplina</span>
+              <select
+                value={categoriaSelecionada}
+                onChange={(evento) => setCategoriaSelecionada(evento.target.value)}
+              >
+                <option value="">Todas as disciplinas</option>
+                {categorias.map((categoria) => (
+                  <option key={categoria.id} value={categoria.id}>{categoria.nome}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Situação</span>
+              <select
+                value={situacaoSelecionada}
+                onChange={(evento) => setSituacaoSelecionada(evento.target.value as SituacaoFiltro)}
+              >
+                <option value="todas">Todas</option>
+                <option value="pendentes">Pendentes</option>
+                <option value="concluidas">Concluídas</option>
+              </select>
+            </label>
+          </section>
+
+          <div className={styles.areaCalendario}>
+            <section className={styles.calendario} aria-label="Calendário mensal">
             <header className={styles.cabecalhoCalendario}>
               <div>
                 <h2>{nomesMeses[mesExibido.getMonth()]} de {mesExibido.getFullYear()}</h2>
-                <p>{tarefas.length} tarefas e {categorias.length} disciplinas carregadas.</p>
+                <p>{tarefasFiltradas.length} tarefas encontradas.</p>
               </div>
               <div className={styles.navegacaoMes}>
                 <button type="button" onClick={() => alterarMes(-1)} aria-label="Mês anterior">‹</button>
@@ -188,16 +228,20 @@ export default function Calendario() {
                 )
               })}
             </div>
-          </section>
+            </section>
 
-          <section className={styles.tarefasDoDia} aria-labelledby="titulo-tarefas-dia">
+            <section className={styles.tarefasDoDia} aria-labelledby="titulo-tarefas-dia">
             <header>
               <h2 id="titulo-tarefas-dia">Tarefas do dia</h2>
               <p>{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(dataSelecionada)}</p>
             </header>
 
             {tarefasSelecionadas.length === 0 ? (
-              <p className={styles.semTarefas}>Nenhuma tarefa para esta data.</p>
+              <p className={styles.semTarefas}>
+                {tarefasFiltradas.length === 0
+                  ? 'Nenhuma tarefa corresponde aos filtros.'
+                  : 'Nenhuma tarefa para esta data.'}
+              </p>
             ) : (
               <ul>
                 {tarefasSelecionadas.map((tarefa) => {
@@ -227,8 +271,9 @@ export default function Calendario() {
                 })}
               </ul>
             )}
-          </section>
-        </div>
+            </section>
+          </div>
+        </>
       )}
     </section>
   )

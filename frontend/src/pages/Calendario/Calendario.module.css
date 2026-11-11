@@ -49,6 +49,31 @@
   align-items: start;
 }
 
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.filtros label {
+  display: grid;
+  gap: 5px;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.filtros select {
+  min-width: 180px;
+  padding: 9px 11px;
+  color: var(--texto);
+  font: inherit;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
 .calendario h2,
 .calendario p,
 .vazio h2,
@@ -356,6 +381,14 @@
   .dia {
     min-height: 54px;
     padding: 5px;
+  }
+
+  .filtros {
+    display: grid;
+  }
+
+  .filtros select {
+    width: 100%;
   }
 }
 

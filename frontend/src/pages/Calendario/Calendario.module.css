@@ -362,6 +362,110 @@
   text-decoration: underline;
 }
 
+.agendaHoje {
+  margin-top: 20px;
+  padding: 22px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.agendaHoje > header h2,
+.agendaHoje > header p {
+  margin: 0;
+}
+
+.agendaHoje > header h2 {
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.agendaHoje > header p,
+.semTarefasAgenda,
+.listaAgenda li > span {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.gradeAgenda {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.blocoAgenda {
+  padding: 16px;
+  background: #faf9ff;
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+}
+
+.blocoAtrasadas {
+  border-color: #f4c5d3;
+}
+
+.blocoAgenda header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.blocoAgenda h3,
+.blocoAgenda header span {
+  margin: 0;
+  font-size: 0.8125rem;
+}
+
+.blocoAgenda header span {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  color: var(--roxo);
+  font-weight: 700;
+  background: var(--lilas);
+  border-radius: 50%;
+}
+
+.blocoAtrasadas header span {
+  color: #b42345;
+  background: #fce3eb;
+}
+
+.listaAgenda {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+
+.listaAgenda li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  align-items: center;
+}
+
+.listaAgenda a {
+  flex-basis: 100%;
+  color: var(--texto);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.listaAgenda a:hover,
+.listaAgenda a:focus-visible {
+  color: var(--roxo);
+  text-decoration: underline;
+}
+
+.semTarefasAgenda {
+  margin: 16px 0 0;
+}
+
 @media (max-width: 560px) {
   .calendario,
   .vazio {
@@ -394,6 +498,10 @@
 
 @media (max-width: 960px) {
   .areaCalendario {
+    grid-template-columns: 1fr;
+  }
+
+  .gradeAgenda {
     grid-template-columns: 1fr;
   }
 }

@@ -40,6 +40,36 @@ function chaveDaData(data: Date) {
   return `${data.getFullYear()}-${mes}-${dia}`
 }
 
+type ListaAgendaProps = {
+  tarefas: TarefaResumo[]
+  categoriasPorId: Map<string, CategoriaResumo>
+  mensagemVazia: string
+}
+
+function ListaAgenda({ tarefas, categoriasPorId, mensagemVazia }: ListaAgendaProps) {
+  if (tarefas.length === 0) {
+    return <p className={styles.semTarefasAgenda}>{mensagemVazia}</p>
+  }
+
+  return (
+    <ul className={styles.listaAgenda}>
+      {tarefas.map((tarefa) => {
+        const categoria = tarefa.categoriaId ? categoriasPorId.get(tarefa.categoriaId) : undefined
+
+        return (
+          <li key={tarefa.id}>
+            <Link to={`/tarefas?destaque=${tarefa.id}`}>{tarefa.titulo}</Link>
+            <span>{categoria?.nome ?? 'Sem disciplina'}</span>
+            <span className={`${styles.prioridade} ${styles[tarefa.prioridade]}`}>
+              {rotulosPrioridade[tarefa.prioridade]}
+            </span>
+          </li>
+        )
+      })}
+    </ul>
+  )
+}
+
 export default function Calendario() {
   const [tarefas, setTarefas] = useState<TarefaResumo[]>([])
   const [categorias, setCategorias] = useState<CategoriaResumo[]>([])
@@ -104,6 +134,16 @@ export default function Calendario() {
   }, new Map<string, TarefaResumo[]>())
   const categoriasPorId = new Map(categorias.map((categoria) => [categoria.id, categoria]))
   const tarefasSelecionadas = tarefasPorData.get(chaveDaData(dataSelecionada)) ?? []
+  const tarefasAtrasadas = tarefasFiltradas
+    .filter((tarefa) => !tarefa.concluida && tarefa.prazo < hoje)
+    .sort((primeira, segunda) => primeira.prazo.localeCompare(segunda.prazo))
+  const tarefasDeHoje = tarefasFiltradas
+    .filter((tarefa) => tarefa.prazo === hoje)
+    .sort((primeira, segunda) => Number(primeira.concluida) - Number(segunda.concluida))
+  const proximasTarefas = tarefasFiltradas
+    .filter((tarefa) => !tarefa.concluida && tarefa.prazo > hoje)
+    .sort((primeira, segunda) => primeira.prazo.localeCompare(segunda.prazo))
+    .slice(0, 4)
 
   function alterarMes(deslocamento: number) {
     setMesExibido((mesAtual) =>
@@ -180,99 +220,135 @@ export default function Calendario() {
 
           <div className={styles.areaCalendario}>
             <section className={styles.calendario} aria-label="Calendário mensal">
-            <header className={styles.cabecalhoCalendario}>
-              <div>
-                <h2>{nomesMeses[mesExibido.getMonth()]} de {mesExibido.getFullYear()}</h2>
-                <p>{tarefasFiltradas.length} tarefas encontradas.</p>
-              </div>
-              <div className={styles.navegacaoMes}>
-                <button type="button" onClick={() => alterarMes(-1)} aria-label="Mês anterior">‹</button>
-                <button type="button" onClick={() => alterarMes(1)} aria-label="Próximo mês">›</button>
-              </div>
-            </header>
+              <header className={styles.cabecalhoCalendario}>
+                <div>
+                  <h2>{nomesMeses[mesExibido.getMonth()]} de {mesExibido.getFullYear()}</h2>
+                  <p>{tarefasFiltradas.length} tarefas encontradas.</p>
+                </div>
+                <div className={styles.navegacaoMes}>
+                  <button type="button" onClick={() => alterarMes(-1)} aria-label="Mês anterior">‹</button>
+                  <button type="button" onClick={() => alterarMes(1)} aria-label="Próximo mês">›</button>
+                </div>
+              </header>
 
-            <div className={styles.gradeCalendario}>
-              {diasDaSemana.map((dia) => (
-                <span key={dia} className={styles.nomeDia}>{dia}</span>
-              ))}
-              {dias.map((dia) => {
-                const chave = chaveDaData(dia)
-                const tarefasDoDia = tarefasPorData.get(chave) ?? []
-                const temPendentes = tarefasDoDia.some((tarefa) => !tarefa.concluida)
-                const temConcluidas = tarefasDoDia.some((tarefa) => tarefa.concluida)
-                const selecionado = chave === chaveDaData(dataSelecionada)
+              <div className={styles.gradeCalendario}>
+                {diasDaSemana.map((dia) => (
+                  <span key={dia} className={styles.nomeDia}>{dia}</span>
+                ))}
+                {dias.map((dia) => {
+                  const chave = chaveDaData(dia)
+                  const tarefasDoDia = tarefasPorData.get(chave) ?? []
+                  const temPendentes = tarefasDoDia.some((tarefa) => !tarefa.concluida)
+                  const temConcluidas = tarefasDoDia.some((tarefa) => tarefa.concluida)
+                  const selecionado = chave === chaveDaData(dataSelecionada)
 
-                return (
-                  <button
-                    key={chave}
-                    type="button"
-                    className={`${styles.dia} ${
-                      dia.getMonth() === mesExibido.getMonth() ? '' : styles.diaForaDoMes
-                    } ${chave === hoje ? styles.diaHoje : ''} ${
-                      selecionado ? styles.diaSelecionado : ''
-                    }`}
-                    onClick={() => selecionarData(dia)}
-                    aria-label={`${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(dia)}: ${
-                      tarefasDoDia.length
-                    } tarefa(s)`}
-                    aria-pressed={selecionado}
-                  >
-                    <span className={styles.numeroDia}>{dia.getDate()}</span>
-                    {tarefasDoDia.length > 0 && (
-                      <span className={styles.marcadores} aria-hidden="true">
-                        {temPendentes && <i className={styles.marcadorPendente} />}
-                        {temConcluidas && <i className={styles.marcadorConcluida} />}
-                      </span>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+                  return (
+                    <button
+                      key={chave}
+                      type="button"
+                      className={`${styles.dia} ${
+                        dia.getMonth() === mesExibido.getMonth() ? '' : styles.diaForaDoMes
+                      } ${chave === hoje ? styles.diaHoje : ''} ${
+                        selecionado ? styles.diaSelecionado : ''
+                      }`}
+                      onClick={() => selecionarData(dia)}
+                      aria-label={`${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(dia)}: ${
+                        tarefasDoDia.length
+                      } tarefa(s)`}
+                      aria-pressed={selecionado}
+                    >
+                      <span className={styles.numeroDia}>{dia.getDate()}</span>
+                      {tarefasDoDia.length > 0 && (
+                        <span className={styles.marcadores} aria-hidden="true">
+                          {temPendentes && <i className={styles.marcadorPendente} />}
+                          {temConcluidas && <i className={styles.marcadorConcluida} />}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
             </section>
 
             <section className={styles.tarefasDoDia} aria-labelledby="titulo-tarefas-dia">
-            <header>
-              <h2 id="titulo-tarefas-dia">Tarefas do dia</h2>
-              <p>{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(dataSelecionada)}</p>
-            </header>
+              <header>
+                <h2 id="titulo-tarefas-dia">Tarefas do dia</h2>
+                <p>{new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(dataSelecionada)}</p>
+              </header>
 
-            {tarefasSelecionadas.length === 0 ? (
-              <p className={styles.semTarefas}>
-                {tarefasFiltradas.length === 0
-                  ? 'Nenhuma tarefa corresponde aos filtros.'
-                  : 'Nenhuma tarefa para esta data.'}
-              </p>
-            ) : (
-              <ul>
-                {tarefasSelecionadas.map((tarefa) => {
-                  const categoria = tarefa.categoriaId
-                    ? categoriasPorId.get(tarefa.categoriaId)
-                    : undefined
+              {tarefasSelecionadas.length === 0 ? (
+                <p className={styles.semTarefas}>
+                  {tarefasFiltradas.length === 0
+                    ? 'Nenhuma tarefa corresponde aos filtros.'
+                    : 'Nenhuma tarefa para esta data.'}
+                </p>
+              ) : (
+                <ul>
+                  {tarefasSelecionadas.map((tarefa) => {
+                    const categoria = tarefa.categoriaId
+                      ? categoriasPorId.get(tarefa.categoriaId)
+                      : undefined
 
-                  return (
-                    <li key={tarefa.id}>
-                      <div>
-                        <strong>{tarefa.titulo}</strong>
-                        <span>{categoria?.nome ?? 'Sem disciplina'}</span>
-                      </div>
-                      <div className={styles.detalhesTarefa}>
-                        <span className={`${styles.prioridade} ${styles[tarefa.prioridade]}`}>
-                          {rotulosPrioridade[tarefa.prioridade]}
-                        </span>
-                        <span className={tarefa.concluida ? styles.concluida : styles.pendente}>
-                          {tarefa.concluida ? 'Concluída' : 'Pendente'}
-                        </span>
-                      </div>
-                      <Link className={styles.abrirTarefa} to={`/tarefas?destaque=${tarefa.id}`}>
-                        Abrir tarefa
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            )}
+                    return (
+                      <li key={tarefa.id}>
+                        <div>
+                          <strong>{tarefa.titulo}</strong>
+                          <span>{categoria?.nome ?? 'Sem disciplina'}</span>
+                        </div>
+                        <div className={styles.detalhesTarefa}>
+                          <span className={`${styles.prioridade} ${styles[tarefa.prioridade]}`}>
+                            {rotulosPrioridade[tarefa.prioridade]}
+                          </span>
+                          <span className={tarefa.concluida ? styles.concluida : styles.pendente}>
+                            {tarefa.concluida ? 'Concluída' : 'Pendente'}
+                          </span>
+                        </div>
+                        <Link className={styles.abrirTarefa} to={`/tarefas?destaque=${tarefa.id}`}>
+                          Abrir tarefa
+                        </Link>
+                      </li>
+                    )
+                  })}
+                </ul>
+              )}
             </section>
           </div>
+
+          <section className={styles.agendaHoje} aria-labelledby="titulo-agenda-hoje">
+            <header>
+              <h2 id="titulo-agenda-hoje">Agenda de hoje</h2>
+              <p>Priorize o que já venceu e os prazos do dia.</p>
+            </header>
+
+            <div className={styles.gradeAgenda}>
+              <section className={`${styles.blocoAgenda} ${styles.blocoAtrasadas}`}>
+                <header><h3>Atrasadas</h3><span>{tarefasAtrasadas.length}</span></header>
+                <ListaAgenda
+                  tarefas={tarefasAtrasadas}
+                  categoriasPorId={categoriasPorId}
+                  mensagemVazia="Nenhuma tarefa atrasada."
+                />
+              </section>
+
+              <section className={styles.blocoAgenda}>
+                <header><h3>Hoje</h3><span>{tarefasDeHoje.length}</span></header>
+                <ListaAgenda
+                  tarefas={tarefasDeHoje}
+                  categoriasPorId={categoriasPorId}
+                  mensagemVazia="Nenhuma tarefa para hoje."
+                />
+              </section>
+
+              <section className={styles.blocoAgenda}>
+                <header><h3>Próximas</h3><span>{proximasTarefas.length}</span></header>
+                <ListaAgenda
+                  tarefas={proximasTarefas}
+                  categoriasPorId={categoriasPorId}
+                  mensagemVazia="Nenhuma tarefa próxima."
+                />
+              </section>
+            </div>
+          </section>
         </>
       )}
     </section>

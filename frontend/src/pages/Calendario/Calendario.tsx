@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { listarCategorias, type CategoriaResumo } from '../../services/categorias'
 import { listarTarefas, type TarefaResumo } from '../../services/tarefas'
 import styles from './Calendario.module.css'
@@ -218,6 +219,9 @@ export default function Calendario() {
                           {tarefa.concluida ? 'Concluída' : 'Pendente'}
                         </span>
                       </div>
+                      <Link className={styles.abrirTarefa} to={`/tarefas?destaque=${tarefa.id}`}>
+                        Abrir tarefa
+                      </Link>
                     </li>
                   )
                 })}

@@ -22,6 +22,7 @@ export type TarefaCreateRequest = {
   prazo: string
   prioridade: Prioridade
   observacao: string
+  categoriaId: string | null
 }
 
 export type TarefaUpdateRequest = {
@@ -30,6 +31,7 @@ export type TarefaUpdateRequest = {
   prioridade: Prioridade
   observacao: string
   concluida: boolean
+  categoriaId: string | null
 }
 
 const BASE_PATH = '/api/tarefas'

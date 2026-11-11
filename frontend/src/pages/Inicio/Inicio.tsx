@@ -130,6 +130,7 @@ export default function Inicio() {
         prioridade: tarefa.prioridade,
         observacao: tarefa.observacao,
         concluida: !tarefa.concluida,
+        categoriaId: tarefa.categoriaId,
       })
       setTarefas((tarefasAtuais) =>
         tarefasAtuais.map((tarefaAtual) =>

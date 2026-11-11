@@ -9,6 +9,7 @@ import {
   type Prioridade,
   type TarefaResumo,
 } from '../../services/tarefas'
+import { listarCategorias, type CategoriaResumo } from '../../services/categorias'
 import styles from './Tarefas.module.css'
 
 const rotulosPrioridade: Record<Prioridade, string> = {
@@ -44,6 +45,7 @@ function mensagemDoErro(erro: unknown) {
 export default function Tarefas() {
   const [parametrosBusca] = useSearchParams()
   const [tarefas, setTarefas] = useState<TarefaResumo[]>([])
+  const [categorias, setCategorias] = useState<CategoriaResumo[]>([])
   const [tarefaEmEdicao, setTarefaEmEdicao] = useState<TarefaResumo | null>(null)
   const [modalAberto, setModalAberto] = useState(false)
   const [termoBusca, setTermoBusca] = useState('')
@@ -59,9 +61,13 @@ export default function Tarefas() {
 
     async function carregarTarefas() {
       try {
-        const resposta = await listarTarefas()
+        const [resposta, categoriasDaApi] = await Promise.all([
+          listarTarefas(),
+          listarCategorias(),
+        ])
         if (telaAtiva) {
           setTarefas(resposta)
+          setCategorias(categoriasDaApi)
         }
       } catch {
         if (telaAtiva) {
@@ -117,6 +123,7 @@ export default function Tarefas() {
     const prazo = String(dados.get('prazo') ?? '')
     const prioridade = String(dados.get('prioridade') ?? '') as Prioridade
     const observacao = String(dados.get('observacao') ?? '').trim()
+    const categoriaId = String(dados.get('categoriaId') ?? '')
 
     if (!titulo || !prazo || !observacao) {
       setErroFormulario('Preencha todos os campos obrigatórios.')
@@ -134,6 +141,7 @@ export default function Tarefas() {
           prioridade,
           observacao,
           concluida: tarefaEmEdicao.concluida,
+          categoriaId: categoriaId || null,
         })
         setTarefas((tarefasAtuais) =>
           tarefasAtuais.map((tarefa) =>
@@ -141,7 +149,13 @@ export default function Tarefas() {
           ),
         )
       } else {
-        const tarefaCriada = await criarTarefa({ titulo, observacao, prazo, prioridade })
+        const tarefaCriada = await criarTarefa({
+          titulo,
+          observacao,
+          prazo,
+          prioridade,
+          categoriaId: categoriaId || null,
+        })
         setTarefas((tarefasAtuais) => [...tarefasAtuais, tarefaCriada])
       }
 
@@ -164,6 +178,7 @@ export default function Tarefas() {
         prioridade: tarefa.prioridade,
         observacao: tarefa.observacao,
         concluida: !tarefa.concluida,
+        categoriaId: tarefa.categoriaId,
       })
       setTarefas((tarefasAtuais) =>
         tarefasAtuais.map((tarefaAtual) =>
@@ -350,6 +365,16 @@ export default function Tarefas() {
               defaultValue={tarefaEmEdicao?.titulo}
               required
             />
+          </label>
+
+          <label className={styles.grupoCampo}>
+            <span>Disciplina</span>
+            <select name="categoriaId" defaultValue={tarefaEmEdicao?.categoriaId ?? ''}>
+              <option value="">Sem disciplina</option>
+              {categorias.map((categoria) => (
+                <option key={categoria.id} value={categoria.id}>{categoria.nome}</option>
+              ))}
+            </select>
           </label>
 
           <label className={styles.grupoCampo}>

@@ -42,6 +42,13 @@
   border-radius: var(--raio);
 }
 
+.areaCalendario {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 0.55fr);
+  gap: 20px;
+  align-items: start;
+}
+
 .calendario h2,
 .calendario p,
 .vazio h2,
@@ -212,6 +219,111 @@
   background: #fcfbfe;
 }
 
+.tarefasDoDia {
+  padding: 22px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.tarefasDoDia header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--borda);
+}
+
+.tarefasDoDia h2,
+.tarefasDoDia p {
+  margin: 0;
+}
+
+.tarefasDoDia h2 {
+  margin-bottom: 4px;
+  font-size: 1rem;
+}
+
+.tarefasDoDia header p,
+.semTarefas,
+.tarefasDoDia li > div:first-child > span {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.semTarefas {
+  margin: 20px 0 0 !important;
+  text-align: center;
+}
+
+.tarefasDoDia ul {
+  display: grid;
+  gap: 12px;
+  padding: 0;
+  margin: 18px 0 0;
+  list-style: none;
+}
+
+.tarefasDoDia li {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0eef7;
+}
+
+.tarefasDoDia li:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.tarefasDoDia li > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.tarefasDoDia strong {
+  font-size: 0.875rem;
+}
+
+.detalhesTarefa {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.prioridade,
+.concluida,
+.pendente {
+  display: inline-block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.prioridade {
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
+.alta {
+  color: #b42345;
+  background: #fce3eb;
+}
+
+.media {
+  color: #8a5d00;
+  background: #fff2ce;
+}
+
+.baixa {
+  color: #26744f;
+  background: #dff5e9;
+}
+
+.concluida {
+  color: #26744f;
+}
+
+.pendente {
+  color: #9a6700;
+}
+
 @media (max-width: 560px) {
   .calendario,
   .vazio {
@@ -231,5 +343,11 @@
   .dia {
     min-height: 54px;
     padding: 5px;
+  }
+}
+
+@media (max-width: 960px) {
+  .areaCalendario {
+    grid-template-columns: 1fr;
   }
 }

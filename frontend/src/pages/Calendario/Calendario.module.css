@@ -25,7 +25,7 @@
 
 .topo > div > p:last-child,
 .estado,
-.cartaoInicial p,
+.calendario p,
 .vazio p {
   color: var(--texto-suave);
 }
@@ -34,7 +34,7 @@
   margin: 0;
 }
 
-.cartaoInicial,
+.calendario,
 .vazio {
   padding: clamp(28px, 5vw, 40px);
   background: var(--branco);
@@ -42,14 +42,14 @@
   border-radius: var(--raio);
 }
 
-.cartaoInicial h2,
-.cartaoInicial p,
+.calendario h2,
+.calendario p,
 .vazio h2,
 .vazio p {
   margin: 0;
 }
 
-.cartaoInicial h2,
+.calendario h2,
 .vazio h2 {
   margin-bottom: 8px;
   font-size: 1rem;
@@ -90,4 +90,106 @@
   border: 0;
   border-radius: 8px;
   cursor: pointer;
+}
+
+.cabecalhoCalendario {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.navegacaoMes {
+  display: flex;
+  gap: 8px;
+}
+
+.navegacaoMes button {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  color: var(--roxo);
+  font-size: 1.5rem;
+  line-height: 1;
+  background: var(--lilas);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.navegacaoMes button:hover {
+  background: #e5e1ff;
+}
+
+.gradeCalendario {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--borda);
+  border-right: 0;
+  border-bottom: 0;
+  border-radius: 8px;
+}
+
+.nomeDia {
+  padding: 10px 8px;
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-align: center;
+  text-transform: uppercase;
+  background: #faf9ff;
+  border-right: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+}
+
+.dia {
+  display: flex;
+  align-items: flex-start;
+  min-height: clamp(68px, 9vw, 104px);
+  padding: 9px;
+  color: var(--texto);
+  background: var(--branco);
+  border-right: 1px solid var(--borda);
+  border-bottom: 1px solid var(--borda);
+}
+
+.dia > span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 50%;
+}
+
+.diaForaDoMes {
+  color: #b6b2c5;
+  background: #fcfbfe;
+}
+
+@media (max-width: 560px) {
+  .calendario,
+  .vazio {
+    padding: 20px 14px;
+  }
+
+  .cabecalhoCalendario {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nomeDia {
+    padding: 8px 2px;
+    font-size: 0.625rem;
+  }
+
+  .dia {
+    min-height: 54px;
+    padding: 5px;
+  }
 }

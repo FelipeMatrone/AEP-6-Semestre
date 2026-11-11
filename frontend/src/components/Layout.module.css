@@ -171,6 +171,62 @@
   box-shadow: 0 10px 24px rgb(46 42 74 / 12%);
 }
 
+.estadoBusca p {
+  margin: 0;
+}
+
+.resumoBusca {
+  padding-bottom: 8px;
+  font-size: 0.75rem;
+}
+
+.grupoResultados + .grupoResultados {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.grupoResultados h2 {
+  margin: 0 0 6px;
+  color: var(--texto);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.grupoResultados ul {
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.grupoResultados a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  color: var(--texto);
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.grupoResultados a:hover,
+.grupoResultados a:focus-visible {
+  background: var(--lilas);
+  outline: none;
+}
+
+.grupoResultados strong {
+  font-size: 0.8125rem;
+}
+
+.grupoResultados a > span {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
 .acoesCabecalho {
   display: flex;
   gap: 18px;

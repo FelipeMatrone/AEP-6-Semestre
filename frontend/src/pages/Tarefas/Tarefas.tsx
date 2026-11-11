@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
   atualizarTarefa,
@@ -41,6 +42,7 @@ function mensagemDoErro(erro: unknown) {
 }
 
 export default function Tarefas() {
+  const [parametrosBusca] = useSearchParams()
   const [tarefas, setTarefas] = useState<TarefaResumo[]>([])
   const [tarefaEmEdicao, setTarefaEmEdicao] = useState<TarefaResumo | null>(null)
   const [modalAberto, setModalAberto] = useState(false)
@@ -89,6 +91,7 @@ export default function Tarefas() {
   const tarefasFiltradas = tarefas.filter((tarefa) =>
     tarefa.titulo.toLocaleLowerCase().includes(termoBusca.trim().toLocaleLowerCase()),
   )
+  const tarefaDestacadaId = parametrosBusca.get('destaque')
 
   function abrirCriacao() {
     setTarefaEmEdicao(null)
@@ -268,7 +271,7 @@ export default function Tarefas() {
                 </tr>
               )}
               {tarefasFiltradas.map((tarefa) => (
-                <tr key={tarefa.id}>
+                <tr key={tarefa.id} className={tarefa.id === tarefaDestacadaId ? styles.tarefaDestacada : ''}>
                   <td>{tarefa.titulo}</td>
                   <td>{formatarPrazo(tarefa.prazo)}</td>
                   <td>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import {
   buscarCategoria,
   criarAnotacao as criarAnotacaoNaApi,
@@ -15,6 +15,7 @@ import styles from './Categoria.module.css'
 export default function Categoria() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [parametrosBusca] = useSearchParams()
   const [categoria, setCategoria] = useState<CategoriaDaApi | null>(null)
   const [busca, setBusca] = useState('')
   const [anotacaoSelecionadaId, setAnotacaoSelecionadaId] = useState<string | null>(null)
@@ -61,7 +62,11 @@ export default function Categoria() {
           setCategoria(resposta)
           setNomeCategoria(resposta.nome)
           setDescricaoCategoria(resposta.descricao ?? '')
-          setAnotacaoSelecionadaId(resposta.anotacoes[0]?.id ?? null)
+          const anotacaoDaBusca = parametrosBusca.get('anotacao')
+          const anotacaoEncontrada = resposta.anotacoes.find(
+            (anotacao) => anotacao.id === anotacaoDaBusca,
+          )
+          setAnotacaoSelecionadaId(anotacaoEncontrada?.id ?? resposta.anotacoes[0]?.id ?? null)
         }
       } catch {
         if (telaAtiva) {
@@ -79,7 +84,7 @@ export default function Categoria() {
     return () => {
       telaAtiva = false
     }
-  }, [id, tentativa])
+  }, [id, parametrosBusca, tentativa])
 
   function atualizarAnotacaoSelecionada(campos: Partial<Anotacao>) {
     if (!anotacaoSelecionada) return

@@ -61,6 +61,10 @@ export default function Layout() {
     }
   }
 
+  function fecharBusca() {
+    setBuscaAberta(false)
+  }
+
   return (
     <div
       className={`${styles.pagina} ${
@@ -110,15 +114,16 @@ export default function Layout() {
 
       <main className={styles.conteudo}>
         <header className={styles.cabecalho}>
-          <label className={styles.busca}>
-            <span className={styles.textoOculto}>Buscar</span>
+          <div className={styles.busca}>
+            <label htmlFor="busca-global" className={styles.textoOculto}>Buscar</label>
             <input
+              id="busca-global"
               type="search"
               placeholder="Busque por tarefas ou anotações"
               value={termoBusca}
               onChange={(evento) => atualizarBusca(evento.target.value)}
               onFocus={() => setBuscaAberta(Boolean(termoBusca.trim()))}
-              onBlur={() => window.setTimeout(() => setBuscaAberta(false), 150)}
+              onBlur={() => window.setTimeout(fecharBusca, 150)}
               onKeyDown={(evento) => {
                 if (evento.key === 'Escape') {
                   setBuscaAberta(false)
@@ -129,14 +134,69 @@ export default function Layout() {
               aria-controls="resultados-busca"
             />
             {buscaAberta && estadoBusca !== 'ocioso' && (
-              <span id="resultados-busca" className={styles.estadoBusca} role="status">
-                {estadoBusca === 'carregando' && 'Buscando...'}
-                {estadoBusca === 'pronto' && `${quantidadeResultados} resultado(s) encontrado(s).`}
-                {estadoBusca === 'vazio' && 'Nenhum resultado encontrado.'}
-                {estadoBusca === 'erro' && 'Não foi possível realizar a busca.'}
-              </span>
+              <div id="resultados-busca" className={styles.estadoBusca}>
+                {estadoBusca === 'carregando' && <p role="status">Buscando...</p>}
+                {estadoBusca === 'vazio' && <p role="status">Nenhum resultado encontrado.</p>}
+                {estadoBusca === 'erro' && <p role="status">Não foi possível realizar a busca.</p>}
+                {estadoBusca === 'pronto' && resultadoBusca && (
+                  <>
+                    <p className={styles.resumoBusca} role="status">
+                      {quantidadeResultados} resultado(s) encontrado(s)
+                    </p>
+
+                    {resultadoBusca.tarefas.length > 0 && (
+                      <section className={styles.grupoResultados} aria-labelledby="resultados-tarefas">
+                        <h2 id="resultados-tarefas">Tarefas</h2>
+                        <ul>
+                          {resultadoBusca.tarefas.map((tarefa) => (
+                            <li key={tarefa.id}>
+                              <Link to={`/tarefas?destaque=${tarefa.id}`} onClick={fecharBusca}>
+                                {tarefa.titulo}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {resultadoBusca.categorias.length > 0 && (
+                      <section className={styles.grupoResultados} aria-labelledby="resultados-categorias">
+                        <h2 id="resultados-categorias">Categorias</h2>
+                        <ul>
+                          {resultadoBusca.categorias.map((categoria) => (
+                            <li key={categoria.id}>
+                              <Link to={`/anotacoes/${categoria.id}`} onClick={fecharBusca}>
+                                {categoria.nome}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {resultadoBusca.anotacoes.length > 0 && (
+                      <section className={styles.grupoResultados} aria-labelledby="resultados-anotacoes">
+                        <h2 id="resultados-anotacoes">Anotações</h2>
+                        <ul>
+                          {resultadoBusca.anotacoes.map((anotacao) => (
+                            <li key={anotacao.id}>
+                              <Link
+                                to={`/anotacoes/${anotacao.categoriaId}?anotacao=${anotacao.id}`}
+                                onClick={fecharBusca}
+                              >
+                                <strong>{anotacao.titulo}</strong>
+                                <span>{anotacao.categoriaNome}</span>
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+                  </>
+                )}
+              </div>
             )}
-          </label>
+          </div>
 
           <div className={styles.acoesCabecalho}>
             <button

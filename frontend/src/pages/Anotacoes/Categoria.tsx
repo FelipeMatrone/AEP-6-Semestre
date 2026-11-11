@@ -1,28 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { anotacoesIniciais, categoriasIniciais, type Anotacao } from './dados'
+import {
+  buscarCategoria,
+  criarAnotacao as criarAnotacaoNaApi,
+  type Anotacao,
+  type Categoria as CategoriaDaApi,
+} from '../../services/categorias'
 import styles from './Categoria.module.css'
 
 export default function Categoria() {
   const { id } = useParams()
-  const categoria = categoriasIniciais.find((item) => item.id === Number(id))
-
-  const [anotacoes, setAnotacoes] = useState(anotacoesIniciais)
+  const [categoria, setCategoria] = useState<CategoriaDaApi | null>(null)
   const [busca, setBusca] = useState('')
-  const [anotacaoSelecionadaId, setAnotacaoSelecionadaId] = useState<
-    number | null
-  >(
-    () =>
-      anotacoesIniciais.find(
-        (anotacao) => anotacao.categoriaId === categoria?.id,
-      )?.id ?? null,
-  )
+  const [anotacaoSelecionadaId, setAnotacaoSelecionadaId] = useState<string | null>(null)
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState<string | null>(null)
+  const [tentativa, setTentativa] = useState(0)
   const [salvo, setSalvo] = useState(true)
   const areaTextoRef = useRef<HTMLDivElement>(null)
 
-  const anotacoesDaCategoria = categoria
-    ? anotacoes.filter((anotacao) => anotacao.categoriaId === categoria.id)
-    : []
+  const anotacoesDaCategoria = categoria?.anotacoes ?? []
 
   const termo = busca.trim().toLowerCase()
   const anotacoesFiltradas = termo
@@ -31,9 +28,45 @@ export default function Categoria() {
       )
     : anotacoesDaCategoria
 
-  const anotacaoSelecionada = anotacoes.find(
+  const anotacaoSelecionada = anotacoesDaCategoria.find(
     (anotacao) => anotacao.id === anotacaoSelecionadaId,
   )
+
+  useEffect(() => {
+    let telaAtiva = true
+
+    async function carregarCategoria() {
+      if (!id) {
+        setCarregando(false)
+        return
+      }
+
+      setCarregando(true)
+      setErro(null)
+
+      try {
+        const resposta = await buscarCategoria(id)
+        if (telaAtiva) {
+          setCategoria(resposta)
+          setAnotacaoSelecionadaId(resposta.anotacoes[0]?.id ?? null)
+        }
+      } catch {
+        if (telaAtiva) {
+          setErro('Não foi possível carregar esta categoria. Tente novamente.')
+        }
+      } finally {
+        if (telaAtiva) {
+          setCarregando(false)
+        }
+      }
+    }
+
+    carregarCategoria()
+
+    return () => {
+      telaAtiva = false
+    }
+  }, [id, tentativa])
 
   useEffect(() => {
     if (salvo) return
@@ -43,30 +76,32 @@ export default function Categoria() {
 
   function atualizarAnotacaoSelecionada(campos: Partial<Anotacao>) {
     if (!anotacaoSelecionada) return
-    setAnotacoes((atuais) =>
-      atuais.map((anotacao) =>
-        anotacao.id === anotacaoSelecionada.id
-          ? { ...anotacao, ...campos }
-          : anotacao,
+    setCategoria((atual) => atual && ({
+      ...atual,
+      anotacoes: atual.anotacoes.map((anotacao) =>
+        anotacao.id === anotacaoSelecionada.id ? { ...anotacao, ...campos } : anotacao,
       ),
-    )
+    }))
     setSalvo(false)
   }
 
-  function criarAnotacao() {
+  async function criarAnotacao() {
     if (!categoria) return
 
-    const nova: Anotacao = {
-      id: Date.now(),
-      categoriaId: categoria.id,
-      titulo: '',
-      conteudo: '',
-      atualizadaEm: 'Editado agora',
+    try {
+      const nova = await criarAnotacaoNaApi(categoria.id, {
+        titulo: 'Nova anotação',
+        conteudo: 'Comece a escrever...',
+      })
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: [nova, ...atual.anotacoes],
+      }))
+      setAnotacaoSelecionadaId(nova.id)
+      setSalvo(true)
+    } catch {
+      setErro('Não foi possível criar a anotação. Tente novamente.')
     }
-
-    setAnotacoes((atuais) => [nova, ...atuais])
-    setAnotacaoSelecionadaId(nova.id)
-    setSalvo(true)
   }
 
   // document.execCommand é deprecated mas ainda suportado em todos os navegadores
@@ -98,6 +133,22 @@ export default function Categoria() {
   // do editor é conveniência marginal perto do risco.
   function aoSoltar(evento: React.DragEvent<HTMLDivElement>) {
     evento.preventDefault()
+  }
+
+  if (carregando) {
+    return <p className={styles.mensagemLateral}>Carregando categoria...</p>
+  }
+
+  if (erro) {
+    return (
+      <div className={styles.naoEncontrada}>
+        <h2>Não foi possível carregar a categoria</h2>
+        <p>{erro}</p>
+        <button type="button" className={styles.botaoNovaAnotacao} onClick={() => setTentativa((atual) => atual + 1)}>
+          Tentar novamente
+        </button>
+      </div>
+    )
   }
 
   if (!categoria) {

@@ -39,7 +39,7 @@ class PainelControllerTest {
 
 	@Test
 	void painelDevolveTotaisEProgresso() throws Exception {
-		when(service.painel(USUARIO)).thenReturn(new PainelResponse(7, 12, 2, List.of(
+		when(service.painel(USUARIO)).thenReturn(new PainelResponse(7, 12, 2, 5, 3, 60, List.of(
 				new ProgressoResponse("672f0000000000000000b001", "Engenharia de Software", Cor.ROXO, 5, 3, 60))));
 
 		mockMvc.perform(get(BASE_PATH))
@@ -47,6 +47,9 @@ class PainelControllerTest {
 				.andExpect(jsonPath("$.pendentes").value(7))
 				.andExpect(jsonPath("$.concluidas").value(12))
 				.andExpect(jsonPath("$.atrasadas").value(2))
+				.andExpect(jsonPath("$.metaSemanal").value(5))
+				.andExpect(jsonPath("$.concluidasNaSemana").value(3))
+				.andExpect(jsonPath("$.percentualMetaSemanal").value(60))
 				.andExpect(jsonPath("$.progresso[0].categoriaId").value("672f0000000000000000b001"))
 				.andExpect(jsonPath("$.progresso[0].cor").value("roxo"))
 				.andExpect(jsonPath("$.progresso[0].total").value(5))
@@ -57,7 +60,7 @@ class PainelControllerTest {
 
 	@Test
 	void painelDevolveBaldeSemDisciplinaComCategoriaIdNulo() throws Exception {
-		when(service.painel(USUARIO)).thenReturn(new PainelResponse(2, 0, 0, List.of(
+		when(service.painel(USUARIO)).thenReturn(new PainelResponse(2, 0, 0, 5, 0, 0, List.of(
 				new ProgressoResponse(null, "Sem disciplina", Cor.AMBAR, 2, 0, 0))));
 
 		mockMvc.perform(get(BASE_PATH))

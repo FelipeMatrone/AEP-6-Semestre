@@ -8,6 +8,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,9 +20,11 @@ import br.com.cesumar.aep.dto.PainelResponse;
 import br.com.cesumar.aep.dto.ProgressoResponse;
 import br.com.cesumar.aep.model.Cor;
 import br.com.cesumar.aep.model.Tarefa;
+import br.com.cesumar.aep.model.Usuario;
 import br.com.cesumar.aep.repository.PainelRepository;
 import br.com.cesumar.aep.repository.PainelRepository.CategoriaComTarefas;
 import br.com.cesumar.aep.repository.TarefaRepository;
+import br.com.cesumar.aep.repository.UsuarioRepository;
 
 @ExtendWith(MockitoExtension.class)
 class PainelServiceTest {
@@ -36,12 +39,15 @@ class PainelServiceTest {
 	@Mock
 	private TarefaRepository tarefaRepository;
 
+	@Mock
+	private UsuarioRepository usuarioRepository;
+
 	private PainelService service;
 
 	@BeforeEach
 	void montarService() {
 		Clock clock = Clock.fixed(Instant.parse("2026-11-08T12:00:00Z"), ZoneOffset.UTC);
-		service = new PainelService(repository, tarefaRepository, clock);
+		service = new PainelService(repository, tarefaRepository, usuarioRepository, clock);
 	}
 
 	@Test
@@ -103,6 +109,41 @@ class PainelServiceTest {
 
 		// 1 de 3 = 33,33...
 		assertThat(service.painel(USUARIO).progresso().get(0).percentual()).isEqualTo(33);
+	}
+
+	@Test
+	void painelCalculaProgressoDaMetaSemanalPelaDataDeConclusao() {
+		Tarefa concluidaNaSemana = tarefa(true, HOJE);
+		concluidaNaSemana.setConcluidaEm(Instant.parse("2026-11-03T10:00:00Z"));
+		Tarefa concluidaAntesDaSemana = tarefa(true, HOJE);
+		concluidaAntesDaSemana.setConcluidaEm(Instant.parse("2026-11-01T10:00:00Z"));
+		when(repository.agregar(USUARIO)).thenReturn(List.of(categoria("c1", List.of(
+				concluidaNaSemana, concluidaAntesDaSemana))));
+		when(tarefaRepository.findByUsuarioIdAndCategoriaIdIsNull(USUARIO)).thenReturn(List.of());
+
+		PainelResponse painel = service.painel(USUARIO);
+
+		assertThat(painel.metaSemanal()).isEqualTo(5);
+		assertThat(painel.concluidasNaSemana()).isEqualTo(1);
+		assertThat(painel.percentualMetaSemanal()).isEqualTo(20);
+	}
+
+	@Test
+	void painelUsaAMetaSemanalDoUsuario() {
+		Tarefa primeira = tarefa(true, HOJE);
+		primeira.setConcluidaEm(Instant.parse("2026-11-02T10:00:00Z"));
+		Tarefa segunda = tarefa(true, HOJE);
+		segunda.setConcluidaEm(Instant.parse("2026-11-06T10:00:00Z"));
+		Usuario usuario = new Usuario();
+		usuario.setMetaSemanal(2);
+		when(repository.agregar(USUARIO)).thenReturn(List.of(categoria("c1", List.of(primeira, segunda))));
+		when(tarefaRepository.findByUsuarioIdAndCategoriaIdIsNull(USUARIO)).thenReturn(List.of());
+		when(usuarioRepository.findById(USUARIO)).thenReturn(Optional.of(usuario));
+
+		PainelResponse painel = service.painel(USUARIO);
+
+		assertThat(painel.metaSemanal()).isEqualTo(2);
+		assertThat(painel.percentualMetaSemanal()).isEqualTo(100);
 	}
 
 	private CategoriaComTarefas categoria(String id, List<Tarefa> tarefas) {

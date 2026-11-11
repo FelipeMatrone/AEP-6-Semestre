@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   buscarCategoria,
   criarAnotacao as criarAnotacaoNaApi,
   atualizarAnotacao as atualizarAnotacaoNaApi,
+  atualizarCategoria as atualizarCategoriaNaApi,
+  excluirCategoria as excluirCategoriaNaApi,
   excluirAnotacao as excluirAnotacaoNaApi,
   type Anotacao,
   type Categoria as CategoriaDaApi,
@@ -12,6 +14,7 @@ import styles from './Categoria.module.css'
 
 export default function Categoria() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const [categoria, setCategoria] = useState<CategoriaDaApi | null>(null)
   const [busca, setBusca] = useState('')
   const [anotacaoSelecionadaId, setAnotacaoSelecionadaId] = useState<string | null>(null)
@@ -22,6 +25,10 @@ export default function Categoria() {
   const [salvando, setSalvando] = useState(false)
   const [excluindo, setExcluindo] = useState(false)
   const [erroSalvamento, setErroSalvamento] = useState<string | null>(null)
+  const [editandoCategoria, setEditandoCategoria] = useState(false)
+  const [nomeCategoria, setNomeCategoria] = useState('')
+  const [descricaoCategoria, setDescricaoCategoria] = useState('')
+  const [salvandoCategoria, setSalvandoCategoria] = useState(false)
 
   const anotacoesDaCategoria = categoria?.anotacoes ?? []
 
@@ -52,6 +59,8 @@ export default function Categoria() {
         const resposta = await buscarCategoria(id)
         if (telaAtiva) {
           setCategoria(resposta)
+          setNomeCategoria(resposta.nome)
+          setDescricaoCategoria(resposta.descricao ?? '')
           setAnotacaoSelecionadaId(resposta.anotacoes[0]?.id ?? null)
         }
       } catch {
@@ -165,6 +174,42 @@ export default function Categoria() {
     }
   }
 
+  async function salvarCategoria() {
+    if (!categoria || !nomeCategoria.trim()) return
+
+    setSalvandoCategoria(true)
+    setErro(null)
+
+    try {
+      const atualizada = await atualizarCategoriaNaApi(categoria.id, {
+        nome: nomeCategoria.trim(),
+        descricao: descricaoCategoria.trim(),
+        cor: categoria.cor,
+      })
+      setCategoria(atualizada)
+      setEditandoCategoria(false)
+    } catch (erro) {
+      setErro(erro instanceof Error ? erro.message : 'Não foi possível salvar a categoria.')
+    } finally {
+      setSalvandoCategoria(false)
+    }
+  }
+
+  async function excluirCategoria() {
+    if (!categoria || !window.confirm(`Excluir a categoria “${categoria.nome}”?`)) return
+
+    setSalvandoCategoria(true)
+    setErro(null)
+
+    try {
+      await excluirCategoriaNaApi(categoria.id)
+      navigate('/anotacoes')
+    } catch (erro) {
+      setErro(erro instanceof Error ? erro.message : 'Não foi possível excluir a categoria.')
+      setSalvandoCategoria(false)
+    }
+  }
+
   function formatarAtualizacao(data: string) {
     return new Intl.DateTimeFormat('pt-BR', {
       dateStyle: 'short',
@@ -224,6 +269,35 @@ export default function Categoria() {
             </span>
             <h1>{categoria.nome}</h1>
           </div>
+
+          {editandoCategoria ? (
+            <div className={styles.formularioCategoria}>
+              <input
+                value={nomeCategoria}
+                onChange={(evento) => setNomeCategoria(evento.target.value)}
+                aria-label="Nome da categoria"
+              />
+              <textarea
+                value={descricaoCategoria}
+                onChange={(evento) => setDescricaoCategoria(evento.target.value)}
+                placeholder="Descrição da categoria"
+                aria-label="Descrição da categoria"
+              />
+              <div>
+                <button type="button" onClick={() => setEditandoCategoria(false)}>Cancelar</button>
+                <button type="button" onClick={salvarCategoria} disabled={salvandoCategoria || !nomeCategoria.trim()}>
+                  {salvandoCategoria ? 'Salvando...' : 'Salvar'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.acoesCategoria}>
+              <button type="button" onClick={() => setEditandoCategoria(true)}>Editar categoria</button>
+              <button type="button" onClick={excluirCategoria} disabled={salvandoCategoria}>
+                Excluir categoria
+              </button>
+            </div>
+          )}
 
           <input
             type="search"

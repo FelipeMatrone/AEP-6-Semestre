@@ -11,6 +11,7 @@ import {
   type CategoriaResumo,
   type Cor,
 } from '../../services/categorias'
+import { listarTarefas, type TarefaResumo } from '../../services/tarefas'
 import styles from './Anotacoes.module.css'
 
 const esquemaCategoria = z.object({
@@ -21,6 +22,11 @@ type DadosCategoria = z.infer<typeof esquemaCategoria>
 
 const cores: Cor[] = ['roxo', 'magenta', 'verde', 'ambar']
 
+type CategoriaComResumo = CategoriaResumo & {
+  tarefasPendentes: number
+  proximoPrazo: string | null
+}
+
 function rotuloAnotacoes(quantidade: number) {
   if (quantidade === 0) {
     return 'Nenhuma anotação'
@@ -30,7 +36,7 @@ function rotuloAnotacoes(quantidade: number) {
 }
 
 export default function Anotacoes() {
-  const [categorias, setCategorias] = useState<CategoriaResumo[]>([])
+  const [categorias, setCategorias] = useState<CategoriaComResumo[]>([])
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
   const [carregando, setCarregando] = useState(true)
@@ -65,9 +71,9 @@ export default function Anotacoes() {
       setErroLista(null)
 
       try {
-        const resposta = await listarCategorias()
+        const [resposta, tarefas] = await Promise.all([listarCategorias(), listarTarefas()])
         if (telaAtiva) {
-          setCategorias(resposta)
+          setCategorias(resposta.map((categoria) => resumirCategoria(categoria, tarefas)))
         }
       } catch {
         if (telaAtiva) {
@@ -114,6 +120,8 @@ export default function Anotacoes() {
           descricao: categoria.descricao,
           cor: categoria.cor,
           totalAnotacoes: categoria.anotacoes.length,
+          tarefasPendentes: 0,
+          proximoPrazo: null,
         },
       ])
       fecharModal()
@@ -209,9 +217,21 @@ export default function Anotacoes() {
 
                 <strong className={styles.nome}>{categoria.nome}</strong>
 
+                {categoria.descricao && <span className={styles.descricaoCategoria}>{categoria.descricao}</span>}
+
                 <span className={styles.quantidade}>
                   {rotuloAnotacoes(categoria.totalAnotacoes)}
                 </span>
+                <span className={styles.quantidade}>
+                  {categoria.tarefasPendentes === 1
+                    ? '1 tarefa pendente'
+                    : `${categoria.tarefasPendentes} tarefas pendentes`}
+                </span>
+                {categoria.proximoPrazo && (
+                  <span className={styles.proximoPrazo}>
+                    Próximo prazo: {formatarPrazo(categoria.proximoPrazo)}
+                  </span>
+                )}
               </Link>
             </li>
           ))}
@@ -253,5 +273,23 @@ export default function Anotacoes() {
         </form>
       </Modal>
     </>
+  )
+}
+
+function resumirCategoria(categoria: CategoriaResumo, tarefas: TarefaResumo[]): CategoriaComResumo {
+  const pendentes = tarefas
+    .filter((tarefa) => tarefa.categoriaId === categoria.id && !tarefa.concluida)
+    .sort((primeira, segunda) => primeira.prazo.localeCompare(segunda.prazo))
+
+  return {
+    ...categoria,
+    tarefasPendentes: pendentes.length,
+    proximoPrazo: pendentes[0]?.prazo ?? null,
+  }
+}
+
+function formatarPrazo(prazo: string) {
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(
+    new Date(`${prazo}T00:00:00Z`),
   )
 }

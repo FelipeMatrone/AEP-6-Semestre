@@ -73,6 +73,47 @@
   white-space: nowrap;
 }
 
+.acoesCategoria,
+.formularioCategoria {
+  display: flex;
+  gap: 8px;
+}
+
+.acoesCategoria button,
+.formularioCategoria button {
+  padding: 6px 8px;
+  color: var(--roxo);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--lilas);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.acoesCategoria button:last-child {
+  color: #c52852;
+  background: #fce3eb;
+}
+
+.formularioCategoria {
+  flex-direction: column;
+}
+
+.formularioCategoria input,
+.formularioCategoria textarea {
+  width: 100%;
+  padding: 8px;
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.75rem;
+  background: #f7f6fb;
+  border: 1px solid var(--borda);
+  border-radius: 6px;
+  resize: vertical;
+}
+
 .busca {
   width: 100%;
   padding: 10px 14px;

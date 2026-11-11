@@ -7,6 +7,7 @@ export type TarefaResumo = {
   prioridade: Prioridade
   observacao: string
   concluida: boolean
+  categoriaId: string | null
 }
 
 export type Tarefa = TarefaResumo & {

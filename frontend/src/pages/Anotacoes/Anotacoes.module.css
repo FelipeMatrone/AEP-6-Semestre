@@ -135,9 +135,26 @@
   line-height: 1.3;
 }
 
+.descricaoCategoria {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
 .quantidade {
   color: var(--texto-suave);
   font-size: 0.75rem;
+}
+
+.proximoPrazo {
+  margin-top: 4px;
+  color: var(--magenta);
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .semResultado {

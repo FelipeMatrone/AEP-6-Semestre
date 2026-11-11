@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import {
   buscarCategoria,
   criarAnotacao as criarAnotacaoNaApi,
+  atualizarAnotacao as atualizarAnotacaoNaApi,
   type Anotacao,
   type Categoria as CategoriaDaApi,
 } from '../../services/categorias'
@@ -17,7 +18,8 @@ export default function Categoria() {
   const [erro, setErro] = useState<string | null>(null)
   const [tentativa, setTentativa] = useState(0)
   const [salvo, setSalvo] = useState(true)
-  const areaTextoRef = useRef<HTMLDivElement>(null)
+  const [salvando, setSalvando] = useState(false)
+  const [erroSalvamento, setErroSalvamento] = useState<string | null>(null)
 
   const anotacoesDaCategoria = categoria?.anotacoes ?? []
 
@@ -68,12 +70,6 @@ export default function Categoria() {
     }
   }, [id, tentativa])
 
-  useEffect(() => {
-    if (salvo) return
-    const temporizador = setTimeout(() => setSalvo(true), 600)
-    return () => clearTimeout(temporizador)
-  }, [salvo])
-
   function atualizarAnotacaoSelecionada(campos: Partial<Anotacao>) {
     if (!anotacaoSelecionada) return
     setCategoria((atual) => atual && ({
@@ -83,6 +79,41 @@ export default function Categoria() {
       ),
     }))
     setSalvo(false)
+    setErroSalvamento(null)
+  }
+
+  async function salvarAnotacaoSelecionada() {
+    if (!categoria || !anotacaoSelecionada || salvo || salvando) return
+
+    const titulo = anotacaoSelecionada.titulo.trim()
+    const conteudo = anotacaoSelecionada.conteudo.trim()
+    if (!titulo || !conteudo) {
+      setErroSalvamento('Título e conteúdo são obrigatórios para salvar.')
+      return
+    }
+
+    setSalvando(true)
+    setErroSalvamento(null)
+
+    try {
+      const anotacao = await atualizarAnotacaoNaApi(categoria.id, anotacaoSelecionada.id, {
+        titulo,
+        conteudo,
+      })
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: atual.anotacoes.map((item) =>
+          item.id === anotacao.id ? anotacao : item,
+        ),
+      }))
+      setSalvo(true)
+    } catch (erro) {
+      setErroSalvamento(
+        erro instanceof Error ? erro.message : 'Não foi possível salvar a anotação.',
+      )
+    } finally {
+      setSalvando(false)
+    }
   }
 
   async function criarAnotacao() {
@@ -104,35 +135,11 @@ export default function Categoria() {
     }
   }
 
-  // document.execCommand é deprecated mas ainda suportado em todos os navegadores
-  // relevantes; trocar por uma lib (Tiptap/Slate) só se a formatação básica
-  // (negrito, itálico, lista) deixar de bastar.
-  function aplicarFormatacao(comando: 'bold' | 'italic' | 'insertUnorderedList') {
-    const areaTexto = areaTextoRef.current
-    if (!areaTexto || !anotacaoSelecionada) return
-
-    areaTexto.focus()
-    document.execCommand(comando)
-    atualizarAnotacaoSelecionada({ conteudo: areaTexto.innerHTML })
-  }
-
-  // Evita colar HTML de fora (ex: de outro site) dentro do contentEditable —
-  // só o texto puro entra, o resto da formatação vem dos botões da barra.
-  function aoColar(evento: React.ClipboardEvent<HTMLDivElement>) {
-    evento.preventDefault()
-    document.execCommand('insertText', false, evento.clipboardData.getData('text/plain'))
-    if (areaTextoRef.current) {
-      atualizarAnotacaoSelecionada({ conteudo: areaTextoRef.current.innerHTML })
-    }
-  }
-
-  // Arrastar conteúdo de outra aba para cá é o mesmo buraco que aoColar fecha,
-  // por um caminho diferente: o navegador insere o HTML da origem direto no
-  // contentEditable, sem passar por sanitização nenhuma. Como o conteúdo volta
-  // à tela por dangerouslySetInnerHTML, o drop fica bloqueado — arrastar dentro
-  // do editor é conveniência marginal perto do risco.
-  function aoSoltar(evento: React.DragEvent<HTMLDivElement>) {
-    evento.preventDefault()
+  function formatarAtualizacao(data: string) {
+    return new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date(data))
   }
 
   if (carregando) {
@@ -228,7 +235,7 @@ export default function Categoria() {
                     onClick={() => setAnotacaoSelecionadaId(anotacao.id)}
                   >
                     <strong>{anotacao.titulo || 'Sem título'}</strong>
-                    <span>{anotacao.atualizadaEm}</span>
+                    <span>{formatarAtualizacao(anotacao.atualizadaEm)}</span>
                   </button>
                 </li>
               ))}
@@ -246,67 +253,30 @@ export default function Categoria() {
                 onChange={(evento) =>
                   atualizarAnotacaoSelecionada({ titulo: evento.target.value })
                 }
+                onBlur={salvarAnotacaoSelecionada}
                 placeholder="Título da anotação"
                 aria-label="Título da anotação"
               />
 
-              <div className={styles.barraFormatacao}>
-                <button
-                  type="button"
-                  className={styles.botaoFormatacao}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => aplicarFormatacao('bold')}
-                  aria-label="Negrito"
-                  title="Negrito"
-                >
-                  <strong>B</strong>
-                </button>
-                <button
-                  type="button"
-                  className={styles.botaoFormatacao}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => aplicarFormatacao('italic')}
-                  aria-label="Itálico"
-                  title="Itálico"
-                >
-                  <em>I</em>
-                </button>
-                <button
-                  type="button"
-                  className={styles.botaoFormatacao}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => aplicarFormatacao('insertUnorderedList')}
-                  aria-label="Lista"
-                  title="Lista"
-                >
-                  •
-                </button>
-              </div>
-
-              <div
+              <textarea
                 key={anotacaoSelecionada.id}
-                ref={areaTextoRef}
                 className={styles.areaTexto}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={(evento) =>
+                value={anotacaoSelecionada.conteudo}
+                onChange={(evento) =>
                   atualizarAnotacaoSelecionada({
-                    conteudo: evento.currentTarget.innerHTML,
+                    conteudo: evento.target.value,
                   })
                 }
-                onPaste={aoColar}
-                onDrop={aoSoltar}
-                dangerouslySetInnerHTML={{ __html: anotacaoSelecionada.conteudo }}
-                data-placeholder="Comece a escrever…"
+                onBlur={salvarAnotacaoSelecionada}
+                placeholder="Comece a escrever…"
                 aria-label="Conteúdo da anotação"
-                role="textbox"
-                aria-multiline="true"
               />
 
               <div className={styles.rodapeEditor}>
                 <span className={styles.statusSalvamento}>
-                  {salvo ? 'Salvo' : 'Salvando…'}
+                  {salvando ? 'Salvando…' : salvo ? 'Salvo' : 'Alterações não salvas'}
                 </span>
+                {erroSalvamento && <span className={styles.erroSalvamento}>{erroSalvamento}</span>}
               </div>
             </>
           ) : (

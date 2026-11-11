@@ -212,12 +212,13 @@
   color: var(--texto);
   font: inherit;
   line-height: 1.7;
+  resize: none;
+  background: transparent;
+  border: 0;
 }
 
-.areaTexto:empty::before {
+.areaTexto::placeholder {
   color: var(--texto-suave);
-  content: attr(data-placeholder);
-  pointer-events: none;
 }
 
 .areaTexto ul,
@@ -233,12 +234,18 @@
 
 .rodapeEditor {
   display: flex;
+  gap: 12px;
   justify-content: flex-end;
   padding-top: 10px;
 }
 
 .statusSalvamento {
   color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.erroSalvamento {
+  color: #c52852;
   font-size: 0.75rem;
 }
 

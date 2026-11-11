@@ -67,6 +67,15 @@ class UsuarioServiceTest {
 	}
 
 	@Test
+	void criarDefineMetaSemanalPadrao() {
+		when(repository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+		service.criar(request("ana@aep.com"));
+
+		verify(repository).save(argThat(usuario -> usuario.getMetaSemanal() == 5));
+	}
+
+	@Test
 	void criarNaoExpoeSenhaHashNaResposta() {
 		when(repository.save(any(Usuario.class))).thenAnswer(invocacao -> comId(invocacao.getArgument(0)));
 

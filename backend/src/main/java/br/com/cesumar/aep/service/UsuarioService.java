@@ -20,6 +20,8 @@ import br.com.cesumar.aep.repository.UsuarioRepository;
 @Service
 public class UsuarioService implements UserDetailsService {
 
+	private static final int META_SEMANAL_PADRAO = 5;
+
 	private final UsuarioRepository repository;
 
 	private final PasswordEncoder passwordEncoder;
@@ -48,6 +50,7 @@ public class UsuarioService implements UserDetailsService {
 		Usuario usuario = mapper.toModel(request);
 		usuario.setEmail(email);
 		usuario.setSenhaHash(passwordEncoder.encode(request.senha()));
+		usuario.setMetaSemanal(META_SEMANAL_PADRAO);
 		usuario.setCriadoEm(Instant.now(clock));
 
 		return mapper.toResponse(repository.save(usuario));

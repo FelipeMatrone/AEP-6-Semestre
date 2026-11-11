@@ -173,6 +173,31 @@ class TarefaServiceTest {
 	}
 
 	@Test
+	void atualizarConcluidaCarimbaQuandoATarefaFoiConcluida() {
+		Tarefa persistida = tarefa("1", "Entregar a modelagem", false);
+		when(repository.findById("1")).thenReturn(Optional.of(persistida));
+		when(repository.save(persistida)).thenReturn(persistida);
+
+		service.atualizar("1",
+				new TarefaUpdateRequest("Entregar a modelagem", PRAZO, Prioridade.MEDIA, null, true, null), USUARIO);
+
+		assertThat(persistida.getConcluidaEm()).isEqualTo(AGORA);
+	}
+
+	@Test
+	void atualizarReabertaRemoveADataDeConclusao() {
+		Tarefa persistida = tarefa("1", "Entregar a modelagem", true);
+		persistida.setConcluidaEm(ONTEM);
+		when(repository.findById("1")).thenReturn(Optional.of(persistida));
+		when(repository.save(persistida)).thenReturn(persistida);
+
+		service.atualizar("1",
+				new TarefaUpdateRequest("Entregar a modelagem", PRAZO, Prioridade.MEDIA, null, false, null), USUARIO);
+
+		assertThat(persistida.getConcluidaEm()).isNull();
+	}
+
+	@Test
 	void listarDevolveSoAsTarefasDoUsuario() {
 		when(repository.findByUsuarioId(USUARIO)).thenReturn(List.of(tarefa("1", "Minha", false)));
 

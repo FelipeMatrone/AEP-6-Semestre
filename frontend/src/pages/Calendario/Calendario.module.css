@@ -149,15 +149,25 @@
 .dia {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
   min-height: clamp(68px, 9vw, 104px);
   padding: 9px;
   color: var(--texto);
+  font: inherit;
   background: var(--branco);
   border-right: 1px solid var(--borda);
   border-bottom: 1px solid var(--borda);
+  cursor: pointer;
 }
 
-.dia > span {
+.dia:hover,
+.dia:focus-visible {
+  background: #faf9ff;
+  outline: 2px solid var(--roxo);
+  outline-offset: -2px;
+}
+
+.numeroDia {
   display: grid;
   place-items: center;
   width: 24px;
@@ -165,6 +175,36 @@
   font-size: 0.75rem;
   font-weight: 600;
   border-radius: 50%;
+}
+
+.diaHoje .numeroDia {
+  color: var(--branco);
+  background: var(--roxo);
+}
+
+.diaSelecionado {
+  background: var(--lilas);
+}
+
+.marcadores {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding-top: 8px;
+}
+
+.marcadores i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.marcadorPendente {
+  background: var(--magenta);
+}
+
+.marcadorConcluida {
+  background: #26744f;
 }
 
 .diaForaDoMes {

@@ -25,6 +25,12 @@ function diasDoCalendario(mes: Date) {
   })
 }
 
+function chaveDaData(data: Date) {
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${data.getFullYear()}-${mes}-${dia}`
+}
+
 export default function Calendario() {
   const [tarefas, setTarefas] = useState<TarefaResumo[]>([])
   const [categorias, setCategorias] = useState<CategoriaResumo[]>([])
@@ -32,6 +38,7 @@ export default function Calendario() {
   const [erro, setErro] = useState<string | null>(null)
   const [tentativa, setTentativa] = useState(0)
   const [mesExibido, setMesExibido] = useState(() => primeiroDiaDoMes(new Date()))
+  const [dataSelecionada, setDataSelecionada] = useState(() => new Date())
 
   useEffect(() => {
     let telaAtiva = true
@@ -69,11 +76,26 @@ export default function Calendario() {
   }, [tentativa])
 
   const dias = diasDoCalendario(mesExibido)
+  const hoje = chaveDaData(new Date())
+  const tarefasPorData = tarefas.reduce((agrupadas, tarefa) => {
+    const tarefasDoDia = agrupadas.get(tarefa.prazo) ?? []
+    tarefasDoDia.push(tarefa)
+    agrupadas.set(tarefa.prazo, tarefasDoDia)
+    return agrupadas
+  }, new Map<string, TarefaResumo[]>())
 
   function alterarMes(deslocamento: number) {
     setMesExibido((mesAtual) =>
       new Date(mesAtual.getFullYear(), mesAtual.getMonth() + deslocamento, 1),
     )
+  }
+
+  function selecionarData(data: Date) {
+    setDataSelecionada(data)
+
+    if (data.getMonth() !== mesExibido.getMonth() || data.getFullYear() !== mesExibido.getFullYear()) {
+      setMesExibido(primeiroDiaDoMes(data))
+    }
   }
 
   return (
@@ -123,17 +145,38 @@ export default function Calendario() {
             {diasDaSemana.map((dia) => (
               <span key={dia} className={styles.nomeDia}>{dia}</span>
             ))}
-            {dias.map((dia) => (
-              <div
-                key={dia.toISOString()}
-                className={`${styles.dia} ${
-                  dia.getMonth() === mesExibido.getMonth() ? '' : styles.diaForaDoMes
-                }`}
-                aria-label={new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(dia)}
-              >
-                <span>{dia.getDate()}</span>
-              </div>
-            ))}
+            {dias.map((dia) => {
+              const chave = chaveDaData(dia)
+              const tarefasDoDia = tarefasPorData.get(chave) ?? []
+              const temPendentes = tarefasDoDia.some((tarefa) => !tarefa.concluida)
+              const temConcluidas = tarefasDoDia.some((tarefa) => tarefa.concluida)
+              const selecionado = chave === chaveDaData(dataSelecionada)
+
+              return (
+                <button
+                  key={chave}
+                  type="button"
+                  className={`${styles.dia} ${
+                    dia.getMonth() === mesExibido.getMonth() ? '' : styles.diaForaDoMes
+                  } ${chave === hoje ? styles.diaHoje : ''} ${
+                    selecionado ? styles.diaSelecionado : ''
+                  }`}
+                  onClick={() => selecionarData(dia)}
+                  aria-label={`${new Intl.DateTimeFormat('pt-BR', { dateStyle: 'full' }).format(dia)}: ${
+                    tarefasDoDia.length
+                  } tarefa(s)`}
+                  aria-pressed={selecionado}
+                >
+                  <span className={styles.numeroDia}>{dia.getDate()}</span>
+                  {tarefasDoDia.length > 0 && (
+                    <span className={styles.marcadores} aria-hidden="true">
+                      {temPendentes && <i className={styles.marcadorPendente} />}
+                      {temConcluidas && <i className={styles.marcadorConcluida} />}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </div>
         </section>
       )}

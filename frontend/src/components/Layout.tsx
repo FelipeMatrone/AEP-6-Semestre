@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { IconeCapelo } from './icones'
 import { NOME_DO_SISTEMA } from '../config'
+import { buscar, type ResultadoBusca } from '../services/busca'
 import styles from './Layout.module.css'
 
 function classeItem({ isActive }: { isActive: boolean }) {
@@ -10,6 +11,55 @@ function classeItem({ isActive }: { isActive: boolean }) {
 
 export default function Layout() {
   const [menuRecolhido, setMenuRecolhido] = useState(false)
+  const [termoBusca, setTermoBusca] = useState('')
+  const [resultadoBusca, setResultadoBusca] = useState<ResultadoBusca | null>(null)
+  const [estadoBusca, setEstadoBusca] = useState<'ocioso' | 'carregando' | 'pronto' | 'vazio' | 'erro'>('ocioso')
+  const [buscaAberta, setBuscaAberta] = useState(false)
+
+  useEffect(() => {
+    const termo = termoBusca.trim()
+    if (!termo) {
+      return
+    }
+
+    let ativa = true
+    const temporizador = window.setTimeout(async () => {
+      setEstadoBusca('carregando')
+
+      try {
+        const resposta = await buscar(termo)
+        if (!ativa) return
+
+        setResultadoBusca(resposta)
+        const total = resposta.tarefas.length + resposta.categorias.length + resposta.anotacoes.length
+        setEstadoBusca(total === 0 ? 'vazio' : 'pronto')
+      } catch {
+        if (ativa) {
+          setResultadoBusca(null)
+          setEstadoBusca('erro')
+        }
+      }
+    }, 350)
+
+    return () => {
+      ativa = false
+      window.clearTimeout(temporizador)
+    }
+  }, [termoBusca])
+
+  const quantidadeResultados = resultadoBusca
+    ? resultadoBusca.tarefas.length + resultadoBusca.categorias.length + resultadoBusca.anotacoes.length
+    : 0
+
+  function atualizarBusca(valor: string) {
+    setTermoBusca(valor)
+    setBuscaAberta(Boolean(valor.trim()))
+
+    if (!valor.trim()) {
+      setResultadoBusca(null)
+      setEstadoBusca('ocioso')
+    }
+  }
 
   return (
     <div
@@ -62,7 +112,30 @@ export default function Layout() {
         <header className={styles.cabecalho}>
           <label className={styles.busca}>
             <span className={styles.textoOculto}>Buscar</span>
-            <input type="search" placeholder="Busque por tarefas ou anotações" />
+            <input
+              type="search"
+              placeholder="Busque por tarefas ou anotações"
+              value={termoBusca}
+              onChange={(evento) => atualizarBusca(evento.target.value)}
+              onFocus={() => setBuscaAberta(Boolean(termoBusca.trim()))}
+              onBlur={() => window.setTimeout(() => setBuscaAberta(false), 150)}
+              onKeyDown={(evento) => {
+                if (evento.key === 'Escape') {
+                  setBuscaAberta(false)
+                  evento.currentTarget.blur()
+                }
+              }}
+              aria-expanded={buscaAberta}
+              aria-controls="resultados-busca"
+            />
+            {buscaAberta && estadoBusca !== 'ocioso' && (
+              <span id="resultados-busca" className={styles.estadoBusca} role="status">
+                {estadoBusca === 'carregando' && 'Buscando...'}
+                {estadoBusca === 'pronto' && `${quantidadeResultados} resultado(s) encontrado(s).`}
+                {estadoBusca === 'vazio' && 'Nenhum resultado encontrado.'}
+                {estadoBusca === 'erro' && 'Não foi possível realizar a busca.'}
+              </span>
+            )}
           </label>
 
           <div className={styles.acoesCabecalho}>

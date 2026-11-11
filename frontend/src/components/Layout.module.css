@@ -153,6 +153,24 @@
   border-radius: 999px;
 }
 
+.busca {
+  position: relative;
+}
+
+.estadoBusca {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 2;
+  width: min(440px, 52vw);
+  padding: 12px 16px;
+  color: var(--texto-suave);
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgb(46 42 74 / 12%);
+}
+
 .acoesCabecalho {
   display: flex;
   gap: 18px;
@@ -280,6 +298,10 @@
   }
 
   .busca input {
+    width: 100%;
+  }
+
+  .estadoBusca {
     width: 100%;
   }
 }

@@ -209,6 +209,12 @@
   gap: 20px;
 }
 
+.erroFormulario {
+  margin: -8px 0 0;
+  color: #c52852;
+  font-size: 0.8125rem;
+}
+
 .acoesModal {
   display: flex;
   gap: 12px;

@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Modal from '../../components/Modal'
 import { CampoTexto } from '../../components/CampoTexto'
-import { cores, categoriasIniciais } from './dados'
+import {
+  criarCategoria as criarCategoriaNaApi,
+  listarCategorias,
+  type CategoriaResumo,
+  type Cor,
+} from '../../services/categorias'
 import styles from './Anotacoes.module.css'
 
 const esquemaCategoria = z.object({
@@ -13,6 +18,8 @@ const esquemaCategoria = z.object({
 })
 
 type DadosCategoria = z.infer<typeof esquemaCategoria>
+
+const cores: Cor[] = ['roxo', 'magenta', 'verde', 'ambar']
 
 function rotuloAnotacoes(quantidade: number) {
   if (quantidade === 0) {
@@ -23,9 +30,13 @@ function rotuloAnotacoes(quantidade: number) {
 }
 
 export default function Anotacoes() {
-  const [categorias, setCategorias] = useState(categoriasIniciais)
+  const [categorias, setCategorias] = useState<CategoriaResumo[]>([])
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
+  const [carregando, setCarregando] = useState(true)
+  const [erroLista, setErroLista] = useState<string | null>(null)
+  const [erroFormulario, setErroFormulario] = useState<string | null>(null)
+  const [tentativa, setTentativa] = useState(0)
 
   const {
     register,
@@ -46,21 +57,71 @@ export default function Anotacoes() {
       )
     : categorias
 
+  useEffect(() => {
+    let telaAtiva = true
+
+    async function carregarCategorias() {
+      setCarregando(true)
+      setErroLista(null)
+
+      try {
+        const resposta = await listarCategorias()
+        if (telaAtiva) {
+          setCategorias(resposta)
+        }
+      } catch {
+        if (telaAtiva) {
+          setErroLista('Não foi possível carregar as categorias. Tente novamente.')
+        }
+      } finally {
+        if (telaAtiva) {
+          setCarregando(false)
+        }
+      }
+    }
+
+    carregarCategorias()
+
+    return () => {
+      telaAtiva = false
+    }
+  }, [tentativa])
+
   function abrirModal() {
+    setErroFormulario(null)
     setModalAberto(true)
   }
 
   function fecharModal() {
+    setErroFormulario(null)
     setModalAberto(false)
     reset()
   }
 
   async function criarCategoria({ nome }: DadosCategoria) {
-    setCategorias((atuais) => [
-      ...atuais,
-      { id: Date.now(), nome, anotacoes: 0, cor: cores[atuais.length % cores.length] },
-    ])
-    fecharModal()
+    setErroFormulario(null)
+
+    try {
+      const categoria = await criarCategoriaNaApi({
+        nome,
+        cor: cores[categorias.length % cores.length],
+      })
+      setCategorias((atuais) => [
+        ...atuais,
+        {
+          id: categoria.id,
+          nome: categoria.nome,
+          descricao: categoria.descricao,
+          cor: categoria.cor,
+          totalAnotacoes: categoria.anotacoes.length,
+        },
+      ])
+      fecharModal()
+    } catch (erro) {
+      setErroFormulario(
+        erro instanceof Error ? erro.message : 'Não foi possível criar a categoria.',
+      )
+    }
   }
 
   return (
@@ -96,7 +157,21 @@ export default function Anotacoes() {
         )}
       </section>
 
-      {categorias.length === 0 ? (
+      {carregando ? (
+        <p className={styles.semResultado}>Carregando categorias...</p>
+      ) : erroLista ? (
+        <section className={styles.vazio}>
+          <h2>Não foi possível carregar as categorias</h2>
+          <p>{erroLista}</p>
+          <button
+            type="button"
+            className={styles.botaoNovaCategoria}
+            onClick={() => setTentativa((atual) => atual + 1)}
+          >
+            Tentar novamente
+          </button>
+        </section>
+      ) : categorias.length === 0 ? (
         <section className={styles.vazio}>
           <div className={styles.iconeVazio} aria-hidden="true">
             ✎
@@ -135,7 +210,7 @@ export default function Anotacoes() {
                 <strong className={styles.nome}>{categoria.nome}</strong>
 
                 <span className={styles.quantidade}>
-                  {rotuloAnotacoes(categoria.anotacoes)}
+                  {rotuloAnotacoes(categoria.totalAnotacoes)}
                 </span>
               </Link>
             </li>
@@ -156,6 +231,8 @@ export default function Anotacoes() {
             erro={errors.nome?.message}
             {...register('nome')}
           />
+
+          {erroFormulario && <p className={styles.erroFormulario} role="alert">{erroFormulario}</p>}
 
           <div className={styles.acoesModal}>
             <button

@@ -6,6 +6,7 @@ import Inicio from './pages/Inicio/Inicio'
 import Anotacoes from './pages/Anotacoes/Anotacoes'
 import Categoria from './pages/Anotacoes/Categoria'
 import Tarefas from './pages/Tarefas/Tarefas'
+import Calendario from './pages/Calendario/Calendario'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
         <Route path="/anotacoes" element={<Anotacoes />} />
         <Route path="/anotacoes/:id" element={<Categoria />} />
         <Route path="/tarefas" element={<Tarefas />} />
+        <Route path="/calendario" element={<Calendario />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/login" replace />} />

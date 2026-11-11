@@ -1,0 +1,93 @@
+.pagina {
+  margin-top: clamp(28px, 5vh, 48px);
+}
+
+.topo {
+  margin-bottom: clamp(20px, 3vh, 28px);
+}
+
+.topo h1,
+.topo p {
+  margin: 0;
+}
+
+.topo h1 {
+  margin: 5px 0 8px;
+  font-size: clamp(1.8rem, 3vw, 2.3rem);
+  line-height: 1.2;
+}
+
+.secao {
+  color: var(--magenta);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.topo > div > p:last-child,
+.estado,
+.cartaoInicial p,
+.vazio p {
+  color: var(--texto-suave);
+}
+
+.estado {
+  margin: 0;
+}
+
+.cartaoInicial,
+.vazio {
+  padding: clamp(28px, 5vw, 40px);
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio);
+}
+
+.cartaoInicial h2,
+.cartaoInicial p,
+.vazio h2,
+.vazio p {
+  margin: 0;
+}
+
+.cartaoInicial h2,
+.vazio h2 {
+  margin-bottom: 8px;
+  font-size: 1rem;
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  text-align: center;
+  border-style: dashed;
+}
+
+.vazio p {
+  max-width: 44ch;
+}
+
+.iconeVazio {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 4px;
+  color: var(--roxo);
+  font-size: 1.5rem;
+  background: var(--lilas);
+  border-radius: 50%;
+}
+
+.vazio button {
+  margin-top: 8px;
+  padding: 10px 16px;
+  color: var(--branco);
+  font: inherit;
+  font-weight: 600;
+  background: var(--roxo);
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}

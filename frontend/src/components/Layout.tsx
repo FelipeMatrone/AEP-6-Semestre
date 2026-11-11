@@ -104,6 +104,11 @@ export default function Layout() {
             <span className={styles.iconeMenu}>✓</span>
             <span className={styles.textoMenu}>Tarefas</span>
           </NavLink>
+
+          <NavLink to="/calendario" className={classeItem} title="Calendário">
+            <span className={styles.iconeMenu}>▦</span>
+            <span className={styles.textoMenu}>Calendário</span>
+          </NavLink>
         </nav>
 
         <Link to="/login" className={styles.sair} title="Sair">

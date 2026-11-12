@@ -112,10 +112,33 @@ db.createCollection("tarefas", {
   }
 });
 
+db.createCollection("eventosCalendario", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["usuarioId", "titulo", "data", "cor", "criadaEm", "atualizadaEm"],
+      additionalProperties: false,
+      properties: {
+        _id: { bsonType: "objectId" },
+        usuarioId: { bsonType: "string" },
+        titulo: { bsonType: "string" },
+        descricao: { bsonType: "string" },
+        data: { bsonType: "date" },
+        horario: { bsonType: "string" },
+        cor: { bsonType: "string", enum: ["roxo", "magenta", "verde", "ambar"] },
+        tarefaId: { bsonType: "string" },
+        criadaEm: { bsonType: "date" },
+        atualizadaEm: { bsonType: "date" }
+      }
+    }
+  }
+});
+
 // Índices: cada um sustenta uma consulta já prevista (ver docs/segunda-entrega.md).
 db.usuarios.createIndex({ email: 1 }, { unique: true });
 db.categorias.createIndex({ usuarioId: 1 });
 db.tarefas.createIndex({ usuarioId: 1, prazo: 1 });
+db.eventosCalendario.createIndex({ usuarioId: 1, data: 1, horario: 1 });
 
 // Dados de demonstração. Um usuário com quatro categorias (uma sem anotação,
 // para a tela vazia aparecer na apresentação), seis anotações e oito tarefas:

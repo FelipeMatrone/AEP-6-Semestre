@@ -108,6 +108,15 @@
 }
 
 .itemLista div,
+.itemAnotacao strong a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.itemAnotacao strong a:hover {
+  text-decoration: underline;
+}
+
 .itemAnotacao div:last-child {
   display: flex;
   flex-direction: column;

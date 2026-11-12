@@ -11,6 +11,9 @@ import {
 import { listarTarefas, type TarefaResumo } from '../../services/tarefas'
 import styles from './Categoria.module.css'
 
+// A anotação nova só existe no navegador até ter título e conteúdo; aí vira POST.
+const RASCUNHO = 'rascunho'
+
 export default function Categoria() {
   const { id } = useParams()
   const [parametrosBusca] = useSearchParams()
@@ -39,6 +42,7 @@ export default function Categoria() {
   const anotacaoSelecionada = anotacoesDaCategoria.find(
     (anotacao) => anotacao.id === anotacaoSelecionadaId,
   )
+  const ehRascunho = anotacaoSelecionada?.id === RASCUNHO
 
   useEffect(() => {
     let telaAtiva = true
@@ -117,7 +121,8 @@ export default function Categoria() {
     const titulo = anotacaoSelecionada.titulo.trim()
     const conteudo = anotacaoSelecionada.conteudo.trim()
     if (!titulo || !conteudo) {
-      setErroSalvamento('Título e conteúdo são obrigatórios para salvar.')
+      // No rascunho o aviso fica no status; erro vermelho a cada troca de campo cansa.
+      if (!ehRascunho) setErroSalvamento('Título e conteúdo são obrigatórios para salvar.')
       return
     }
 
@@ -125,16 +130,16 @@ export default function Categoria() {
     setErroSalvamento(null)
 
     try {
-      const anotacao = await atualizarAnotacaoNaApi(categoria.id, anotacaoSelecionada.id, {
-        titulo,
-        conteudo,
-      })
+      const anotacao = ehRascunho
+        ? await criarAnotacaoNaApi(categoria.id, { titulo, conteudo })
+        : await atualizarAnotacaoNaApi(categoria.id, anotacaoSelecionada.id, { titulo, conteudo })
       setCategoria((atual) => atual && ({
         ...atual,
         anotacoes: atual.anotacoes.map((item) =>
-          item.id === anotacao.id ? anotacao : item,
+          item.id === anotacaoSelecionada.id ? anotacao : item,
         ),
       }))
+      if (ehRascunho) setAnotacaoSelecionadaId(anotacao.id)
       setSalvo(true)
     } catch (erro) {
       setErroSalvamento(
@@ -145,27 +150,36 @@ export default function Categoria() {
     }
   }
 
-  async function criarAnotacao() {
+  function criarAnotacao() {
     if (!categoria) return
 
-    try {
-      const nova = await criarAnotacaoNaApi(categoria.id, {
-        titulo: 'Nova anotação',
-        conteudo: 'Comece a escrever...',
-      })
+    if (!anotacoesDaCategoria.some((anotacao) => anotacao.id === RASCUNHO)) {
+      const agora = new Date().toISOString()
       setCategoria((atual) => atual && ({
         ...atual,
-        anotacoes: [nova, ...atual.anotacoes],
+        anotacoes: [
+          { id: RASCUNHO, titulo: '', conteudo: '', criadaEm: agora, atualizadaEm: agora },
+          ...atual.anotacoes,
+        ],
       }))
-      setAnotacaoSelecionadaId(nova.id)
-      setSalvo(true)
-    } catch {
-      setErro('Não foi possível criar a anotação. Tente novamente.')
     }
+    setAnotacaoSelecionadaId(RASCUNHO)
+    setSalvo(false)
+    setErroSalvamento(null)
   }
 
   async function excluirAnotacaoSelecionada() {
     if (!categoria || !anotacaoSelecionada) return
+
+    if (ehRascunho) {
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: atual.anotacoes.filter((item) => item.id !== RASCUNHO),
+      }))
+      setAnotacaoSelecionadaId(anotacoesDaCategoria.find((item) => item.id !== RASCUNHO)?.id ?? null)
+      setSalvo(true)
+      return
+    }
 
     const confirmou = window.confirm(`Excluir a anotação “${anotacaoSelecionada.titulo}”?`)
     if (!confirmou) return
@@ -343,6 +357,7 @@ export default function Categoria() {
                   atualizarAnotacaoSelecionada({ titulo: evento.target.value })
                 }
                 onBlur={salvarAnotacaoSelecionada}
+                autoFocus={ehRascunho}
                 placeholder="Título da anotação"
                 aria-label="Título da anotação"
               />
@@ -368,10 +383,16 @@ export default function Categoria() {
                   onClick={excluirAnotacaoSelecionada}
                   disabled={excluindo || salvando}
                 >
-                  {excluindo ? 'Excluindo...' : 'Excluir anotação'}
+                  {excluindo ? 'Excluindo...' : ehRascunho ? 'Descartar' : 'Excluir anotação'}
                 </button>
                 <span className={styles.statusSalvamento}>
-                  {salvando ? 'Salvando…' : salvo ? 'Salvo' : 'Alterações não salvas'}
+                  {salvando
+                    ? 'Salvando…'
+                    : ehRascunho
+                      ? 'Preencha título e conteúdo para salvar'
+                      : salvo
+                        ? 'Salvo'
+                        : 'Alterações não salvas'}
                 </span>
                 {erroSalvamento && <span className={styles.erroSalvamento}>{erroSalvamento}</span>}
               </div>

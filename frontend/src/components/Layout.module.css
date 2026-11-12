@@ -233,53 +233,9 @@
   align-items: center;
 }
 
-.botaoNotificacao {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  color: var(--texto);
-  background: transparent;
-  border: 0;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.botaoNotificacao:hover {
-  background: var(--lilas);
-}
-
-.botaoNotificacao svg {
-  width: 21px;
-  height: 21px;
-  fill: none;
-  stroke: currentcolor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-}
-
-.indicadorNotificacao {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  display: grid;
-  place-items: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  color: var(--branco);
-  font-size: 0.625rem;
-  font-weight: 700;
-  background: var(--magenta);
-  border: 2px solid #f7f6fb;
-  border-radius: 999px;
-}
-
 .perfil {
   display: flex;
+  text-decoration: none;
   gap: 10px;
   align-items: center;
   padding: 0;

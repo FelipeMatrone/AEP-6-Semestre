@@ -1,20 +1,45 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { IconeCapelo } from './icones'
 import { NOME_DO_SISTEMA } from '../config'
 import { buscar, type ResultadoBusca } from '../services/busca'
+import { buscarSessao, sair, type Usuario } from '../services/auth'
 import styles from './Layout.module.css'
+
+export type ContextoLayout = {
+  usuario: Usuario
+  setUsuario: (usuario: Usuario) => void
+}
 
 function classeItem({ isActive }: { isActive: boolean }) {
   return isActive ? styles.itemAtivo : ''
 }
 
+function iniciais(nome: string) {
+  const partes = nome.trim().split(/\s+/)
+  const ultima = partes.length > 1 ? partes[partes.length - 1][0] : ''
+  return (partes[0][0] + ultima).toUpperCase()
+}
+
 export default function Layout() {
+  const navigate = useNavigate()
+  // undefined = ainda conferindo; null = sem sessão.
+  const [usuario, setUsuario] = useState<Usuario | null | undefined>(undefined)
   const [menuRecolhido, setMenuRecolhido] = useState(false)
   const [termoBusca, setTermoBusca] = useState('')
   const [resultadoBusca, setResultadoBusca] = useState<ResultadoBusca | null>(null)
   const [estadoBusca, setEstadoBusca] = useState<'ocioso' | 'carregando' | 'pronto' | 'vazio' | 'erro'>('ocioso')
   const [buscaAberta, setBuscaAberta] = useState(false)
+
+  useEffect(() => {
+    let ativa = true
+    buscarSessao()
+      .then((atual) => ativa && setUsuario(atual))
+      .catch(() => ativa && setUsuario(null))
+    return () => {
+      ativa = false
+    }
+  }, [])
 
   useEffect(() => {
     const termo = termoBusca.trim()
@@ -65,6 +90,15 @@ export default function Layout() {
     setBuscaAberta(false)
   }
 
+  async function aoSair() {
+    // Mesmo se a API falhar, o usuário pediu para sair: segue para o login.
+    await sair().catch(() => undefined)
+    navigate('/login', { replace: true })
+  }
+
+  if (usuario === undefined) return null
+  if (usuario === null) return <Navigate to="/login" replace />
+
   return (
     <div
       className={`${styles.pagina} ${
@@ -109,12 +143,17 @@ export default function Layout() {
             <span className={styles.iconeMenu}>▦</span>
             <span className={styles.textoMenu}>Calendário</span>
           </NavLink>
+
+          <NavLink to="/perfil" className={classeItem} title="Perfil">
+            <span className={styles.iconeMenu}>☺</span>
+            <span className={styles.textoMenu}>Perfil</span>
+          </NavLink>
         </nav>
 
-        <Link to="/login" className={styles.sair} title="Sair">
+        <button type="button" className={styles.sair} title="Sair" onClick={aoSair}>
           <span className={styles.iconeMenu}>↪</span>
           <span className={styles.textoMenu}>Sair</span>
-        </Link>
+        </button>
       </aside>
 
       <main className={styles.conteudo}>
@@ -204,30 +243,14 @@ export default function Layout() {
           </div>
 
           <div className={styles.acoesCabecalho}>
-            <button
-              type="button"
-              className={styles.botaoNotificacao}
-              aria-label="Ver notificações"
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
-                <path d="M10 21h4" />
-              </svg>
-              <span className={styles.indicadorNotificacao}>3</span>
-            </button>
-
-            <button
-              type="button"
-              className={styles.perfil}
-              aria-label="Abrir perfil de Aluno AEP"
-            >
-              <span className={styles.nomePerfil}>Aluno AEP</span>
-              <span className={styles.avatar}>AA</span>
-            </button>
+            <Link to="/perfil" className={styles.perfil} title={usuario.email}>
+              <span className={styles.nomePerfil}>{usuario.nome}</span>
+              <span className={styles.avatar} aria-hidden="true">{iniciais(usuario.nome)}</span>
+            </Link>
           </div>
         </header>
 
-        <Outlet />
+        <Outlet context={{ usuario, setUsuario } satisfies ContextoLayout} />
       </main>
     </div>
   )

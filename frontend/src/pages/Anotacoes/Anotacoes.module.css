@@ -75,6 +75,10 @@
   list-style: none;
 }
 
+.itemCategoria {
+  position: relative;
+}
+
 .cartaoCategoria {
   display: flex;
   flex-direction: column;
@@ -90,6 +94,76 @@
     border-color 0.15s ease,
     box-shadow 0.15s ease,
     transform 0.15s ease;
+}
+
+.menuCategoria {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+}
+
+.botaoMenuCategoria {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  color: var(--texto-suave);
+  font: inherit;
+  font-size: 1.35rem;
+  line-height: 1;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.botaoMenuCategoria:hover,
+.botaoMenuCategoria:focus-visible {
+  color: var(--roxo);
+  background: var(--lilas);
+}
+
+.opcoesCategoria {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 1;
+  display: grid;
+  gap: 2px;
+  min-width: 160px;
+  padding: 6px;
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgb(46 42 74 / 14%);
+}
+
+.opcoesCategoria button {
+  padding: 9px 10px;
+  color: var(--texto);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.opcoesCategoria button:hover,
+.opcoesCategoria button:focus-visible {
+  background: #f7f6fb;
+}
+
+.opcoesCategoria .opcaoExcluirCategoria {
+  color: #c52852;
+}
+
+.opcoesCategoria .opcaoExcluirCategoria:hover,
+.opcoesCategoria .opcaoExcluirCategoria:focus-visible {
+  background: #fce3eb;
 }
 
 .cartaoCategoria:hover {
@@ -224,6 +298,31 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.campoDescricao {
+  display: grid;
+  gap: 8px;
+  color: var(--texto);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.campoDescricao textarea {
+  min-height: 88px;
+  padding: 10px 12px;
+  color: var(--texto);
+  font: inherit;
+  font-weight: 400;
+  background: var(--branco);
+  border: 1.5px solid var(--borda);
+  border-radius: 10px;
+  resize: vertical;
+}
+
+.campoDescricao textarea:focus {
+  outline: 0;
+  border-color: var(--roxo);
 }
 
 .erroFormulario {

@@ -12,7 +12,8 @@
 .tela {
   display: grid;
   grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-  height: min(76dvh, 720px);
+  height: calc(100dvh - clamp(150px, 14vh, 180px));
+  min-height: 560px;
   overflow: hidden;
   background: var(--branco);
   border: 1px solid var(--borda);
@@ -71,30 +72,6 @@
   font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.acoesCategoria,
-.formularioCategoria {
-  display: flex;
-  gap: 8px;
-}
-
-.acoesCategoria button,
-.formularioCategoria button {
-  padding: 6px 8px;
-  color: var(--roxo);
-  font: inherit;
-  font-size: 0.7rem;
-  font-weight: 600;
-  background: var(--lilas);
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.acoesCategoria button:last-child {
-  color: #c52852;
-  background: #fce3eb;
 }
 
 .tarefasVinculadas {
@@ -161,23 +138,6 @@
 .tarefasVinculadas span {
   color: var(--texto-suave);
   font-size: 0.6875rem;
-}
-
-.formularioCategoria {
-  flex-direction: column;
-}
-
-.formularioCategoria input,
-.formularioCategoria textarea {
-  width: 100%;
-  padding: 8px;
-  color: var(--texto);
-  font: inherit;
-  font-size: 0.75rem;
-  background: #f7f6fb;
-  border: 1px solid var(--borda);
-  border-radius: 6px;
-  resize: vertical;
 }
 
 .busca {
@@ -408,6 +368,7 @@
     grid-template-columns: 1fr;
     grid-template-rows: minmax(180px, 240px) minmax(0, 1fr);
     height: min(84dvh, 760px);
+    min-height: 0;
   }
 
   .barraLateral {

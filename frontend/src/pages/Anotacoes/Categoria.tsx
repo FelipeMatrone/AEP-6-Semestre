@@ -1,28 +1,36 @@
-import { useEffect, useRef, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
-import { anotacoesIniciais, categoriasIniciais, type Anotacao } from './dados'
+import { useEffect, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
+import {
+  buscarCategoria,
+  criarAnotacao as criarAnotacaoNaApi,
+  atualizarAnotacao as atualizarAnotacaoNaApi,
+  excluirAnotacao as excluirAnotacaoNaApi,
+  type Anotacao,
+  type Categoria as CategoriaDaApi,
+} from '../../services/categorias'
+import { listarTarefas, type TarefaResumo } from '../../services/tarefas'
 import styles from './Categoria.module.css'
+
+// A anotação nova só existe no navegador até ter título e conteúdo; aí vira POST.
+const RASCUNHO = 'rascunho'
 
 export default function Categoria() {
   const { id } = useParams()
-  const categoria = categoriasIniciais.find((item) => item.id === Number(id))
-
-  const [anotacoes, setAnotacoes] = useState(anotacoesIniciais)
+  const [parametrosBusca] = useSearchParams()
+  const [categoria, setCategoria] = useState<CategoriaDaApi | null>(null)
+  const [tarefasVinculadas, setTarefasVinculadas] = useState<TarefaResumo[]>([])
   const [busca, setBusca] = useState('')
-  const [anotacaoSelecionadaId, setAnotacaoSelecionadaId] = useState<
-    number | null
-  >(
-    () =>
-      anotacoesIniciais.find(
-        (anotacao) => anotacao.categoriaId === categoria?.id,
-      )?.id ?? null,
-  )
+  const [anotacaoSelecionadaId, setAnotacaoSelecionadaId] = useState<string | null>(null)
+  const [carregando, setCarregando] = useState(true)
+  const [erro, setErro] = useState<string | null>(null)
+  const [erroTarefas, setErroTarefas] = useState<string | null>(null)
+  const [tentativa, setTentativa] = useState(0)
   const [salvo, setSalvo] = useState(true)
-  const areaTextoRef = useRef<HTMLDivElement>(null)
+  const [salvando, setSalvando] = useState(false)
+  const [excluindo, setExcluindo] = useState(false)
+  const [erroSalvamento, setErroSalvamento] = useState<string | null>(null)
 
-  const anotacoesDaCategoria = categoria
-    ? anotacoes.filter((anotacao) => anotacao.categoriaId === categoria.id)
-    : []
+  const anotacoesDaCategoria = categoria?.anotacoes ?? []
 
   const termo = busca.trim().toLowerCase()
   const anotacoesFiltradas = termo
@@ -31,73 +39,200 @@ export default function Categoria() {
       )
     : anotacoesDaCategoria
 
-  const anotacaoSelecionada = anotacoes.find(
+  const anotacaoSelecionada = anotacoesDaCategoria.find(
     (anotacao) => anotacao.id === anotacaoSelecionadaId,
   )
+  const ehRascunho = anotacaoSelecionada?.id === RASCUNHO
 
   useEffect(() => {
-    if (salvo) return
-    const temporizador = setTimeout(() => setSalvo(true), 600)
-    return () => clearTimeout(temporizador)
-  }, [salvo])
+    let telaAtiva = true
+
+    async function carregarCategoria() {
+      if (!id) {
+        setCarregando(false)
+        return
+      }
+
+      setCarregando(true)
+      setErro(null)
+      setErroTarefas(null)
+
+      try {
+        const [resultadoCategoria, resultadoTarefas] = await Promise.allSettled([
+          buscarCategoria(id),
+          listarTarefas(),
+        ])
+
+        if (resultadoCategoria.status !== 'fulfilled') {
+          throw new Error()
+        }
+
+        if (telaAtiva) {
+          const resposta = resultadoCategoria.value
+          setCategoria(resposta)
+          const anotacaoDaBusca = parametrosBusca.get('anotacao')
+          const anotacaoEncontrada = resposta.anotacoes.find(
+            (anotacao) => anotacao.id === anotacaoDaBusca,
+          )
+          setAnotacaoSelecionadaId(anotacaoEncontrada?.id ?? resposta.anotacoes[0]?.id ?? null)
+
+          if (resultadoTarefas.status === 'fulfilled') {
+            setTarefasVinculadas(
+              resultadoTarefas.value.filter((tarefa) => tarefa.categoriaId === resposta.id),
+            )
+          } else {
+            setTarefasVinculadas([])
+            setErroTarefas('Não foi possível carregar as tarefas vinculadas.')
+          }
+        }
+      } catch {
+        if (telaAtiva) {
+          setErro('Não foi possível carregar esta categoria. Tente novamente.')
+        }
+      } finally {
+        if (telaAtiva) {
+          setCarregando(false)
+        }
+      }
+    }
+
+    carregarCategoria()
+
+    return () => {
+      telaAtiva = false
+    }
+  }, [id, parametrosBusca, tentativa])
 
   function atualizarAnotacaoSelecionada(campos: Partial<Anotacao>) {
     if (!anotacaoSelecionada) return
-    setAnotacoes((atuais) =>
-      atuais.map((anotacao) =>
-        anotacao.id === anotacaoSelecionada.id
-          ? { ...anotacao, ...campos }
-          : anotacao,
+    setCategoria((atual) => atual && ({
+      ...atual,
+      anotacoes: atual.anotacoes.map((anotacao) =>
+        anotacao.id === anotacaoSelecionada.id ? { ...anotacao, ...campos } : anotacao,
       ),
-    )
+    }))
     setSalvo(false)
+    setErroSalvamento(null)
+  }
+
+  async function salvarAnotacaoSelecionada() {
+    if (!categoria || !anotacaoSelecionada || salvo || salvando) return
+
+    const titulo = anotacaoSelecionada.titulo.trim()
+    const conteudo = anotacaoSelecionada.conteudo.trim()
+    if (!titulo || !conteudo) {
+      // No rascunho o aviso fica no status; erro vermelho a cada troca de campo cansa.
+      if (!ehRascunho) setErroSalvamento('Título e conteúdo são obrigatórios para salvar.')
+      return
+    }
+
+    setSalvando(true)
+    setErroSalvamento(null)
+
+    try {
+      const anotacao = ehRascunho
+        ? await criarAnotacaoNaApi(categoria.id, { titulo, conteudo })
+        : await atualizarAnotacaoNaApi(categoria.id, anotacaoSelecionada.id, { titulo, conteudo })
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: atual.anotacoes.map((item) =>
+          item.id === anotacaoSelecionada.id ? anotacao : item,
+        ),
+      }))
+      if (ehRascunho) setAnotacaoSelecionadaId(anotacao.id)
+      setSalvo(true)
+    } catch (erro) {
+      setErroSalvamento(
+        erro instanceof Error ? erro.message : 'Não foi possível salvar a anotação.',
+      )
+    } finally {
+      setSalvando(false)
+    }
   }
 
   function criarAnotacao() {
     if (!categoria) return
 
-    const nova: Anotacao = {
-      id: Date.now(),
-      categoriaId: categoria.id,
-      titulo: '',
-      conteudo: '',
-      atualizadaEm: 'Editado agora',
+    if (!anotacoesDaCategoria.some((anotacao) => anotacao.id === RASCUNHO)) {
+      const agora = new Date().toISOString()
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: [
+          { id: RASCUNHO, titulo: '', conteudo: '', criadaEm: agora, atualizadaEm: agora },
+          ...atual.anotacoes,
+        ],
+      }))
+    }
+    setAnotacaoSelecionadaId(RASCUNHO)
+    setSalvo(false)
+    setErroSalvamento(null)
+  }
+
+  async function excluirAnotacaoSelecionada() {
+    if (!categoria || !anotacaoSelecionada) return
+
+    if (ehRascunho) {
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: atual.anotacoes.filter((item) => item.id !== RASCUNHO),
+      }))
+      setAnotacaoSelecionadaId(anotacoesDaCategoria.find((item) => item.id !== RASCUNHO)?.id ?? null)
+      setSalvo(true)
+      return
     }
 
-    setAnotacoes((atuais) => [nova, ...atuais])
-    setAnotacaoSelecionadaId(nova.id)
-    setSalvo(true)
-  }
+    const confirmou = window.confirm(`Excluir a anotação “${anotacaoSelecionada.titulo}”?`)
+    if (!confirmou) return
 
-  // document.execCommand é deprecated mas ainda suportado em todos os navegadores
-  // relevantes; trocar por uma lib (Tiptap/Slate) só se a formatação básica
-  // (negrito, itálico, lista) deixar de bastar.
-  function aplicarFormatacao(comando: 'bold' | 'italic' | 'insertUnorderedList') {
-    const areaTexto = areaTextoRef.current
-    if (!areaTexto || !anotacaoSelecionada) return
+    setExcluindo(true)
+    setErroSalvamento(null)
 
-    areaTexto.focus()
-    document.execCommand(comando)
-    atualizarAnotacaoSelecionada({ conteudo: areaTexto.innerHTML })
-  }
-
-  // Evita colar HTML de fora (ex: de outro site) dentro do contentEditable —
-  // só o texto puro entra, o resto da formatação vem dos botões da barra.
-  function aoColar(evento: React.ClipboardEvent<HTMLDivElement>) {
-    evento.preventDefault()
-    document.execCommand('insertText', false, evento.clipboardData.getData('text/plain'))
-    if (areaTextoRef.current) {
-      atualizarAnotacaoSelecionada({ conteudo: areaTextoRef.current.innerHTML })
+    try {
+      await excluirAnotacaoNaApi(categoria.id, anotacaoSelecionada.id)
+      setCategoria((atual) => atual && ({
+        ...atual,
+        anotacoes: atual.anotacoes.filter((item) => item.id !== anotacaoSelecionada.id),
+      }))
+      setAnotacaoSelecionadaId(
+        anotacoesDaCategoria.find((item) => item.id !== anotacaoSelecionada.id)?.id ?? null,
+      )
+      setSalvo(true)
+    } catch (erro) {
+      setErroSalvamento(
+        erro instanceof Error ? erro.message : 'Não foi possível excluir a anotação.',
+      )
+    } finally {
+      setExcluindo(false)
     }
   }
 
-  // Arrastar conteúdo de outra aba para cá é o mesmo buraco que aoColar fecha,
-  // por um caminho diferente: o navegador insere o HTML da origem direto no
-  // contentEditable, sem passar por sanitização nenhuma. Como o conteúdo volta
-  // à tela por dangerouslySetInnerHTML, o drop fica bloqueado — arrastar dentro
-  // do editor é conveniência marginal perto do risco.
-  function aoSoltar(evento: React.DragEvent<HTMLDivElement>) {
-    evento.preventDefault()
+  function formatarAtualizacao(data: string) {
+    return new Intl.DateTimeFormat('pt-BR', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+    }).format(new Date(data))
+  }
+
+  function formatarPrazo(prazo: string) {
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(
+      new Date(`${prazo}T00:00:00Z`),
+    )
+  }
+
+  if (carregando) {
+    return <p className={styles.mensagemLateral}>Carregando categoria...</p>
+  }
+
+  if (erro) {
+    return (
+      <div className={styles.naoEncontrada}>
+        <h2>Não foi possível carregar a categoria</h2>
+        <p>{erro}</p>
+        <button type="button" className={styles.botaoNovaAnotacao} onClick={() => setTentativa((atual) => atual + 1)}>
+          Tentar novamente
+        </button>
+      </div>
+    )
   }
 
   if (!categoria) {
@@ -136,6 +271,32 @@ export default function Categoria() {
             </span>
             <h1>{categoria.nome}</h1>
           </div>
+
+          <section className={styles.tarefasVinculadas} aria-labelledby="titulo-tarefas-vinculadas">
+            <header>
+              <h2 id="titulo-tarefas-vinculadas">Tarefas vinculadas</h2>
+              <Link to="/tarefas">Ver todas</Link>
+            </header>
+
+            {erroTarefas ? (
+              <p>{erroTarefas}</p>
+            ) : tarefasVinculadas.length === 0 ? (
+              <p>Nenhuma tarefa nesta disciplina.</p>
+            ) : (
+              <ul>
+                {tarefasVinculadas.map((tarefa) => (
+                  <li key={tarefa.id}>
+                    <Link to={`/tarefas?destaque=${tarefa.id}`}>
+                      <strong>{tarefa.titulo}</strong>
+                      <span>
+                        {tarefa.concluida ? 'Concluída' : 'Pendente'} · Prazo {formatarPrazo(tarefa.prazo)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           <input
             type="search"
@@ -177,7 +338,7 @@ export default function Categoria() {
                     onClick={() => setAnotacaoSelecionadaId(anotacao.id)}
                   >
                     <strong>{anotacao.titulo || 'Sem título'}</strong>
-                    <span>{anotacao.atualizadaEm}</span>
+                    <span>{formatarAtualizacao(anotacao.atualizadaEm)}</span>
                   </button>
                 </li>
               ))}
@@ -195,67 +356,45 @@ export default function Categoria() {
                 onChange={(evento) =>
                   atualizarAnotacaoSelecionada({ titulo: evento.target.value })
                 }
+                onBlur={salvarAnotacaoSelecionada}
+                autoFocus={ehRascunho}
                 placeholder="Título da anotação"
                 aria-label="Título da anotação"
               />
 
-              <div className={styles.barraFormatacao}>
-                <button
-                  type="button"
-                  className={styles.botaoFormatacao}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => aplicarFormatacao('bold')}
-                  aria-label="Negrito"
-                  title="Negrito"
-                >
-                  <strong>B</strong>
-                </button>
-                <button
-                  type="button"
-                  className={styles.botaoFormatacao}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => aplicarFormatacao('italic')}
-                  aria-label="Itálico"
-                  title="Itálico"
-                >
-                  <em>I</em>
-                </button>
-                <button
-                  type="button"
-                  className={styles.botaoFormatacao}
-                  onMouseDown={(evento) => evento.preventDefault()}
-                  onClick={() => aplicarFormatacao('insertUnorderedList')}
-                  aria-label="Lista"
-                  title="Lista"
-                >
-                  •
-                </button>
-              </div>
-
-              <div
+              <textarea
                 key={anotacaoSelecionada.id}
-                ref={areaTextoRef}
                 className={styles.areaTexto}
-                contentEditable
-                suppressContentEditableWarning
-                onInput={(evento) =>
+                value={anotacaoSelecionada.conteudo}
+                onChange={(evento) =>
                   atualizarAnotacaoSelecionada({
-                    conteudo: evento.currentTarget.innerHTML,
+                    conteudo: evento.target.value,
                   })
                 }
-                onPaste={aoColar}
-                onDrop={aoSoltar}
-                dangerouslySetInnerHTML={{ __html: anotacaoSelecionada.conteudo }}
-                data-placeholder="Comece a escrever…"
+                onBlur={salvarAnotacaoSelecionada}
+                placeholder="Comece a escrever…"
                 aria-label="Conteúdo da anotação"
-                role="textbox"
-                aria-multiline="true"
               />
 
               <div className={styles.rodapeEditor}>
+                <button
+                  type="button"
+                  className={styles.botaoExcluir}
+                  onClick={excluirAnotacaoSelecionada}
+                  disabled={excluindo || salvando}
+                >
+                  {excluindo ? 'Excluindo...' : ehRascunho ? 'Descartar' : 'Excluir anotação'}
+                </button>
                 <span className={styles.statusSalvamento}>
-                  {salvo ? 'Salvo' : 'Salvando…'}
+                  {salvando
+                    ? 'Salvando…'
+                    : ehRascunho
+                      ? 'Preencha título e conteúdo para salvar'
+                      : salvo
+                        ? 'Salvo'
+                        : 'Alterações não salvas'}
                 </span>
+                {erroSalvamento && <span className={styles.erroSalvamento}>{erroSalvamento}</span>}
               </div>
             </>
           ) : (

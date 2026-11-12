@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CampoTexto } from '../../components/CampoTexto'
 import {
   IconeCapelo,
@@ -10,6 +10,8 @@ import {
   IconeOlhoCortado,
 } from '../../components/icones'
 import { NOME_DO_SISTEMA } from '../../config'
+import { ErroApi } from '../../services/http'
+import { cadastrarUsuario } from '../../services/usuarios'
 import loginStyles from '../Login/Login.module.css'
 import styles from './Cadastro.module.css'
 
@@ -24,7 +26,8 @@ const esquemaCadastro = z
     senha: z
       .string()
       .min(1, 'Informe uma senha')
-      .min(8, 'A senha deve ter ao menos 8 caracteres'),
+      .min(8, 'A senha deve ter ao menos 8 caracteres')
+      .max(72, 'A senha deve ter no máximo 72 caracteres'),
     confirmarSenha: z.string().min(1, 'Confirme sua senha'),
   })
   .refine((dados) => dados.senha === dados.confirmarSenha, {
@@ -37,11 +40,13 @@ type DadosCadastro = z.infer<typeof esquemaCadastro>
 export default function Cadastro() {
   const [senhaVisivel, setSenhaVisivel] = useState(false)
   const [confirmacaoVisivel, setConfirmacaoVisivel] = useState(false)
-  const [cadastrado, setCadastrado] = useState(false)
+  const navigate = useNavigate()
+  const [erroCadastro, setErroCadastro] = useState<string | null>(null)
 
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<DadosCadastro>({
     resolver: zodResolver(esquemaCadastro),
@@ -49,10 +54,34 @@ export default function Cadastro() {
     defaultValues: { nome: '', email: '', senha: '', confirmarSenha: '' },
   })
 
-  // Sem backend de cadastro ainda — só valida e confirma na tela.
-  // Quando o endpoint existir, chama ele aqui (como autenticar() em services/auth.ts).
-  async function aoSalvar() {
-    setCadastrado(true)
+  async function aoSalvar(dados: DadosCadastro) {
+    setErroCadastro(null)
+
+    try {
+      await cadastrarUsuario({
+        nome: dados.nome.trim(),
+        email: dados.email.trim(),
+        senha: dados.senha,
+      })
+      navigate('/login', { replace: true, state: { emailCadastrado: dados.email.trim() } })
+    } catch (erro) {
+      if (erro instanceof ErroApi && erro.status === 409) {
+        setError('email', { message: 'Este e-mail já está cadastrado' }, { shouldFocus: true })
+        return
+      }
+      // 400 do Bean Validation: cada mensagem volta para o campo dela.
+      const campos = erro instanceof ErroApi ? Object.entries(erro.errosDeCampo) : []
+      const conhecidos = campos.filter(([campo]) => ['nome', 'email', 'senha'].includes(campo))
+      if (conhecidos.length > 0) {
+        for (const [campo, mensagem] of conhecidos) {
+          setError(campo as 'nome' | 'email' | 'senha', { message: mensagem })
+        }
+        return
+      }
+      setErroCadastro(
+        erro instanceof Error ? erro.message : 'Não foi possível concluir o cadastro.',
+      )
+    }
   }
 
   return (
@@ -149,10 +178,8 @@ export default function Cadastro() {
               {...register('confirmarSenha')}
             />
 
-            {cadastrado && (
-              <p role="status" className={loginStyles.sucesso}>
-                Cadastro realizado! Você já pode entrar com sua conta.
-              </p>
+            {erroCadastro && (
+              <p role="alert" className={loginStyles.alerta}>{erroCadastro}</p>
             )}
 
             <div className={styles.acoes}>

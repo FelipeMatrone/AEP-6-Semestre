@@ -24,8 +24,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import br.com.cesumar.aep.configuration.SecurityConfiguration;
+import br.com.cesumar.aep.dto.PerfilResponse;
 import br.com.cesumar.aep.dto.UsuarioCreateRequest;
 import br.com.cesumar.aep.dto.UsuarioResponse;
+import br.com.cesumar.aep.service.UsuarioAtual;
 import br.com.cesumar.aep.service.UsuarioAutenticado;
 import br.com.cesumar.aep.service.UsuarioService;
 
@@ -34,7 +36,7 @@ import br.com.cesumar.aep.service.UsuarioService;
 // o UsuarioController entra no slice por causa do último teste da classe: é
 // aqui que o cadastro consegue ser exercitado contra a cadeia de verdade.
 @WebMvcTest({ SessaoController.class, UsuarioController.class })
-@Import(SecurityConfiguration.class)
+@Import({ SecurityConfiguration.class, UsuarioAtual.class })
 class SessaoControllerTest {
 
 	private static final String BASE_PATH = "/api/sessao";
@@ -122,7 +124,11 @@ class SessaoControllerTest {
 	}
 
 	@Test
-	void getSessaoDevolveUsuarioDoPrincipal() throws Exception {
+	void getSessaoDevolveUsuarioDoBanco() throws Exception {
+		// o nome vem do banco, não do principal: editar o perfil tem de aparecer
+		// sem novo login.
+		when(service.perfil(USUARIO_ID)).thenReturn(new PerfilResponse(USUARIO_ID, NOME, EMAIL, 5, null));
+
 		mockMvc.perform(get(BASE_PATH).with(user(usuario())))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(USUARIO_ID))

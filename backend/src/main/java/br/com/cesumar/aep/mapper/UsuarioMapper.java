@@ -2,6 +2,7 @@ package br.com.cesumar.aep.mapper;
 
 import org.springframework.stereotype.Component;
 
+import br.com.cesumar.aep.dto.PerfilResponse;
 import br.com.cesumar.aep.dto.UsuarioCreateRequest;
 import br.com.cesumar.aep.dto.UsuarioResponse;
 import br.com.cesumar.aep.model.Usuario;
@@ -20,6 +21,15 @@ public class UsuarioMapper {
 				usuario.getId(),
 				usuario.getNome(),
 				usuario.getEmail());
+	}
+
+	public PerfilResponse toPerfil(Usuario usuario) {
+		return new PerfilResponse(
+				usuario.getId(),
+				usuario.getNome(),
+				usuario.getEmail(),
+				usuario.getMetaSemanal(),
+				usuario.getCriadoEm());
 	}
 
 }

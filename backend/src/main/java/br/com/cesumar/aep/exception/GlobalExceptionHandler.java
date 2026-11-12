@@ -51,6 +51,14 @@ public class GlobalExceptionHandler {
 		return resposta(HttpStatus.UNAUTHORIZED, CREDENCIAIS_INVALIDAS, requisicao, Map.of());
 	}
 
+	// vai como erro do campo senhaAtual para o formulário marcar o campo certo.
+	@ExceptionHandler(SenhaAtualIncorretaException.class)
+	public ResponseEntity<ApiError> senhaAtualIncorreta(SenhaAtualIncorretaException excecao,
+			HttpServletRequest requisicao) {
+		return resposta(HttpStatus.BAD_REQUEST, excecao.getMessage(), requisicao,
+				Map.of("senhaAtual", excecao.getMessage()));
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ApiError> corpoInvalido(MethodArgumentNotValidException excecao, HttpServletRequest requisicao) {
 		Map<String, String> erros = new LinkedHashMap<>();

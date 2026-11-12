@@ -19,7 +19,7 @@ db.createCollection("usuarios", {
   validator: {
     $jsonSchema: {
       bsonType: "object",
-      required: ["nome", "email", "senhaHash", "criadoEm"],
+      required: ["nome", "email", "senhaHash", "metaSemanal", "criadoEm"],
       additionalProperties: false,
       properties: {
         // _id precisa estar declarado: com additionalProperties: false ele
@@ -29,6 +29,7 @@ db.createCollection("usuarios", {
         // minúsculo; a unicidade é o índice abaixo, não esta regra
         email: { bsonType: "string" },
         senhaHash: { bsonType: "string" },
+        metaSemanal: { bsonType: "int", minimum: 1 },
         criadoEm: { bsonType: "date" }
       }
     }
@@ -79,7 +80,7 @@ db.createCollection("tarefas", {
   validator: {
     $jsonSchema: {
       bsonType: "object",
-      // observacao e categoriaId ficam fora da lista: campos opcionais. O
+      // observacao, categoriaId e concluidaEm ficam fora da lista: campos opcionais. O
       // Spring Data omite a chave por completo quando o valor e null.
       required: [
         "usuarioId",
@@ -102,7 +103,30 @@ db.createCollection("tarefas", {
         // o mesmo slug ASCII que a API expõe; o rótulo acentuado é da tela
         prioridade: { bsonType: "string", enum: ["alta", "media", "baixa"] },
         concluida: { bsonType: "bool" },
+        concluidaEm: { bsonType: "date" },
         observacao: { bsonType: "string" },
+        criadaEm: { bsonType: "date" },
+        atualizadaEm: { bsonType: "date" }
+      }
+    }
+  }
+});
+
+db.createCollection("eventosCalendario", {
+  validator: {
+    $jsonSchema: {
+      bsonType: "object",
+      required: ["usuarioId", "titulo", "data", "cor", "criadaEm", "atualizadaEm"],
+      additionalProperties: false,
+      properties: {
+        _id: { bsonType: "objectId" },
+        usuarioId: { bsonType: "string" },
+        titulo: { bsonType: "string" },
+        descricao: { bsonType: "string" },
+        data: { bsonType: "date" },
+        horario: { bsonType: "string" },
+        cor: { bsonType: "string", enum: ["roxo", "magenta", "verde", "ambar"] },
+        tarefaId: { bsonType: "string" },
         criadaEm: { bsonType: "date" },
         atualizadaEm: { bsonType: "date" }
       }
@@ -114,6 +138,7 @@ db.createCollection("tarefas", {
 db.usuarios.createIndex({ email: 1 }, { unique: true });
 db.categorias.createIndex({ usuarioId: 1 });
 db.tarefas.createIndex({ usuarioId: 1, prazo: 1 });
+db.eventosCalendario.createIndex({ usuarioId: 1, data: 1, horario: 1 });
 
 // Dados de demonstração. Um usuário com quatro categorias (uma sem anotação,
 // para a tela vazia aparecer na apresentação), seis anotações e oito tarefas:
@@ -125,6 +150,7 @@ db.usuarios.insertOne({
   nome: "Usuário de demonstração",
   email: "demo@aep.local",
   senhaHash: "$2a$10$VXylslVk9eCgQ5A/1ZzMWOFZMGqZlTcd6pLr.WDjOSbt6g2dAT1ne",
+  metaSemanal: 5,
   criadoEm: agora
 });
 
@@ -225,6 +251,7 @@ db.tarefas.insertMany([
     prazo: emDias(-10),
     prioridade: "alta",
     concluida: true,
+    concluidaEm: agora,
     observacao: "Revisar os requisitos antes da entrega.",
     criadaEm: agora,
     atualizadaEm: agora
@@ -297,6 +324,7 @@ db.tarefas.insertMany([
     prazo: emDias(-1),
     prioridade: "baixa",
     concluida: true,
+    concluidaEm: agora,
     observacao: "Unidade 4 concluída.",
     criadaEm: agora,
     atualizadaEm: agora

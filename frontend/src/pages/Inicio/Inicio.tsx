@@ -1,33 +1,17 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useOutletContext } from 'react-router-dom'
+import type { ContextoLayout } from '../../components/Layout'
+import { buscarCategoria, listarCategorias, type Anotacao } from '../../services/categorias'
 import {
   atualizarTarefa,
   listarTarefas,
   type Prioridade,
   type TarefaResumo,
 } from '../../services/tarefas'
+import { buscarPainel, type Painel } from '../../services/painel'
 import styles from './Inicio.module.css'
 
-const anotacoes = [
-  {
-    id: 1,
-    titulo: 'Requisitos funcionais',
-    data: 'Criada hoje',
-    descricao: 'Anotações sobre o levantamento inicial do projeto.',
-  },
-  {
-    id: 2,
-    titulo: 'Banco de Dados NoSQL',
-    data: 'Criada ontem',
-    descricao: 'Conceitos principais para revisar antes da atividade.',
-  },
-  {
-    id: 3,
-    titulo: 'Ideias para a AEP',
-    data: 'Criada em 20 ago.',
-    descricao: 'Possíveis temas e funcionalidades para a PoC.',
-  },
-]
+type AnotacaoRecente = Anotacao & { categoriaId: string; categoriaNome: string }
 
 const rotulosPrioridade: Record<Prioridade, string> = {
   alta: 'Alta',
@@ -49,6 +33,23 @@ function obterDataLocalAtual() {
   return `${agora.getFullYear()}-${mes}-${dia}`
 }
 
+async function buscarAnotacoesRecentes(): Promise<AnotacaoRecente[]> {
+  // A listagem só traz o total de cada categoria; as anotações vêm no detalhe.
+  const resumos = await listarCategorias()
+  const categorias = await Promise.all(resumos.map((resumo) => buscarCategoria(resumo.id)))
+
+  return categorias
+    .flatMap((categoria) =>
+      categoria.anotacoes.map((anotacao) => ({
+        ...anotacao,
+        categoriaId: categoria.id,
+        categoriaNome: categoria.nome,
+      })),
+    )
+    .sort((primeira, segunda) => segunda.criadaEm.localeCompare(primeira.criadaEm))
+    .slice(0, 3)
+}
+
 function formatarPrazo(prazo: string, hoje: string) {
   if (prazo === hoje) return 'Hoje'
 
@@ -58,37 +59,60 @@ function formatarPrazo(prazo: string, hoje: string) {
 }
 
 export default function Inicio() {
+  const { usuario } = useOutletContext<ContextoLayout>()
+  const [anotacoes, setAnotacoes] = useState<AnotacaoRecente[] | null>(null)
   const [tarefas, setTarefas] = useState<TarefaResumo[]>([])
+  const [painel, setPainel] = useState<Painel | null>(null)
   const [carregando, setCarregando] = useState(true)
+  const [carregandoPainel, setCarregandoPainel] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
+  const [erroPainel, setErroPainel] = useState<string | null>(null)
   const [processandoId, setProcessandoId] = useState<string | null>(null)
 
   useEffect(() => {
     let telaAtiva = true
 
-    async function carregarTarefas() {
-      try {
-        const resposta = await listarTarefas()
-        if (telaAtiva) {
-          setTarefas(resposta)
-        }
-      } catch {
-        if (telaAtiva) {
-          setErro('Não foi possível carregar as tarefas.')
-        }
-      } finally {
-        if (telaAtiva) {
-          setCarregando(false)
-        }
+    async function carregarDashboard() {
+      const [resultadoTarefas, resultadoPainel, resultadoAnotacoes] = await Promise.allSettled([
+        listarTarefas(),
+        buscarPainel(),
+        buscarAnotacoesRecentes(),
+      ])
+
+      if (!telaAtiva) return
+
+      if (resultadoTarefas.status === 'fulfilled') {
+        setTarefas(resultadoTarefas.value)
+      } else {
+        setErro('Não foi possível carregar as tarefas.')
       }
+
+      if (resultadoPainel.status === 'fulfilled') {
+        setPainel(resultadoPainel.value)
+      } else {
+        setErroPainel('Não foi possível carregar as metas e o progresso.')
+      }
+
+      setAnotacoes(resultadoAnotacoes.status === 'fulfilled' ? resultadoAnotacoes.value : [])
+      setCarregando(false)
+      setCarregandoPainel(false)
     }
 
-    carregarTarefas()
+    carregarDashboard()
 
     return () => {
       telaAtiva = false
     }
   }, [])
+
+  async function atualizarDadosDoPainel() {
+    try {
+      setErroPainel(null)
+      setPainel(await buscarPainel())
+    } catch {
+      setErroPainel('Não foi possível atualizar as metas e o progresso.')
+    }
+  }
 
   const hoje = obterDataLocalAtual()
   const tarefasDeHoje = tarefas.filter((tarefa) => tarefa.prazo === hoje)
@@ -110,12 +134,14 @@ export default function Inicio() {
         prioridade: tarefa.prioridade,
         observacao: tarefa.observacao,
         concluida: !tarefa.concluida,
+        categoriaId: tarefa.categoriaId,
       })
       setTarefas((tarefasAtuais) =>
         tarefasAtuais.map((tarefaAtual) =>
           tarefaAtual.id === tarefaAtualizada.id ? tarefaAtualizada : tarefaAtual,
         ),
       )
+      await atualizarDadosDoPainel()
     } catch (erroAoAtualizar) {
       setErro(
         erroAoAtualizar instanceof Error
@@ -130,7 +156,7 @@ export default function Inicio() {
   return (
     <>
       <section className={styles.boasVindas}>
-        <p className={styles.saudacao}>Olá, estudante!</p>
+        <p className={styles.saudacao}>Olá, {usuario.nome.split(' ')[0]}!</p>
         <h1>Seu painel acadêmico</h1>
         <p>Acompanhe suas tarefas e anotações em um só lugar.</p>
       </section>
@@ -162,17 +188,27 @@ export default function Inicio() {
           <article className={styles.cartao}>
             <div className={styles.tituloCartao}>
               <h2>Últimas anotações criadas</h2>
-              <button type="button">Ver todas</button>
+              <Link to="/anotacoes">Ver todas</Link>
             </div>
 
             <ul className={styles.lista}>
-              {anotacoes.map((anotacao) => (
+              {anotacoes?.length === 0 && (
+                <li className={styles.mensagemVazia}>Nenhuma anotação ainda.</li>
+              )}
+              {anotacoes?.map((anotacao) => (
                 <li key={anotacao.id} className={styles.itemAnotacao}>
                   <div className={styles.iconeAnotacao}>✎</div>
                   <div>
-                    <strong>{anotacao.titulo}</strong>
-                    <p>{anotacao.descricao}</p>
-                    <span>{anotacao.data}</span>
+                    <strong>
+                      <Link to={`/anotacoes/${anotacao.categoriaId}?anotacao=${anotacao.id}`}>
+                        {anotacao.titulo}
+                      </Link>
+                    </strong>
+                    <p>{anotacao.categoriaNome}</p>
+                    <span>
+                      Criada em{' '}
+                      {new Intl.DateTimeFormat('pt-BR').format(new Date(anotacao.criadaEm))}
+                    </span>
                   </div>
                 </li>
               ))}
@@ -181,17 +217,70 @@ export default function Inicio() {
         </div>
 
         <div className={styles.colunaDireita}>
+          <article className={`${styles.cartao} ${styles.metasProgresso}`}>
+            <div className={styles.tituloCartao}>
+              <h2>Metas e progresso</h2>
+              {!carregandoPainel && painel && (
+                <span>{painel.percentualMetaSemanal}% da meta</span>
+              )}
+            </div>
+
+            {carregandoPainel && <p className={styles.mensagemVazia}>Carregando metas...</p>}
+            {erroPainel && <p className={styles.mensagemVazia} role="alert">{erroPainel}</p>}
+            {!carregandoPainel && !erroPainel && painel && (
+              <>
+                <section className={styles.metaSemanal} aria-label="Meta semanal">
+                  <div>
+                    <span>Meta semanal</span>
+                    <strong>{painel.concluidasNaSemana} de {painel.metaSemanal} tarefas concluídas</strong>
+                  </div>
+                  <progress value={painel.percentualMetaSemanal} max={100}>
+                    {painel.percentualMetaSemanal}%
+                  </progress>
+                </section>
+
+                <ul className={styles.indicadores} aria-label="Indicadores das tarefas">
+                  <li><span>Pendentes</span><strong>{painel.pendentes}</strong></li>
+                  <li><span>Concluídas</span><strong>{painel.concluidas}</strong></li>
+                  <li><span>Atrasadas</span><strong>{painel.atrasadas}</strong></li>
+                </ul>
+
+                <section className={styles.progressoCategorias} aria-labelledby="titulo-progresso-categorias">
+                  <h3 id="titulo-progresso-categorias">Por disciplina</h3>
+                  {painel.progresso.length === 0 ? (
+                    <p>Nenhuma tarefa categorizada ainda.</p>
+                  ) : (
+                    <ul>
+                      {painel.progresso.map((progresso) => (
+                        <li key={progresso.categoriaId ?? 'sem-categoria'}>
+                          <div>
+                            <span className={`${styles.marcadorCategoria} ${styles[progresso.cor]}`} />
+                            <strong>{progresso.nome}</strong>
+                            <span>{progresso.concluidas}/{progresso.total}</span>
+                          </div>
+                          <progress value={progresso.percentual} max={100}>
+                            {progresso.percentual}%
+                          </progress>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </section>
+              </>
+            )}
+          </article>
+
           <article className={`${styles.cartao} ${styles.resumo}`}>
             <h2>Resumo de hoje</h2>
 
             <div className={styles.metricas}>
               <div>
-                <span>Concluídas</span>
+                <span>Concluídas hoje</span>
                 <strong>{concluidasHoje}</strong>
               </div>
 
               <div>
-                <span>Pendentes</span>
+                <span>Pendentes hoje</span>
                 <strong>{pendentesHoje}</strong>
               </div>
             </div>

@@ -130,6 +130,10 @@ tbody tr:last-child td {
   border-bottom: 0;
 }
 
+.tarefaDestacada td {
+  background: var(--lilas);
+}
+
 .prioridade {
   display: inline-block;
   padding: 3px 8px;

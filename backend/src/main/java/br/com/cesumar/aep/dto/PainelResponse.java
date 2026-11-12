@@ -6,5 +6,8 @@ public record PainelResponse(
 		long pendentes,
 		long concluidas,
 		long atrasadas,
+		int metaSemanal,
+		long concluidasNaSemana,
+		int percentualMetaSemanal,
 		List<ProgressoResponse> progresso) {
 }

@@ -1,18 +1,34 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Modal from '../../components/Modal'
 import { CampoTexto } from '../../components/CampoTexto'
-import { cores, categoriasIniciais } from './dados'
+import {
+  atualizarCategoria as atualizarCategoriaNaApi,
+  criarCategoria as criarCategoriaNaApi,
+  excluirCategoria as excluirCategoriaNaApi,
+  listarCategorias,
+  type CategoriaResumo,
+  type Cor,
+} from '../../services/categorias'
+import { listarTarefas, type TarefaResumo } from '../../services/tarefas'
 import styles from './Anotacoes.module.css'
 
 const esquemaCategoria = z.object({
   nome: z.string().trim().min(1, 'Informe o nome da categoria'),
+  descricao: z.string().trim().optional(),
 })
 
 type DadosCategoria = z.infer<typeof esquemaCategoria>
+
+const cores: Cor[] = ['roxo', 'magenta', 'verde', 'ambar']
+
+type CategoriaComResumo = CategoriaResumo & {
+  tarefasPendentes: number
+  proximoPrazo: string | null
+}
 
 function rotuloAnotacoes(quantidade: number) {
   if (quantidade === 0) {
@@ -23,9 +39,15 @@ function rotuloAnotacoes(quantidade: number) {
 }
 
 export default function Anotacoes() {
-  const [categorias, setCategorias] = useState(categoriasIniciais)
+  const [categorias, setCategorias] = useState<CategoriaComResumo[]>([])
   const [busca, setBusca] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
+  const [categoriaEmEdicao, setCategoriaEmEdicao] = useState<CategoriaComResumo | null>(null)
+  const [menuCategoriaAberto, setMenuCategoriaAberto] = useState<string | null>(null)
+  const [carregando, setCarregando] = useState(true)
+  const [erroLista, setErroLista] = useState<string | null>(null)
+  const [erroFormulario, setErroFormulario] = useState<string | null>(null)
+  const [tentativa, setTentativa] = useState(0)
 
   const {
     register,
@@ -35,7 +57,7 @@ export default function Anotacoes() {
   } = useForm<DadosCategoria>({
     resolver: zodResolver(esquemaCategoria),
     mode: 'onTouched',
-    defaultValues: { nome: '' },
+    defaultValues: { nome: '', descricao: '' },
   })
 
   const termo = busca.trim().toLowerCase()
@@ -46,21 +68,118 @@ export default function Anotacoes() {
       )
     : categorias
 
-  function abrirModal() {
+  useEffect(() => {
+    let telaAtiva = true
+
+    async function carregarCategorias() {
+      setCarregando(true)
+      setErroLista(null)
+
+      try {
+        const [resposta, tarefas] = await Promise.all([listarCategorias(), listarTarefas()])
+        if (telaAtiva) {
+          setCategorias(resposta.map((categoria) => resumirCategoria(categoria, tarefas)))
+        }
+      } catch {
+        if (telaAtiva) {
+          setErroLista('Não foi possível carregar as categorias. Tente novamente.')
+        }
+      } finally {
+        if (telaAtiva) {
+          setCarregando(false)
+        }
+      }
+    }
+
+    carregarCategorias()
+
+    return () => {
+      telaAtiva = false
+    }
+  }, [tentativa])
+
+  function abrirModalCriacao() {
+    setErroFormulario(null)
+    setCategoriaEmEdicao(null)
+    reset({ nome: '', descricao: '' })
+    setModalAberto(true)
+  }
+
+  function abrirModalEdicao(categoria: CategoriaComResumo) {
+    setErroFormulario(null)
+    setCategoriaEmEdicao(categoria)
+    setMenuCategoriaAberto(null)
+    reset({ nome: categoria.nome, descricao: categoria.descricao ?? '' })
     setModalAberto(true)
   }
 
   function fecharModal() {
+    setErroFormulario(null)
     setModalAberto(false)
-    reset()
+    setCategoriaEmEdicao(null)
+    reset({ nome: '', descricao: '' })
   }
 
-  async function criarCategoria({ nome }: DadosCategoria) {
-    setCategorias((atuais) => [
-      ...atuais,
-      { id: Date.now(), nome, anotacoes: 0, cor: cores[atuais.length % cores.length] },
-    ])
-    fecharModal()
+  async function salvarCategoria({ nome, descricao }: DadosCategoria) {
+    setErroFormulario(null)
+
+    try {
+      if (categoriaEmEdicao) {
+        const categoriaAtualizada = await atualizarCategoriaNaApi(categoriaEmEdicao.id, {
+          nome,
+          descricao: descricao ?? '',
+          cor: categoriaEmEdicao.cor,
+        })
+        setCategorias((atuais) => atuais.map((categoria) =>
+          categoria.id === categoriaAtualizada.id
+            ? {
+                ...categoria,
+                nome: categoriaAtualizada.nome,
+                descricao: categoriaAtualizada.descricao,
+                cor: categoriaAtualizada.cor,
+                totalAnotacoes: categoriaAtualizada.anotacoes.length,
+              }
+            : categoria,
+        ))
+        fecharModal()
+        return
+      }
+
+      const categoria = await criarCategoriaNaApi({
+        nome,
+        descricao: descricao || undefined,
+        cor: cores[categorias.length % cores.length],
+      })
+      setCategorias((atuais) => [
+        ...atuais,
+        {
+          id: categoria.id,
+          nome: categoria.nome,
+          descricao: categoria.descricao,
+          cor: categoria.cor,
+          totalAnotacoes: categoria.anotacoes.length,
+          tarefasPendentes: 0,
+          proximoPrazo: null,
+        },
+      ])
+      fecharModal()
+    } catch (erro) {
+      setErroFormulario(
+        erro instanceof Error ? erro.message : 'Não foi possível criar a categoria.',
+      )
+    }
+  }
+
+  async function excluirCategoria(categoria: CategoriaComResumo) {
+    setMenuCategoriaAberto(null)
+    if (!window.confirm(`Excluir a categoria “${categoria.nome}”?`)) return
+
+    try {
+      await excluirCategoriaNaApi(categoria.id)
+      setCategorias((atuais) => atuais.filter((item) => item.id !== categoria.id))
+    } catch (erro) {
+      setErroLista(erro instanceof Error ? erro.message : 'Não foi possível excluir a categoria.')
+    }
   }
 
   return (
@@ -88,7 +207,7 @@ export default function Anotacoes() {
             <button
               type="button"
               className={styles.botaoNovaCategoria}
-              onClick={abrirModal}
+              onClick={abrirModalCriacao}
             >
               <span aria-hidden="true">+</span> Nova categoria
             </button>
@@ -96,7 +215,21 @@ export default function Anotacoes() {
         )}
       </section>
 
-      {categorias.length === 0 ? (
+      {carregando ? (
+        <p className={styles.semResultado}>Carregando categorias...</p>
+      ) : erroLista ? (
+        <section className={styles.vazio}>
+          <h2>Não foi possível carregar as categorias</h2>
+          <p>{erroLista}</p>
+          <button
+            type="button"
+            className={styles.botaoNovaCategoria}
+            onClick={() => setTentativa((atual) => atual + 1)}
+          >
+            Tentar novamente
+          </button>
+        </section>
+      ) : categorias.length === 0 ? (
         <section className={styles.vazio}>
           <div className={styles.iconeVazio} aria-hidden="true">
             ✎
@@ -108,7 +241,7 @@ export default function Anotacoes() {
           <button
             type="button"
             className={styles.botaoNovaCategoria}
-            onClick={abrirModal}
+            onClick={abrirModalCriacao}
           >
             <span aria-hidden="true">+</span> Nova categoria
           </button>
@@ -120,7 +253,7 @@ export default function Anotacoes() {
       ) : (
         <ul className={styles.grade}>
           {encontradas.map((categoria) => (
-            <li key={categoria.id}>
+            <li key={categoria.id} className={styles.itemCategoria}>
               <Link
                 to={`/anotacoes/${categoria.id}`}
                 className={styles.cartaoCategoria}
@@ -134,19 +267,65 @@ export default function Anotacoes() {
 
                 <strong className={styles.nome}>{categoria.nome}</strong>
 
+                {categoria.descricao && <span className={styles.descricaoCategoria}>{categoria.descricao}</span>}
+
                 <span className={styles.quantidade}>
-                  {rotuloAnotacoes(categoria.anotacoes)}
+                  {rotuloAnotacoes(categoria.totalAnotacoes)}
                 </span>
+                <span className={styles.quantidade}>
+                  {categoria.tarefasPendentes === 1
+                    ? '1 tarefa pendente'
+                    : `${categoria.tarefasPendentes} tarefas pendentes`}
+                </span>
+                {categoria.proximoPrazo && (
+                  <span className={styles.proximoPrazo}>
+                    Próximo prazo: {formatarPrazo(categoria.proximoPrazo)}
+                  </span>
+                )}
               </Link>
+
+              <div className={styles.menuCategoria}>
+                <button
+                  type="button"
+                  className={styles.botaoMenuCategoria}
+                  aria-label={`Ações da categoria ${categoria.nome}`}
+                  aria-expanded={menuCategoriaAberto === categoria.id}
+                  aria-controls={`acoes-categoria-${categoria.id}`}
+                  onClick={() => setMenuCategoriaAberto((aberto) =>
+                    aberto === categoria.id ? null : categoria.id,
+                  )}
+                >
+                  <span aria-hidden="true">⋯</span>
+                </button>
+
+                {menuCategoriaAberto === categoria.id && (
+                  <div id={`acoes-categoria-${categoria.id}`} className={styles.opcoesCategoria}>
+                    <button type="button" onClick={() => abrirModalEdicao(categoria)}>
+                      Editar categoria
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.opcaoExcluirCategoria}
+                      onClick={() => excluirCategoria(categoria)}
+                    >
+                      Excluir categoria
+                    </button>
+                  </div>
+                )}
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      <Modal aberto={modalAberto} titulo="Nova categoria" aoFechar={fecharModal}>
+      <Modal
+        aberto={modalAberto}
+        titulo={categoriaEmEdicao ? 'Editar categoria' : 'Nova categoria'}
+        aoFechar={fecharModal}
+      >
         <form
           className={styles.formularioCategoria}
-          onSubmit={handleSubmit(criarCategoria)}
+          onSubmit={handleSubmit(salvarCategoria)}
           noValidate
         >
           <CampoTexto
@@ -156,6 +335,18 @@ export default function Anotacoes() {
             erro={errors.nome?.message}
             {...register('nome')}
           />
+
+          {categoriaEmEdicao && (
+            <label className={styles.campoDescricao}>
+              Descrição
+              <textarea
+                placeholder="Descreva esta categoria"
+                {...register('descricao')}
+              />
+            </label>
+          )}
+
+          {erroFormulario && <p className={styles.erroFormulario} role="alert">{erroFormulario}</p>}
 
           <div className={styles.acoesModal}>
             <button
@@ -170,11 +361,29 @@ export default function Anotacoes() {
               className={styles.botaoNovaCategoria}
               disabled={isSubmitting}
             >
-              Criar
+              {categoriaEmEdicao ? 'Salvar' : 'Criar'}
             </button>
           </div>
         </form>
       </Modal>
     </>
+  )
+}
+
+function resumirCategoria(categoria: CategoriaResumo, tarefas: TarefaResumo[]): CategoriaComResumo {
+  const pendentes = tarefas
+    .filter((tarefa) => tarefa.categoriaId === categoria.id && !tarefa.concluida)
+    .sort((primeira, segunda) => primeira.prazo.localeCompare(segunda.prazo))
+
+  return {
+    ...categoria,
+    tarefasPendentes: pendentes.length,
+    proximoPrazo: pendentes[0]?.prazo ?? null,
+  }
+}
+
+function formatarPrazo(prazo: string) {
+  return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(
+    new Date(`${prazo}T00:00:00Z`),
   )
 }

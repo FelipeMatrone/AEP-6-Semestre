@@ -23,9 +23,14 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import br.com.cesumar.aep.dto.PerfilResponse;
+import br.com.cesumar.aep.dto.PerfilUpdateRequest;
+import br.com.cesumar.aep.dto.SenhaUpdateRequest;
 import br.com.cesumar.aep.dto.UsuarioCreateRequest;
 import br.com.cesumar.aep.dto.UsuarioResponse;
 import br.com.cesumar.aep.exception.EmailJaCadastradoException;
+import br.com.cesumar.aep.exception.SenhaAtualIncorretaException;
+import br.com.cesumar.aep.exception.UsuarioNotFoundException;
 import br.com.cesumar.aep.mapper.UsuarioMapper;
 import br.com.cesumar.aep.model.Usuario;
 import br.com.cesumar.aep.repository.UsuarioRepository;
@@ -64,6 +69,15 @@ class UsuarioServiceTest {
 		verify(repository).save(argThat(usuario -> !SENHA.equals(usuario.getSenhaHash())
 				&& encoder.matches(SENHA, usuario.getSenhaHash())
 				&& AGORA.equals(usuario.getCriadoEm())));
+	}
+
+	@Test
+	void criarDefineMetaSemanalPadrao() {
+		when(repository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+		service.criar(request("ana@aep.com"));
+
+		verify(repository).save(argThat(usuario -> usuario.getMetaSemanal() == 5));
 	}
 
 	@Test
@@ -133,6 +147,68 @@ class UsuarioServiceTest {
 		assertThatThrownBy(() -> service.loadUserByUsername("ANA@aep.com"))
 				.isInstanceOf(UsernameNotFoundException.class)
 				.hasMessageContaining("ana@aep.com");
+	}
+
+	@Test
+	void perfilDevolveMetaSemanalECriadoEm() {
+		Usuario usuario = persistido();
+		usuario.setMetaSemanal(7);
+		usuario.setCriadoEm(AGORA);
+		when(repository.findById(ID)).thenReturn(Optional.of(usuario));
+
+		assertThat(service.perfil(ID)).isEqualTo(new PerfilResponse(ID, "Ana", "ana@aep.com", 7, AGORA));
+	}
+
+	@Test
+	void perfilSemMetaGravadaUsaOPadrao() {
+		Usuario usuario = persistido();
+		usuario.setMetaSemanal(0);
+		when(repository.findById(ID)).thenReturn(Optional.of(usuario));
+
+		assertThat(service.perfil(ID).metaSemanal()).isEqualTo(5);
+	}
+
+	@Test
+	void perfilDeUsuarioInexistenteLancaNaoEncontrado() {
+		when(repository.findById(ID)).thenReturn(Optional.empty());
+
+		assertThatThrownBy(() -> service.perfil(ID)).isInstanceOf(UsuarioNotFoundException.class);
+	}
+
+	@Test
+	void atualizarPerfilGravaNomeSemEspacosEMeta() {
+		when(repository.findById(ID)).thenReturn(Optional.of(persistido()));
+		when(repository.save(any(Usuario.class))).thenAnswer(invocacao -> invocacao.getArgument(0));
+
+		PerfilResponse resposta = service.atualizarPerfil(ID, new PerfilUpdateRequest("  Ana Maria ", 10));
+
+		assertThat(resposta.nome()).isEqualTo("Ana Maria");
+		assertThat(resposta.metaSemanal()).isEqualTo(10);
+		// o e-mail não é editável por aqui: segue o mesmo de antes
+		assertThat(resposta.email()).isEqualTo("ana@aep.com");
+	}
+
+	@Test
+	void trocarSenhaComSenhaAtualCorretaGravaNovoHash() {
+		Usuario usuario = persistido();
+		usuario.setSenhaHash(encoder.encode(SENHA));
+		when(repository.findById(ID)).thenReturn(Optional.of(usuario));
+
+		service.trocarSenha(ID, new SenhaUpdateRequest(SENHA, "nova-senha-2026"));
+
+		verify(repository).save(argThat(salvo -> encoder.matches("nova-senha-2026", salvo.getSenhaHash())));
+	}
+
+	@Test
+	void trocarSenhaComSenhaAtualErradaNaoGrava() {
+		Usuario usuario = persistido();
+		usuario.setSenhaHash(encoder.encode(SENHA));
+		when(repository.findById(ID)).thenReturn(Optional.of(usuario));
+
+		assertThatThrownBy(() -> service.trocarSenha(ID, new SenhaUpdateRequest("errada-123", "nova-senha-2026")))
+				.isInstanceOf(SenhaAtualIncorretaException.class);
+
+		verify(repository, never()).save(any(Usuario.class));
 	}
 
 	private UsuarioCreateRequest request(String email) {

@@ -102,6 +102,12 @@ podem ser contestadas por quem implementa.
 
 Três coleções. Duas referências entre coleções. Uma lista de subdocumentos.
 
+> **Acréscimo na implementação:** o calendário ganhou eventos próprios, numa 4ª
+> coleção, `eventosCalendario` (`usuarioId` obrigatório, `tarefaId` opcional,
+> índice `{ usuarioId: 1, data: 1, horario: 1 }`), também com `$jsonSchema`
+> fechado no `banco/init.js`. O desenho abaixo continua valendo para as três
+> originais; o estado final está no `README.md`, seção "Banco de dados".
+
 ```
 usuarios ──< categorias ──┐ (anotacoes[] aninhadas)
     │                     │
@@ -227,7 +233,9 @@ OpenAPI correto, para o Felipe integrar enquanto o recheio vira Mongo de verdade
 | `POST` | `/api/usuarios` | 201, usuário criado (cadastro, público) |
 | `POST` | `/api/sessao` | 200, usuário autenticado (login, público) |
 | `DELETE` | `/api/sessao` | 204 (logout) |
-| `GET` | `/api/sessao` | 200, usuário da sessão atual |
+| `GET` | `/api/sessao` | 200, usuário da sessão atual, com a meta semanal |
+| `PUT` | `/api/usuarios/me` | 200, nome e meta semanal atualizados |
+| `PUT` | `/api/usuarios/me/senha` | 204; 400 com `fieldErrors.senhaAtual` se a atual não confere |
 | `GET` | `/api/categorias` | lista de categorias do usuário, com `totalAnotacoes` |
 | `POST` | `/api/categorias` | 201, categoria criada |
 | `GET` | `/api/categorias/{id}` | categoria **com `anotacoes` aninhadas** |
@@ -237,6 +245,9 @@ OpenAPI correto, para o Felipe integrar enquanto o recheio vira Mongo de verdade
 | `PUT` | `/api/categorias/{id}/anotacoes/{anotacaoId}` | anotação atualizada |
 | `DELETE` | `/api/categorias/{id}/anotacoes/{anotacaoId}` | 204 |
 | `GET` | `/api/painel` | agregação de progresso (ver abaixo) |
+| `GET` `POST` | `/api/eventos-calendario` | eventos do calendário do usuário; 201 na criação |
+| `PUT` `DELETE` | `/api/eventos-calendario/{id}` | evento atualizado; 204 na exclusão |
+| `GET` | `/api/busca?termo=` | até 5 tarefas, categorias e anotações que contêm o termo |
 
 As rotas de tarefas continuam as mesmas; `categoriaId` entra nos DTOs de criação
 e atualização, e a listagem passa a devolver só as tarefas do usuário da sessão.

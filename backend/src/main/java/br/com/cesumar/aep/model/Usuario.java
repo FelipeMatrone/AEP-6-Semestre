@@ -17,6 +17,8 @@ public class Usuario {
 
 	private String senhaHash;
 
+	private int metaSemanal;
+
 	private Instant criadoEm;
 
 	public Usuario() {
@@ -55,6 +57,14 @@ public class Usuario {
 
 	public String getSenhaHash() {
 		return senhaHash;
+	}
+
+	public int getMetaSemanal() {
+		return metaSemanal;
+	}
+
+	public void setMetaSemanal(int metaSemanal) {
+		this.metaSemanal = metaSemanal;
 	}
 
 	public void setSenhaHash(String senhaHash) {

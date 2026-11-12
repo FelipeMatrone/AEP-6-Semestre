@@ -153,59 +153,89 @@
   border-radius: 999px;
 }
 
+.busca {
+  position: relative;
+}
+
+.estadoBusca {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 2;
+  width: min(440px, 52vw);
+  padding: 12px 16px;
+  color: var(--texto-suave);
+  background: var(--branco);
+  border: 1px solid var(--borda);
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgb(46 42 74 / 12%);
+}
+
+.estadoBusca p {
+  margin: 0;
+}
+
+.resumoBusca {
+  padding-bottom: 8px;
+  font-size: 0.75rem;
+}
+
+.grupoResultados + .grupoResultados {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--borda);
+}
+
+.grupoResultados h2 {
+  margin: 0 0 6px;
+  color: var(--texto);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.grupoResultados ul {
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.grupoResultados a {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  color: var(--texto);
+  text-decoration: none;
+  border-radius: 6px;
+}
+
+.grupoResultados a:hover,
+.grupoResultados a:focus-visible {
+  background: var(--lilas);
+  outline: none;
+}
+
+.grupoResultados strong {
+  font-size: 0.8125rem;
+}
+
+.grupoResultados a > span {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
 .acoesCabecalho {
   display: flex;
   gap: 18px;
   align-items: center;
 }
 
-.botaoNotificacao {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  color: var(--texto);
-  background: transparent;
-  border: 0;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-.botaoNotificacao:hover {
-  background: var(--lilas);
-}
-
-.botaoNotificacao svg {
-  width: 21px;
-  height: 21px;
-  fill: none;
-  stroke: currentcolor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 1.8;
-}
-
-.indicadorNotificacao {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  display: grid;
-  place-items: center;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  color: var(--branco);
-  font-size: 0.625rem;
-  font-weight: 700;
-  background: var(--magenta);
-  border: 2px solid #f7f6fb;
-  border-radius: 999px;
-}
-
 .perfil {
   display: flex;
+  text-decoration: none;
   gap: 10px;
   align-items: center;
   padding: 0;
@@ -280,6 +310,10 @@
   }
 
   .busca input {
+    width: 100%;
+  }
+
+  .estadoBusca {
     width: 100%;
   }
 }

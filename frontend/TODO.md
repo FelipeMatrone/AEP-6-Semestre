@@ -1,5 +1,12 @@
 # TODO — frontend
 
+> **Revisão feita antes da integração com o backend (histórico).** As seções A e B
+> e quase toda a C foram resolvidas com a API real: login e cadastro de verdade,
+> rotas privadas guardadas no `Layout`, `<dialog>` nativo, senha mínima de 8,
+> `localStorage` com `try/catch`, editor em `<textarea>` (sem HTML renderizado) e
+> o login com Google removido. **Ainda em aberto:** testes do frontend (Vitest),
+> Prettier e os restos da demo do Vite em `src/assets/` e `public/icons.svg`.
+
 ## Como este arquivo é organizado
 
 Os itens são separados por **quando** fazem sentido, não por gravidade:
@@ -21,22 +28,22 @@ Os itens são separados por **quando** fazem sentido, não por gravidade:
 
 Nada a fazer aqui além de não se assustar. Listado para ninguém "corrigir" à toa.
 
-- [ ] Senha mock `'123456'` compilada no bundle (`src/services/auth.ts:31`).
+- [x] Senha mock `'123456'` compilada no bundle (`src/services/auth.ts:31`).
       Some junto com o `USUARIO_MOCK` quando `autenticar()` virar `fetch`.
-- [ ] Contagem de anotações inventada: `categoriasIniciais[0].anotacoes = 12`, mas
+- [x] Contagem de anotações inventada: `categoriasIniciais[0].anotacoes = 12`, mas
       só existem 3 anotações com `categoriaId: 1` (`src/pages/Anotacoes/dados.ts:11`).
       Com a API o número passa a ser derivado.
-- [ ] `atualizadaEm` nunca muda ao editar uma anotação
+- [x] `atualizadaEm` nunca muda ao editar uma anotação
       (`src/pages/Anotacoes/Categoria.tsx:44`). O backend devolve o timestamp real.
-- [ ] `aoSalvar()` do cadastro é `async` sem `await` — `isSubmitting` nunca aparece
+- [x] `aoSalvar()` do cadastro é `async` sem `await` — `isSubmitting` nunca aparece
       e `cadastrado` nunca volta a `false` (`src/pages/Cadastro/Cadastro.tsx:48`).
       A função inteira será reescrita quando o endpoint existir.
-- [ ] Dados mock declarados dentro do componente (`src/pages/Inicio/Inicio.tsx:14-76`),
+- [x] Dados mock declarados dentro do componente (`src/pages/Inicio/Inicio.tsx:14-76`),
       enquanto `Anotacoes` usa `./dados.ts`. Dois padrões que viram um só com a API.
-- [ ] Nome, iniciais e badge de notificação fixos no shell
+- [x] Nome, iniciais e badge de notificação fixos no shell
       (`src/components/Layout.tsx:83-86`: "Aluno AEP", "AA", "3").
       Passam a vir do usuário autenticado.
-- [ ] Categoria criada em `Anotacoes.tsx` não é encontrada em `Categoria.tsx` — uma
+- [x] Categoria criada em `Anotacoes.tsx` não é encontrada em `Categoria.tsx` — uma
       guarda o state em `useState` (linha 26), a outra lê `categoriasIniciais` do
       módulo (linha 8). Criar → clicar → "Categoria não encontrada"; e o state some
       ao navegar. Resolve sozinho quando ambas lerem da API.
@@ -50,28 +57,28 @@ Nada a fazer aqui além de não se assustar. Listado para ninguém "corrigir" à
 
 Pré-requisitos de merge. Conferir antes de abrir o PR da integração.
 
-- [ ] **Sanitizar o conteúdo das anotações antes de renderizar.**
+- [x] **Sanitizar o conteúdo das anotações antes de renderizar.**
       `src/pages/Anotacoes/Categoria.tsx:238` faz
       `dangerouslySetInnerHTML={{ __html: anotacaoSelecionada.conteudo }}`.
       Enquanto a fonte é local isso é aceitável; no instante em que `conteudo` vier
       da API, é injeção de HTML de servidor direto no DOM — XSS armazenado clássico
       se anotações forem compartilhadas. Usar DOMPurify na renderização.
       Não confie no conteúdo só porque saiu daqui limpo.
-- [ ] **Proteger as rotas privadas.** `/inicio` e `/anotacoes` abrem digitando a URL
+- [x] **Proteger as rotas privadas.** `/inicio` e `/anotacoes` abrem digitando a URL
       (`src/App.tsx:14-18`). Hoje não vaza nada — tudo é mock. A guarda depende da
       decisão de sessão abaixo, por isso vive aqui e não em C.
       O `Layout` já envolve exatamente as rotas privadas: a checagem cabe nele,
       retornando `<Navigate to="/login" replace />` ou `<Outlet />`.
-- [ ] Decidir como o backend devolve a sessão para a SPA depois do OAuth:
+- [x] Decidir como o backend devolve a sessão para a SPA depois do OAuth:
       cookie `HttpOnly` (exige `SameSite` e CORS configurados) ou JWT no redirect.
       Essa decisão define o que a guarda acima verifica.
-- [ ] Substituir o mock de `src/services/auth.ts` por `fetch` para o endpoint real
+- [x] Substituir o mock de `src/services/auth.ts` por `fetch` para o endpoint real
       do Spring. Nada além do corpo da função precisa mudar.
-- [ ] Habilitar `spring-boot-starter-oauth2-client` no backend: o endpoint
+- [x] ~~Habilitar `spring-boot-starter-oauth2-client` no backend~~ — descartado: o login com Google foi removido. o endpoint
       `/oauth2/authorization/google` que o botão do Google já aponta passa a existir.
       Requer cadastrar as URLs de origem e de redirect no Google Cloud Console
       (inclusive `http://localhost` para desenvolvimento).
-- [ ] Validar senha no servidor. A regra de cliente (item em C) é conveniência de
+- [x] Validar senha no servidor. A regra de cliente (item em C) é conveniência de
       UX, nunca a defesa — a validação que conta é a do backend.
 
 ---

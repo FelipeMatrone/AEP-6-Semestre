@@ -26,6 +26,9 @@ public class Tarefa {
 
 	private boolean concluida;
 
+	// instante em que a tarefa foi concluída; nulo enquanto estiver pendente.
+	private Instant concluidaEm;
+
 	private String observacao;
 
 	private Instant criadaEm;
@@ -98,6 +101,14 @@ public class Tarefa {
 
 	public void setConcluida(boolean concluida) {
 		this.concluida = concluida;
+	}
+
+	public Instant getConcluidaEm() {
+		return concluidaEm;
+	}
+
+	public void setConcluidaEm(Instant concluidaEm) {
+		this.concluidaEm = concluidaEm;
 	}
 
 	public String getObservacao() {

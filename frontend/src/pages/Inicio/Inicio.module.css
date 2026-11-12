@@ -108,6 +108,15 @@
 }
 
 .itemLista div,
+.itemAnotacao strong a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.itemAnotacao strong a:hover {
+  text-decoration: underline;
+}
+
 .itemAnotacao div:last-child {
   display: flex;
   flex-direction: column;
@@ -147,6 +156,121 @@
 .resumo {
   padding-bottom: 18px;
 }
+
+.metasProgresso {
+  display: grid;
+  gap: 18px;
+}
+
+.metasProgresso > .tituloCartao > span {
+  color: var(--roxo);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.metaSemanal {
+  display: grid;
+  gap: 10px;
+}
+
+.metaSemanal div {
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+}
+
+.metaSemanal span,
+.indicadores span,
+.progressoCategorias p,
+.progressoCategorias li > div > span:last-child {
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.metaSemanal strong {
+  font-size: 0.9rem;
+}
+
+.metasProgresso progress {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  accent-color: var(--roxo);
+  border: 0;
+  border-radius: 999px;
+}
+
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0;
+  padding: 12px 0;
+  list-style: none;
+  border-block: 1px solid var(--borda);
+}
+
+.indicadores li {
+  display: flex;
+  gap: 4px;
+  flex-direction: column;
+  padding: 0 10px;
+}
+
+.indicadores li + li {
+  border-left: 1px solid var(--borda);
+}
+
+.indicadores strong {
+  color: var(--roxo);
+  font-size: 1.25rem;
+}
+
+.progressoCategorias h3 {
+  margin: 0 0 10px;
+  font-size: 0.8125rem;
+}
+
+.progressoCategorias p {
+  margin: 0;
+}
+
+.progressoCategorias ul {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.progressoCategorias li {
+  display: grid;
+  gap: 6px;
+}
+
+.progressoCategorias li > div {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+}
+
+.progressoCategorias strong {
+  overflow: hidden;
+  font-size: 0.8125rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.marcadorCategoria {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.marcadorCategoria.roxo { background: var(--roxo); }
+.marcadorCategoria.magenta { background: var(--magenta); }
+.marcadorCategoria.verde { background: #26744f; }
+.marcadorCategoria.ambar { background: #9a6700; }
 
 .metricas {
   display: grid;

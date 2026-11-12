@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { CampoTexto } from '../../components/CampoTexto'
 import { autenticar, CredenciaisInvalidasError } from '../../services/auth'
 import {
@@ -11,16 +11,11 @@ import {
 } from '../../services/preferencias'
 import {
   IconeCapelo,
-  IconeGoogle,
   IconeOlho,
   IconeOlhoCortado,
 } from '../../components/icones'
 import { NOME_DO_SISTEMA } from '../../config'
 import styles from './Login.module.css'
-
-// O Spring Security expõe esta rota ao habilitar o oauth2-client. A troca do
-// código por token acontece no servidor — o frontend só leva o usuário até lá.
-const URL_OAUTH_GOOGLE = `${import.meta.env.VITE_API_URL}/oauth2/authorization/google`
 
 const esquemaLogin = z.object({
   email: z
@@ -40,6 +35,8 @@ type StatusEnvio =
 
 export default function Login() {
   const navigate = useNavigate()
+  // Vindo do cadastro, o e-mail recém-criado tem prioridade sobre o lembrado.
+  const emailCadastrado: string | undefined = useLocation().state?.emailCadastrado
   const emailLembrado = recuperarEmailLembrado()
   const [senhaVisivel, setSenhaVisivel] = useState(false)
   const [status, setStatus] = useState<StatusEnvio>({ tipo: 'ocioso' })
@@ -54,7 +51,7 @@ export default function Login() {
     // quem ainda está digitando.
     mode: 'onTouched',
     defaultValues: {
-      email: emailLembrado,
+      email: emailCadastrado ?? emailLembrado,
       senha: '',
       lembrarMe: emailLembrado !== '',
     },
@@ -150,6 +147,12 @@ export default function Login() {
               Lembre-me
             </label>
 
+            {emailCadastrado && status.tipo === 'ocioso' && (
+              <p role="status" className={styles.sucesso}>
+                Cadastro realizado! Entre com sua senha.
+              </p>
+            )}
+
             {status.tipo === 'erro' && (
               <p role="alert" className={styles.alerta}>
                 {status.mensagem}
@@ -164,15 +167,6 @@ export default function Login() {
               {isSubmitting ? 'Entrando…' : 'Entrar'}
             </button>
           </form>
-
-          <div className={styles.divisor}>
-            <span>ou continue com</span>
-          </div>
-
-          <a className={styles.botaoGoogle} href={URL_OAUTH_GOOGLE}>
-            <IconeGoogle />
-            Entrar com Google
-          </a>
 
           <p className={styles.rodape}>
             Não tem uma conta? <Link to="/cadastro">Cadastre-se</Link>

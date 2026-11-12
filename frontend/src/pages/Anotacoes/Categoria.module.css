@@ -12,7 +12,8 @@
 .tela {
   display: grid;
   grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-  height: min(76dvh, 720px);
+  height: calc(100dvh - clamp(150px, 14vh, 180px));
+  min-height: 560px;
   overflow: hidden;
   background: var(--branco);
   border: 1px solid var(--borda);
@@ -71,6 +72,72 @@
   font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tarefasVinculadas {
+  display: grid;
+  gap: 8px;
+}
+
+.tarefasVinculadas header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tarefasVinculadas h2 {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.tarefasVinculadas header a {
+  color: var(--roxo);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tarefasVinculadas > p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.tarefasVinculadas ul {
+  display: grid;
+  gap: 4px;
+  max-height: 120px;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.tarefasVinculadas a {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  color: var(--texto);
+  text-decoration: none;
+  background: #f7f6fb;
+  border-radius: 8px;
+}
+
+.tarefasVinculadas a:hover,
+.tarefasVinculadas a:focus-visible {
+  background: var(--lilas);
+}
+
+.tarefasVinculadas strong {
+  overflow: hidden;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tarefasVinculadas span {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
 }
 
 .busca {
@@ -212,12 +279,13 @@
   color: var(--texto);
   font: inherit;
   line-height: 1.7;
+  resize: none;
+  background: transparent;
+  border: 0;
 }
 
-.areaTexto:empty::before {
+.areaTexto::placeholder {
   color: var(--texto-suave);
-  content: attr(data-placeholder);
-  pointer-events: none;
 }
 
 .areaTexto ul,
@@ -233,12 +301,40 @@
 
 .rodapeEditor {
   display: flex;
-  justify-content: flex-end;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
   padding-top: 10px;
+}
+
+.botaoExcluir {
+  padding: 7px 10px;
+  color: #c52852;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid #f4bfd0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.botaoExcluir:hover:not(:disabled) {
+  background: #fce3eb;
+}
+
+.botaoExcluir:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .statusSalvamento {
   color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.erroSalvamento {
+  color: #c52852;
   font-size: 0.75rem;
 }
 
@@ -272,6 +368,7 @@
     grid-template-columns: 1fr;
     grid-template-rows: minmax(180px, 240px) minmax(0, 1fr);
     height: min(84dvh, 760px);
+    min-height: 0;
   }
 
   .barraLateral {

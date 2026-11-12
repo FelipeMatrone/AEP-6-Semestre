@@ -17,9 +17,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import br.com.cesumar.aep.dto.PerfilResponse;
 import br.com.cesumar.aep.dto.SessaoCreateRequest;
 import br.com.cesumar.aep.dto.UsuarioResponse;
 import br.com.cesumar.aep.service.UsuarioAutenticado;
+import br.com.cesumar.aep.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -35,19 +37,22 @@ public class SessaoController {
 
 	private final SessionAuthenticationStrategy sessionAuthenticationStrategy;
 
+	private final UsuarioService usuarioService;
+
 	public SessaoController(AuthenticationManager authenticationManager,
 			SecurityContextRepository securityContextRepository,
-			SessionAuthenticationStrategy sessionAuthenticationStrategy) {
+			SessionAuthenticationStrategy sessionAuthenticationStrategy, UsuarioService usuarioService) {
 		this.authenticationManager = authenticationManager;
 		this.securityContextRepository = securityContextRepository;
 		this.sessionAuthenticationStrategy = sessionAuthenticationStrategy;
+		this.usuarioService = usuarioService;
 	}
 
-	// montado do principal, sem ir ao banco de novo: o UsuarioAutenticado já
-	// carrega os três campos da resposta.
+	// lido do banco, não do principal: o principal é uma foto do login e
+	// mostraria o nome antigo depois de o usuário editar o perfil.
 	@GetMapping
-	public UsuarioResponse atual(@AuthenticationPrincipal UsuarioAutenticado usuario) {
-		return respostaDe(usuario);
+	public PerfilResponse atual(@AuthenticationPrincipal UsuarioAutenticado usuario) {
+		return usuarioService.perfil(usuario.id());
 	}
 
 	@PostMapping

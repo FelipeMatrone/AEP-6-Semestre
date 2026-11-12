@@ -53,6 +53,7 @@ public class TarefaService {
 		Instant agora = Instant.now(clock);
 		tarefa.setUsuarioId(usuarioId);
 		tarefa.setConcluida(false);
+		tarefa.setConcluidaEm(null);
 		tarefa.setCriadaEm(agora);
 		tarefa.setAtualizadaEm(agora);
 
@@ -62,9 +63,16 @@ public class TarefaService {
 	public TarefaResponse atualizar(String id, TarefaUpdateRequest request, String usuarioId) {
 		Tarefa tarefa = buscarOuFalhar(id, usuarioId);
 		validarCategoria(request.categoriaId(), usuarioId);
+		boolean estavaConcluida = tarefa.isConcluida();
 
 		mapper.updateModel(tarefa, request);
-		tarefa.setAtualizadaEm(Instant.now(clock));
+		Instant agora = Instant.now(clock);
+		if (!estavaConcluida && tarefa.isConcluida()) {
+			tarefa.setConcluidaEm(agora);
+		} else if (estavaConcluida && !tarefa.isConcluida()) {
+			tarefa.setConcluidaEm(null);
+		}
+		tarefa.setAtualizadaEm(agora);
 
 		return mapper.toResponse(repository.save(tarefa));
 	}

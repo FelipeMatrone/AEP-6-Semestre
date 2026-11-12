@@ -97,6 +97,72 @@
   background: #fce3eb;
 }
 
+.tarefasVinculadas {
+  display: grid;
+  gap: 8px;
+}
+
+.tarefasVinculadas header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tarefasVinculadas h2 {
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.tarefasVinculadas header a {
+  color: var(--roxo);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.tarefasVinculadas > p {
+  margin: 0;
+  color: var(--texto-suave);
+  font-size: 0.75rem;
+}
+
+.tarefasVinculadas ul {
+  display: grid;
+  gap: 4px;
+  max-height: 120px;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.tarefasVinculadas a {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  color: var(--texto);
+  text-decoration: none;
+  background: #f7f6fb;
+  border-radius: 8px;
+}
+
+.tarefasVinculadas a:hover,
+.tarefasVinculadas a:focus-visible {
+  background: var(--lilas);
+}
+
+.tarefasVinculadas strong {
+  overflow: hidden;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tarefasVinculadas span {
+  color: var(--texto-suave);
+  font-size: 0.6875rem;
+}
+
 .formularioCategoria {
   flex-direction: column;
 }

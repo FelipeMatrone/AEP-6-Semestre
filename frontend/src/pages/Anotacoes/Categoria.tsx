@@ -10,6 +10,7 @@ import {
   type Anotacao,
   type Categoria as CategoriaDaApi,
 } from '../../services/categorias'
+import { listarTarefas, type TarefaResumo } from '../../services/tarefas'
 import styles from './Categoria.module.css'
 
 export default function Categoria() {
@@ -17,10 +18,12 @@ export default function Categoria() {
   const navigate = useNavigate()
   const [parametrosBusca] = useSearchParams()
   const [categoria, setCategoria] = useState<CategoriaDaApi | null>(null)
+  const [tarefasVinculadas, setTarefasVinculadas] = useState<TarefaResumo[]>([])
   const [busca, setBusca] = useState('')
   const [anotacaoSelecionadaId, setAnotacaoSelecionadaId] = useState<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState<string | null>(null)
+  const [erroTarefas, setErroTarefas] = useState<string | null>(null)
   const [tentativa, setTentativa] = useState(0)
   const [salvo, setSalvo] = useState(true)
   const [salvando, setSalvando] = useState(false)
@@ -55,10 +58,20 @@ export default function Categoria() {
 
       setCarregando(true)
       setErro(null)
+      setErroTarefas(null)
 
       try {
-        const resposta = await buscarCategoria(id)
+        const [resultadoCategoria, resultadoTarefas] = await Promise.allSettled([
+          buscarCategoria(id),
+          listarTarefas(),
+        ])
+
+        if (resultadoCategoria.status !== 'fulfilled') {
+          throw new Error()
+        }
+
         if (telaAtiva) {
+          const resposta = resultadoCategoria.value
           setCategoria(resposta)
           setNomeCategoria(resposta.nome)
           setDescricaoCategoria(resposta.descricao ?? '')
@@ -67,6 +80,15 @@ export default function Categoria() {
             (anotacao) => anotacao.id === anotacaoDaBusca,
           )
           setAnotacaoSelecionadaId(anotacaoEncontrada?.id ?? resposta.anotacoes[0]?.id ?? null)
+
+          if (resultadoTarefas.status === 'fulfilled') {
+            setTarefasVinculadas(
+              resultadoTarefas.value.filter((tarefa) => tarefa.categoriaId === resposta.id),
+            )
+          } else {
+            setTarefasVinculadas([])
+            setErroTarefas('Não foi possível carregar as tarefas vinculadas.')
+          }
         }
       } catch {
         if (telaAtiva) {
@@ -222,6 +244,12 @@ export default function Categoria() {
     }).format(new Date(data))
   }
 
+  function formatarPrazo(prazo: string) {
+    return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(
+      new Date(`${prazo}T00:00:00Z`),
+    )
+  }
+
   if (carregando) {
     return <p className={styles.mensagemLateral}>Carregando categoria...</p>
   }
@@ -303,6 +331,32 @@ export default function Categoria() {
               </button>
             </div>
           )}
+
+          <section className={styles.tarefasVinculadas} aria-labelledby="titulo-tarefas-vinculadas">
+            <header>
+              <h2 id="titulo-tarefas-vinculadas">Tarefas vinculadas</h2>
+              <Link to="/tarefas">Ver todas</Link>
+            </header>
+
+            {erroTarefas ? (
+              <p>{erroTarefas}</p>
+            ) : tarefasVinculadas.length === 0 ? (
+              <p>Nenhuma tarefa nesta disciplina.</p>
+            ) : (
+              <ul>
+                {tarefasVinculadas.map((tarefa) => (
+                  <li key={tarefa.id}>
+                    <Link to={`/tarefas?destaque=${tarefa.id}`}>
+                      <strong>{tarefa.titulo}</strong>
+                      <span>
+                        {tarefa.concluida ? 'Concluída' : 'Pendente'} · Prazo {formatarPrazo(tarefa.prazo)}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
 
           <input
             type="search"

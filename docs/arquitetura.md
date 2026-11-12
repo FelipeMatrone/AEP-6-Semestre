@@ -24,12 +24,12 @@ errado é este — a regra é lida antes de escrever, o desenho depois.
                regra, pertencimento (404), campos derivados, Clock injetado
                  │  Model                       ▲
                  ▼                              │
-  Mapper  DTO ↔ Model          Repository   Usuario · Tarefa · Categoria (Spring Data)
+  Mapper  DTO ↔ Model          Repository   Usuario · Tarefa · Categoria · EventoCalendario
                                             PainelRepository (MongoTemplate, $lookup)
                                                 │ BSON
                                                 ▼
-                     MongoDB — usuarios · categorias{anotacoes[]} · tarefas
-                     $jsonSchema fechado nas três
+                     MongoDB — usuarios · categorias{anotacoes[]} · tarefas · eventosCalendario
+                     $jsonSchema fechado nas quatro
 
   transversal:  GlobalExceptionHandler  @RestControllerAdvice → ApiError
                 MongoConfiguration      conversores de enum e _class desligado

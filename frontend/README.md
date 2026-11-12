@@ -4,15 +4,13 @@ Interface web do projeto da Atividade de Ensino Prática do 6º semestre.
 React 19 + TypeScript, build com Vite, roteamento com React Router e formulários
 com react-hook-form + zod.
 
-**Estado atual:** roda inteiramente sem backend. Login e cadastro são mocks e as
-anotações vivem em memória — veja `TODO.md`, que separa o que some sozinho quando
-a API existir do que precisa ser corrigido antes.
+Fala com o backend Spring pela API REST: o Vite repassa `/api` para
+`http://localhost:8080` (`vite.config.ts`), então suba o backend antes.
 
 ## Como rodar
 
 ```bash
 npm install
-cp .env.example .env   # ajuste VITE_API_URL se o backend não estiver em :8080
 npm run dev
 ```
 
@@ -34,8 +32,11 @@ src/
 │   ├── Login/
 │   ├── Cadastro/
 │   ├── Inicio/     Painel principal
-│   └── Anotacoes/  Categorias e o editor de anotações
-├── services/       Acesso a dados e preferências (hoje mockados)
+│   ├── Tarefas/
+│   ├── Anotacoes/  Categorias e o editor de anotações
+│   ├── Calendario/
+│   └── Perfil/     Estatísticas, dados pessoais e troca de senha
+├── services/       Chamadas à API (http.ts cuida de CSRF e erros) e preferências
 ├── config.ts       Constantes de identidade do sistema
 └── index.css       Tokens de cor, tipografia e reset
 ```
@@ -50,4 +51,4 @@ src/
 - **Acessibilidade:** rótulo associado a todo campo, `aria-label` em botão só de
   ícone, e `<dialog>` nativo para modais — não reimplemente foco preso ou Esc.
 
-Convenções de commit e de branch estão no `CLAUDE.md` da raiz do repositório.
+Convenções de commit e de branch estão no `AGENTS.md` da raiz do repositório.

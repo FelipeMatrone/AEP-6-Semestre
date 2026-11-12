@@ -7,7 +7,7 @@ de Engenharia de Software (Banco de Dados NoSQL, Paradigmas de Linguagem,
 Processo de Software, Projeto/Implementação e Testes).
 
 **Esta é a 2ª entrega.** O que mudou desde a 1ª, em uma frase: o banco passou de
-uma coleção achatada para três coleções relacionadas, uma delas com objetos
+uma coleção achatada para quatro coleções relacionadas, uma delas com objetos
 aninhados, e cada pessoa passou a entrar com a própria conta e ver só o que é
 dela.
 
@@ -57,10 +57,13 @@ O problema tem duas metades, e o aplicativo cobre as duas:
 | Painel de progresso por disciplina (agregação no MongoDB) | pronto |
 | Cada pessoa vê só o que é dela | pronto — recurso de outra conta responde `404` |
 | Validação de entrada com mensagens por campo e erro padronizado (`ApiError`) | pronto |
-| Validação de esquema no próprio MongoDB (`$jsonSchema` fechado nas três coleções) | pronto |
+| Validação de esquema no próprio MongoDB (`$jsonSchema` fechado nas quatro coleções) | pronto |
 | Documentação interativa da API (Swagger UI) | pronto |
 | Testes unitário, de contrato HTTP e de integração contra MongoDB real | pronto |
-| Telas React | início e tarefas consomem a API; login, disciplinas e painel em integração |
+| Calendário com eventos próprios, opcionalmente ligados a uma tarefa | pronto |
+| Busca global em tarefas, disciplinas e anotações | pronto |
+| Perfil — estatísticas, nome, meta semanal e troca de senha | pronto |
+| Telas React | pronto — login, cadastro, início, tarefas, disciplinas e anotações, calendário e perfil, todas na API |
 
 ## Tecnologias
 
@@ -82,7 +85,7 @@ backend/          API Spring Boot
   src/main/java/br/com/cesumar/aep/
     model/ repository/ dto/ mapper/ service/ controller/ exception/ configuration/
   src/test/java/.../                     unitário, contrato HTTP e integration/
-banco/init.js     esquema, índices e dados de demonstração das três coleções
+banco/init.js     esquema, índices e dados de demonstração das quatro coleções
 frontend/         cliente React
 docs/             documentação técnica
 docker-compose.yml
@@ -96,7 +99,7 @@ instalado na máquina. Maven não é necessário: o wrapper está no repositóri
 ### 1. Subir o banco
 
 Dois caminhos, conforme a máquina. Os dois aplicam o mesmo `banco/init.js`, que
-cria as três coleções com validador de esquema, os índices e os dados de
+cria as quatro coleções com validador de esquema, os índices e os dados de
 demonstração.
 
 **Com Docker:**
@@ -158,8 +161,10 @@ resto de `/api/**` exige sessão**.
 |---|---|---|
 | `POST` | `/api/usuarios` | cadastra — `201`, ou `409` se o e-mail já existe |
 | `POST` | `/api/sessao` | login — `200`, ou `401` com senha errada |
-| `GET` | `/api/sessao` | quem está logado — `200`, ou `401` |
+| `GET` | `/api/sessao` | quem está logado, com a meta semanal — `200`, ou `401` |
 | `DELETE` | `/api/sessao` | logout — `204` |
+| `PUT` | `/api/usuarios/me` | edita nome e meta semanal do usuário da sessão |
+| `PUT` | `/api/usuarios/me/senha` | troca a senha — `204`, ou `400` se a atual não confere |
 | `GET` `POST` | `/api/tarefas` | listar e criar tarefas |
 | `GET` `PUT` `DELETE` | `/api/tarefas/{id}` | uma tarefa |
 | `GET` `POST` | `/api/categorias` | listar e criar disciplinas |
@@ -167,6 +172,9 @@ resto de `/api/**` exige sessão**.
 | `POST` | `/api/categorias/{id}/anotacoes` | criar anotação na disciplina |
 | `PUT` `DELETE` | `/api/categorias/{id}/anotacoes/{anotacaoId}` | uma anotação |
 | `GET` | `/api/painel` | pendentes, concluídas, atrasadas e progresso por disciplina |
+| `GET` `POST` | `/api/eventos-calendario` | listar e criar eventos do calendário |
+| `PUT` `DELETE` | `/api/eventos-calendario/{id}` | um evento |
+| `GET` | `/api/busca?termo=` | até 5 tarefas, disciplinas e anotações que contêm o termo |
 
 A anotação é endereçada pela disciplina que a contém porque ela não existe fora
 dela: a URL conta a verdade da modelagem.
@@ -222,19 +230,22 @@ O contrato da 1ª entrega, com os campos de tarefa e o formato do erro, está em
 
 ## Banco de dados
 
-Três coleções, dois relacionamentos e um objeto complexo:
+Quatro coleções ligadas por referência e um objeto complexo:
 
 ```
 usuarios  ◀── usuarioId ──  categorias  { anotacoes: [ … ] }
     ▲                            ▲
-    └──── usuarioId ── tarefas ──┘ categoriaId (opcional)
+    ├──── usuarioId ── tarefas ──┘ categoriaId (opcional)
+    │                     ▲
+    └── usuarioId ── eventosCalendario   tarefaId (opcional)
 ```
 
 | Coleção | O que guarda | Referências |
 |---|---|---|
-| `usuarios` | `nome`, `email` (único, minúsculo), `senhaHash` (BCrypt) | — |
+| `usuarios` | `nome`, `email` (único, minúsculo), `senhaHash` (BCrypt), `metaSemanal` | — |
 | `categorias` | a disciplina, com `cor` e a lista **`anotacoes` aninhada** | `usuarioId` |
 | `tarefas` | `titulo`, `prazo`, `prioridade`, `concluida`, `observacao` | `usuarioId` (obrigatório), `categoriaId` (opcional) |
+| `eventosCalendario` | `titulo`, `data`, `horario`, `cor`, `descricao` | `usuarioId` (obrigatório), `tarefaId` (opcional) |
 
 **Por que a anotação é aninhada.** Ela não existe fora da disciplina, é sempre
 lida junto com ela e nunca é consultada sozinha — o caso de manual para
@@ -255,9 +266,9 @@ MongoDB real provando isso.
 
 Todo o esquema é validado no próprio banco por `$jsonSchema` fechado
 (`additionalProperties: false`): campo com nome errado falha na escrita em vez
-de divergir em silêncio. Os índices são três — `usuarios.email` único,
-`categorias.usuarioId` e `tarefas.{usuarioId, prazo}` —, um por consulta que os
-usa.
+de divergir em silêncio. Os índices são quatro — `usuarios.email` único,
+`categorias.usuarioId`, `tarefas.{usuarioId, prazo}` e
+`eventosCalendario.{usuarioId, data, horario}` —, um por consulta que os usa.
 
 Especificação e alternativas descartadas em
 [`docs/segunda-entrega.md`](docs/segunda-entrega.md#modelagem) e
@@ -338,8 +349,11 @@ Declarados porque limite escondido vira pergunta na correção.
   corrige conseguir entrar. Num sistema real, seed com credencial versionada não
   passa.
 - **Sem recuperação de senha.** Fora do escopo da PoC.
-- **O `conteudo` da anotação é HTML guardado como veio**, limitado em tamanho. A
-  sanitização acontece na renderização, no frontend.
+- **Trocar a senha não derruba outras sessões abertas.** Quem já estava logado
+  em outro navegador continua até sair ou o servidor reiniciar.
+- **O `conteudo` da anotação é texto puro**, limitado em tamanho. O editor é um
+  `<textarea>` e a tela o exibe como texto, que o React escapa: nenhum HTML
+  guardado chega a ser interpretado.
 
 ## Equipe
 
